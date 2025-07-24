@@ -28,6 +28,7 @@ import {
 import * as XLSX from 'xlsx';
 import { PricingVarianceIndicator } from '@/components/inventory/PricingVarianceIndicator';
 import { usePricingMaster } from '@/hooks/usePricingMaster';
+import { EnterpriseBulkUpload } from '@/components/inventory/EnterpriseBulkUpload';
 
 interface GRNRecord {
   id: string;

@@ -467,6 +467,78 @@ export type Database = {
           },
         ]
       }
+      dkegl_data_quality_metrics: {
+        Row: {
+          accuracy_score: number | null
+          completeness_score: number | null
+          consistency_score: number | null
+          created_at: string | null
+          duplicate_values: number | null
+          empty_fields: number | null
+          id: string
+          invalid_formats: number | null
+          organization_id: string | null
+          outliers_detected: number | null
+          overall_quality_score: number | null
+          quality_issues: Json | null
+          recommendations: Json | null
+          total_fields: number | null
+          upload_session_id: string | null
+          validity_score: number | null
+        }
+        Insert: {
+          accuracy_score?: number | null
+          completeness_score?: number | null
+          consistency_score?: number | null
+          created_at?: string | null
+          duplicate_values?: number | null
+          empty_fields?: number | null
+          id?: string
+          invalid_formats?: number | null
+          organization_id?: string | null
+          outliers_detected?: number | null
+          overall_quality_score?: number | null
+          quality_issues?: Json | null
+          recommendations?: Json | null
+          total_fields?: number | null
+          upload_session_id?: string | null
+          validity_score?: number | null
+        }
+        Update: {
+          accuracy_score?: number | null
+          completeness_score?: number | null
+          consistency_score?: number | null
+          created_at?: string | null
+          duplicate_values?: number | null
+          empty_fields?: number | null
+          id?: string
+          invalid_formats?: number | null
+          organization_id?: string | null
+          outliers_detected?: number | null
+          overall_quality_score?: number | null
+          quality_issues?: Json | null
+          recommendations?: Json | null
+          total_fields?: number | null
+          upload_session_id?: string | null
+          validity_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_data_quality_metrics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_data_quality_metrics_upload_session_id_fkey"
+            columns: ["upload_session_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_upload_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_eligible_adhesive_coating_uiorns: {
         Row: {
           deckle: number | null
@@ -734,6 +806,199 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "dkegl_wip_items_view"
             referencedColumns: ["organization_id", "item_code"]
+          },
+        ]
+      }
+      dkegl_grn_operations_audit: {
+        Row: {
+          affected_records: number | null
+          after_values: Json | null
+          before_values: Json | null
+          completed_at: string | null
+          created_at: string | null
+          duration_ms: number | null
+          error_count: number | null
+          errors: Json | null
+          id: string
+          ip_address: unknown | null
+          operation_data: Json | null
+          operation_id: string | null
+          operation_type: string
+          organization_id: string | null
+          risk_factors: Json | null
+          risk_level: string | null
+          session_id: string | null
+          started_at: string | null
+          success_count: number | null
+          user_agent: string | null
+          user_id: string
+          warning_count: number | null
+          warnings: Json | null
+        }
+        Insert: {
+          affected_records?: number | null
+          after_values?: Json | null
+          before_values?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_count?: number | null
+          errors?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          operation_data?: Json | null
+          operation_id?: string | null
+          operation_type: string
+          organization_id?: string | null
+          risk_factors?: Json | null
+          risk_level?: string | null
+          session_id?: string | null
+          started_at?: string | null
+          success_count?: number | null
+          user_agent?: string | null
+          user_id: string
+          warning_count?: number | null
+          warnings?: Json | null
+        }
+        Update: {
+          affected_records?: number | null
+          after_values?: Json | null
+          before_values?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_count?: number | null
+          errors?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          operation_data?: Json | null
+          operation_id?: string | null
+          operation_type?: string
+          organization_id?: string | null
+          risk_factors?: Json | null
+          risk_level?: string | null
+          session_id?: string | null
+          started_at?: string | null
+          success_count?: number | null
+          user_agent?: string | null
+          user_id?: string
+          warning_count?: number | null
+          warnings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_grn_operations_audit_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_grn_staging: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          created_by: string | null
+          date: string
+          duplicate_reason: string | null
+          existing_record_id: string | null
+          grn_number: string
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          is_duplicate: boolean | null
+          item_code: string
+          organization_id: string | null
+          processed_at: string | null
+          processing_status: string | null
+          qty_received: number
+          quality_status: string | null
+          remarks: string | null
+          source_file_name: string | null
+          source_row_number: number | null
+          supplier_name: string | null
+          total_amount: number | null
+          unit_rate: number | null
+          uom: string | null
+          updated_at: string | null
+          upload_session_id: string
+          validation_errors: Json | null
+          validation_status: string | null
+          validation_warnings: Json | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date: string
+          duplicate_reason?: string | null
+          existing_record_id?: string | null
+          grn_number: string
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          is_duplicate?: boolean | null
+          item_code: string
+          organization_id?: string | null
+          processed_at?: string | null
+          processing_status?: string | null
+          qty_received: number
+          quality_status?: string | null
+          remarks?: string | null
+          source_file_name?: string | null
+          source_row_number?: number | null
+          supplier_name?: string | null
+          total_amount?: number | null
+          unit_rate?: number | null
+          uom?: string | null
+          updated_at?: string | null
+          upload_session_id: string
+          validation_errors?: Json | null
+          validation_status?: string | null
+          validation_warnings?: Json | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date?: string
+          duplicate_reason?: string | null
+          existing_record_id?: string | null
+          grn_number?: string
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          is_duplicate?: boolean | null
+          item_code?: string
+          organization_id?: string | null
+          processed_at?: string | null
+          processing_status?: string | null
+          qty_received?: number
+          quality_status?: string | null
+          remarks?: string | null
+          source_file_name?: string | null
+          source_row_number?: number | null
+          supplier_name?: string | null
+          total_amount?: number | null
+          unit_rate?: number | null
+          uom?: string | null
+          updated_at?: string | null
+          upload_session_id?: string
+          validation_errors?: Json | null
+          validation_status?: string | null
+          validation_warnings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_grn_staging_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2061,6 +2326,104 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      dkegl_upload_sessions: {
+        Row: {
+          approval_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          duplicate_rows: number | null
+          error_summary: Json | null
+          file_hash: string | null
+          file_name: string
+          file_size: number | null
+          id: string
+          invalid_rows: number | null
+          organization_id: string | null
+          processed_rows: number | null
+          processing_completed_at: string | null
+          processing_duration_ms: number | null
+          processing_errors: Json | null
+          processing_started_at: string | null
+          requires_approval: boolean | null
+          session_type: string | null
+          status: string | null
+          total_rows: number | null
+          updated_at: string | null
+          upload_duration_ms: number | null
+          uploaded_by: string
+          valid_rows: number | null
+          validation_duration_ms: number | null
+          validation_summary: Json | null
+        }
+        Insert: {
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          duplicate_rows?: number | null
+          error_summary?: Json | null
+          file_hash?: string | null
+          file_name: string
+          file_size?: number | null
+          id?: string
+          invalid_rows?: number | null
+          organization_id?: string | null
+          processed_rows?: number | null
+          processing_completed_at?: string | null
+          processing_duration_ms?: number | null
+          processing_errors?: Json | null
+          processing_started_at?: string | null
+          requires_approval?: boolean | null
+          session_type?: string | null
+          status?: string | null
+          total_rows?: number | null
+          updated_at?: string | null
+          upload_duration_ms?: number | null
+          uploaded_by: string
+          valid_rows?: number | null
+          validation_duration_ms?: number | null
+          validation_summary?: Json | null
+        }
+        Update: {
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          duplicate_rows?: number | null
+          error_summary?: Json | null
+          file_hash?: string | null
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          invalid_rows?: number | null
+          organization_id?: string | null
+          processed_rows?: number | null
+          processing_completed_at?: string | null
+          processing_duration_ms?: number | null
+          processing_errors?: Json | null
+          processing_started_at?: string | null
+          requires_approval?: boolean | null
+          session_type?: string | null
+          status?: string | null
+          total_rows?: number | null
+          updated_at?: string | null
+          upload_duration_ms?: number | null
+          uploaded_by?: string
+          valid_rows?: number | null
+          validation_duration_ms?: number | null
+          validation_summary?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_upload_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dkegl_user_profiles: {
         Row: {
@@ -3482,6 +3845,10 @@ export type Database = {
       dkegl_refresh_stock_summary: {
         Args: { _org_id: string }
         Returns: undefined
+      }
+      dkegl_validate_grn_staging_record: {
+        Args: { _staging_id: string }
+        Returns: Json
       }
       generate_item_code: {
         Args: {
