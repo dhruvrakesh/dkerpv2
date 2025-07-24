@@ -295,6 +295,116 @@ export type Database = {
         }
         Relationships: []
       }
+      dkegl_artwork: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          artwork_name: string
+          artwork_type: string
+          created_at: string
+          created_by: string | null
+          file_path: string | null
+          file_size: number | null
+          id: string
+          metadata: Json | null
+          mime_type: string | null
+          order_id: string | null
+          organization_id: string | null
+          status: string
+          updated_at: string
+          version_number: number | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          artwork_name: string
+          artwork_type: string
+          created_at?: string
+          created_by?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          metadata?: Json | null
+          mime_type?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          status?: string
+          updated_at?: string
+          version_number?: number | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          artwork_name?: string
+          artwork_type?: string
+          created_at?: string
+          created_by?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          metadata?: Json | null
+          mime_type?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          status?: string
+          updated_at?: string
+          version_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_artwork_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_artwork_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_artwork_versions: {
+        Row: {
+          artwork_id: string | null
+          changes_summary: string | null
+          created_at: string
+          created_by: string | null
+          file_path: string | null
+          id: string
+          version_number: number
+        }
+        Insert: {
+          artwork_id?: string | null
+          changes_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_path?: string | null
+          id?: string
+          version_number: number
+        }
+        Update: {
+          artwork_id?: string | null
+          changes_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_path?: string | null
+          id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_artwork_versions_artwork_id_fkey"
+            columns: ["artwork_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_artwork"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_categories: {
         Row: {
           category_code: string
@@ -416,6 +526,138 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "dkegl_cost_analysis_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_cylinder_maintenance: {
+        Row: {
+          completed_date: string | null
+          cost: number | null
+          created_at: string
+          cylinder_id: string | null
+          id: string
+          maintenance_notes: string | null
+          maintenance_type: string
+          organization_id: string | null
+          performed_by: string | null
+          scheduled_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          cylinder_id?: string | null
+          id?: string
+          maintenance_notes?: string | null
+          maintenance_type: string
+          organization_id?: string | null
+          performed_by?: string | null
+          scheduled_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          cylinder_id?: string | null
+          id?: string
+          maintenance_notes?: string | null
+          maintenance_type?: string
+          organization_id?: string | null
+          performed_by?: string | null
+          scheduled_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_cylinder_maintenance_cylinder_id_fkey"
+            columns: ["cylinder_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_cylinders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_cylinder_maintenance_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_cylinders: {
+        Row: {
+          artwork_id: string | null
+          created_at: string
+          cylinder_code: string
+          cylinder_type: string
+          diameter: number | null
+          id: string
+          last_used_date: string | null
+          length: number | null
+          location: string | null
+          maintenance_due_date: string | null
+          number_of_colors: number | null
+          organization_id: string | null
+          specifications: Json | null
+          status: string
+          updated_at: string
+          usage_count: number | null
+        }
+        Insert: {
+          artwork_id?: string | null
+          created_at?: string
+          cylinder_code: string
+          cylinder_type: string
+          diameter?: number | null
+          id?: string
+          last_used_date?: string | null
+          length?: number | null
+          location?: string | null
+          maintenance_due_date?: string | null
+          number_of_colors?: number | null
+          organization_id?: string | null
+          specifications?: Json | null
+          status?: string
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Update: {
+          artwork_id?: string | null
+          created_at?: string
+          cylinder_code?: string
+          cylinder_type?: string
+          diameter?: number | null
+          id?: string
+          last_used_date?: string | null
+          length?: number | null
+          location?: string | null
+          maintenance_due_date?: string | null
+          number_of_colors?: number | null
+          organization_id?: string | null
+          specifications?: Json | null
+          status?: string
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_cylinders_artwork_id_fkey"
+            columns: ["artwork_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_artwork"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_cylinders_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "dkegl_organizations"
@@ -2018,6 +2260,133 @@ export type Database = {
           },
         ]
       }
+      dkegl_quality_inspections: {
+        Row: {
+          corrective_actions: Json | null
+          created_at: string
+          defects_found: Json | null
+          id: string
+          inspection_date: string
+          inspection_results: Json
+          inspector_id: string | null
+          order_id: string | null
+          organization_id: string | null
+          overall_result: string
+          remarks: string | null
+          stage_id: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          corrective_actions?: Json | null
+          created_at?: string
+          defects_found?: Json | null
+          id?: string
+          inspection_date?: string
+          inspection_results?: Json
+          inspector_id?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          overall_result: string
+          remarks?: string | null
+          stage_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          corrective_actions?: Json | null
+          created_at?: string
+          defects_found?: Json | null
+          id?: string
+          inspection_date?: string
+          inspection_results?: Json
+          inspector_id?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          overall_result?: string
+          remarks?: string | null
+          stage_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_quality_inspections_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_quality_inspections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_quality_inspections_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_workflow_stages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_quality_inspections_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_quality_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_quality_templates: {
+        Row: {
+          acceptance_criteria: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          organization_id: string | null
+          quality_parameters: Json
+          stage_type: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          acceptance_criteria?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          quality_parameters?: Json
+          stage_type: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          acceptance_criteria?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          quality_parameters?: Json
+          stage_type?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_quality_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_security_audit_log: {
         Row: {
           created_at: string | null
@@ -2095,6 +2464,69 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      dkegl_stage_performance: {
+        Row: {
+          avg_efficiency_percentage: number | null
+          avg_processing_time_hours: number | null
+          bottleneck_score: number | null
+          created_at: string
+          id: string
+          orders_processed: number | null
+          organization_id: string | null
+          performance_date: string
+          quality_pass_rate: number | null
+          resource_utilization: number | null
+          stage_id: string | null
+          total_waste_percentage: number | null
+          updated_at: string
+        }
+        Insert: {
+          avg_efficiency_percentage?: number | null
+          avg_processing_time_hours?: number | null
+          bottleneck_score?: number | null
+          created_at?: string
+          id?: string
+          orders_processed?: number | null
+          organization_id?: string | null
+          performance_date?: string
+          quality_pass_rate?: number | null
+          resource_utilization?: number | null
+          stage_id?: string | null
+          total_waste_percentage?: number | null
+          updated_at?: string
+        }
+        Update: {
+          avg_efficiency_percentage?: number | null
+          avg_processing_time_hours?: number | null
+          bottleneck_score?: number | null
+          created_at?: string
+          id?: string
+          orders_processed?: number | null
+          organization_id?: string | null
+          performance_date?: string
+          quality_pass_rate?: number | null
+          resource_utilization?: number | null
+          stage_id?: string | null
+          total_waste_percentage?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_stage_performance_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_stage_performance_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_workflow_stages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dkegl_stock: {
         Row: {
@@ -2512,6 +2944,123 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "dkegl_user_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_workflow_progress: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          order_id: string | null
+          organization_id: string | null
+          progress_percentage: number | null
+          quality_status: string | null
+          stage_data: Json | null
+          stage_id: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          progress_percentage?: number | null
+          quality_status?: string | null
+          stage_data?: Json | null
+          stage_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          progress_percentage?: number | null
+          quality_status?: string | null
+          stage_data?: Json | null
+          stage_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_workflow_progress_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_workflow_progress_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_workflow_progress_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_workflow_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_workflow_stages: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          organization_id: string | null
+          stage_config: Json | null
+          stage_name: string
+          stage_order: number
+          stage_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          stage_config?: Json | null
+          stage_name: string
+          stage_order: number
+          stage_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          stage_config?: Json | null
+          stage_name?: string
+          stage_order?: number
+          stage_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_workflow_stages_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "dkegl_organizations"
