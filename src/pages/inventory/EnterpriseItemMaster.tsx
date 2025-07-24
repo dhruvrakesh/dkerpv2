@@ -897,8 +897,9 @@ export const EnterpriseItemMaster = () => {
     const matchesCategory = selectedCategory === 'all' || item.category_id === selectedCategory;
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
     const matchesItemType = itemTypeFilter === 'all' || item.item_type === itemTypeFilter;
+    const matchesActiveView = activeView === 'all' || item.item_type === activeView;
     
-    return matchesSearch && matchesCategory && matchesStatus && matchesItemType;
+    return matchesSearch && matchesCategory && matchesStatus && matchesItemType && matchesActiveView;
   });
 
   const getItemTypeIcon = (type: string) => {
