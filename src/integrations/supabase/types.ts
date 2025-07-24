@@ -346,6 +346,83 @@ export type Database = {
           },
         ]
       }
+      dkegl_cost_analysis: {
+        Row: {
+          analysis_date: string
+          analyzed_by: string | null
+          cost_breakdown: Json | null
+          created_at: string
+          current_market_price: number | null
+          efficiency_factor: number | null
+          id: string
+          item_code: string
+          labor_cost: number | null
+          margin_percentage: number | null
+          material_cost: number | null
+          notes: string | null
+          organization_id: string | null
+          overhead_cost: number | null
+          production_volume: number | null
+          selling_price: number | null
+          standard_cost: number | null
+          total_manufacturing_cost: number | null
+          updated_at: string
+          waste_percentage: number | null
+        }
+        Insert: {
+          analysis_date?: string
+          analyzed_by?: string | null
+          cost_breakdown?: Json | null
+          created_at?: string
+          current_market_price?: number | null
+          efficiency_factor?: number | null
+          id?: string
+          item_code: string
+          labor_cost?: number | null
+          margin_percentage?: number | null
+          material_cost?: number | null
+          notes?: string | null
+          organization_id?: string | null
+          overhead_cost?: number | null
+          production_volume?: number | null
+          selling_price?: number | null
+          standard_cost?: number | null
+          total_manufacturing_cost?: number | null
+          updated_at?: string
+          waste_percentage?: number | null
+        }
+        Update: {
+          analysis_date?: string
+          analyzed_by?: string | null
+          cost_breakdown?: Json | null
+          created_at?: string
+          current_market_price?: number | null
+          efficiency_factor?: number | null
+          id?: string
+          item_code?: string
+          labor_cost?: number | null
+          margin_percentage?: number | null
+          material_cost?: number | null
+          notes?: string | null
+          organization_id?: string | null
+          overhead_cost?: number | null
+          production_volume?: number | null
+          selling_price?: number | null
+          standard_cost?: number | null
+          total_manufacturing_cost?: number | null
+          updated_at?: string
+          waste_percentage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_cost_analysis_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_daily_stock_snapshots: {
         Row: {
           created_at: string
@@ -1011,6 +1088,77 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      dkegl_pricing_hierarchy: {
+        Row: {
+          base_price: number
+          created_at: string
+          currency_code: string | null
+          customer_tier: string
+          discount_percentage: number | null
+          effective_from: string
+          effective_until: string | null
+          final_price: number
+          id: string
+          is_active: boolean | null
+          item_code: string
+          market_region: string | null
+          max_quantity: number | null
+          min_quantity: number
+          organization_id: string | null
+          pricing_rules: Json | null
+          special_conditions: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_price: number
+          created_at?: string
+          currency_code?: string | null
+          customer_tier: string
+          discount_percentage?: number | null
+          effective_from?: string
+          effective_until?: string | null
+          final_price: number
+          id?: string
+          is_active?: boolean | null
+          item_code: string
+          market_region?: string | null
+          max_quantity?: number | null
+          min_quantity?: number
+          organization_id?: string | null
+          pricing_rules?: Json | null
+          special_conditions?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number
+          created_at?: string
+          currency_code?: string | null
+          customer_tier?: string
+          discount_percentage?: number | null
+          effective_from?: string
+          effective_until?: string | null
+          final_price?: number
+          id?: string
+          is_active?: boolean | null
+          item_code?: string
+          market_region?: string | null
+          max_quantity?: number | null
+          min_quantity?: number
+          organization_id?: string | null
+          pricing_rules?: Json | null
+          special_conditions?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_pricing_hierarchy_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dkegl_production_metrics: {
         Row: {

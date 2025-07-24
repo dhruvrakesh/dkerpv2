@@ -8,7 +8,8 @@ import {
   Settings,
   LogOut,
   Sun,
-  Moon
+  Moon,
+  Building2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -18,17 +19,23 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 
 interface TopBarProps {
   className?: string;
 }
 
 export function ERPTopBar({ className }: TopBarProps) {
+  const { user, userProfile, organization, signOut } = useDKEGLAuth();
   const [isDark, setIsDark] = React.useState(false);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
     document.documentElement.classList.toggle('dark');
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (
@@ -69,12 +76,27 @@ export function ERPTopBar({ className }: TopBarProps) {
                   <User className="h-4 w-4 text-primary-foreground" />
                 </div>
                 <div className="hidden md:block text-left">
-                  <div className="text-sm font-medium">Admin User</div>
-                  <div className="text-xs text-muted-foreground">info@dkenterprises.co.in</div>
+                  <div className="text-sm font-medium">
+                    {userProfile?.full_name || 'User'}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {user?.email}
+                  </div>
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-64">
+              {organization && (
+                <>
+                  <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      {organization.name}
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuItem>
                 <User className="mr-2 h-4 w-4" />
                 Profile
@@ -84,9 +106,12 @@ export function ERPTopBar({ className }: TopBarProps) {
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
+              <DropdownMenuItem 
+                className="text-destructive"
+                onClick={handleSignOut}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
-                Log out
+                Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

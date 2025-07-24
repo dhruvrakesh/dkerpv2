@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface DKEGLLogoProps {
   className?: string;
@@ -16,8 +17,21 @@ export const DKEGLLogo: React.FC<DKEGLLogoProps> = ({
   };
 
   return (
-    <div className={`${sizeClasses[size]} bg-primary rounded-lg flex items-center justify-center font-bold text-primary-foreground shadow-lg ${className}`}>
-      <span className="font-inter tracking-tight">dk</span>
+    <div className={cn("flex items-center space-x-2", className)}>
+      <div className="relative">
+        {/* Hexagonal background with gradient */}
+        <div className={sizeClasses[size]}>
+          <div className="absolute inset-0 gradient-primary rounded-lg transform rotate-12 opacity-90"></div>
+          <div className="absolute inset-1 bg-background rounded-lg transform rotate-12"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="font-bold text-primary font-mono">DK</span>
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col">
+        <span className="text-xl font-bold text-primary tracking-tight">DKEGL</span>
+        <span className="text-xs text-muted-foreground tracking-wide uppercase">Enterprises</span>
+      </div>
     </div>
   );
 };
