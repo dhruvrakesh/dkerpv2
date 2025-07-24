@@ -10,6 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { StockMovementChart } from '@/components/analytics/StockMovementChart';
+import { StockAgingChart } from '@/components/analytics/StockAgingChart';
+import { PricingDashboard } from '@/components/analytics/PricingDashboard';
+import { useStockAnalytics } from '@/hooks/useStockAnalytics';
 import { 
   Package, 
   Plus, 
@@ -21,7 +25,8 @@ import {
   TrendingDown,
   TrendingUp,
   Warehouse,
-  BarChart3
+  BarChart3,
+  PieChart
 } from 'lucide-react';
 
 interface StockItem {
@@ -49,6 +54,7 @@ interface OpeningStockForm {
 
 export default function StockManagement() {
   const { toast } = useToast();
+  const analytics = useStockAnalytics();
   const [stockItems, setStockItems] = useState<StockItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,6 +62,7 @@ export default function StockManagement() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [isOpeningStockDialogOpen, setIsOpeningStockDialogOpen] = useState(false);
   const [availableItems, setAvailableItems] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const [openingStockForm, setOpeningStockForm] = useState<OpeningStockForm>({
     item_code: '',
@@ -222,9 +229,9 @@ export default function StockManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Stock Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Stock Management & Analytics</h1>
           <p className="text-muted-foreground">
-            Monitor and manage your inventory levels
+            Monitor inventory levels, analyze stock movements, and optimize pricing
           </p>
         </div>
         <div className="flex gap-2">
@@ -372,110 +379,155 @@ export default function StockManagement() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by item name or code..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={filterLocation} onValueChange={setFilterLocation}>
-              <SelectTrigger className="w-[180px]">
-                <Warehouse className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="All Locations" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                <SelectItem value="MAIN-STORE">Main Store</SelectItem>
-                <SelectItem value="RAW-MATERIAL">Raw Material</SelectItem>
-                <SelectItem value="FINISHED-GOODS">Finished Goods</SelectItem>
-                <SelectItem value="WORK-IN-PROGRESS">Work in Progress</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[140px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="in-stock">In Stock</SelectItem>
-                <SelectItem value="low-stock">Low Stock</SelectItem>
-                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Enhanced Analytics Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Stock Overview
+          </TabsTrigger>
+          <TabsTrigger value="movements" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Stock Movements
+          </TabsTrigger>
+          <TabsTrigger value="aging" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Stock Aging
+          </TabsTrigger>
+          <TabsTrigger value="pricing" className="flex items-center gap-2">
+            <PieChart className="h-4 w-4" />
+            Pricing Analytics
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Stock Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Current Stock ({filteredStock.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Item Code</TableHead>
-                <TableHead>Item Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Current Stock</TableHead>
-                <TableHead>Reorder Level</TableHead>
-                <TableHead>Unit Cost</TableHead>
-                <TableHead>Total Value</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Updated</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStock.map((item) => {
-                const status = getStockStatus(item.current_qty, item.reorder_level || 0);
-                return (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-mono">{item.item_code}</TableCell>
-                    <TableCell className="font-medium">{item.item_name}</TableCell>
-                    <TableCell>{item.category_name}</TableCell>
-                    <TableCell className="text-right">
-                      {item.current_qty.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {item.reorder_level?.toLocaleString() || '-'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      ₹{item.unit_cost?.toFixed(2) || '0.00'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      ₹{item.total_value?.toLocaleString() || '0'}
-                    </TableCell>
-                    <TableCell>{item.location}</TableCell>
-                    <TableCell>
-                      <Badge variant={status.color as any}>
-                        {status.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(item.last_updated).toLocaleDateString()}
-                    </TableCell>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Filters */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-[200px]">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by item name or code..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Select value={filterLocation} onValueChange={setFilterLocation}>
+                  <SelectTrigger className="w-[180px]">
+                    <Warehouse className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="All Locations" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Locations</SelectItem>
+                    <SelectItem value="MAIN-STORE">Main Store</SelectItem>
+                    <SelectItem value="RAW-MATERIAL">Raw Material</SelectItem>
+                    <SelectItem value="FINISHED-GOODS">Finished Goods</SelectItem>
+                    <SelectItem value="WORK-IN-PROGRESS">Work in Progress</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-[140px]">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="in-stock">In Stock</SelectItem>
+                    <SelectItem value="low-stock">Low Stock</SelectItem>
+                    <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Stock Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Current Stock ({filteredStock.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item Code</TableHead>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Current Stock</TableHead>
+                    <TableHead>Reorder Level</TableHead>
+                    <TableHead>Unit Cost</TableHead>
+                    <TableHead>Total Value</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Last Updated</TableHead>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {filteredStock.map((item) => {
+                    const status = getStockStatus(item.current_qty, item.reorder_level || 0);
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-mono">{item.item_code}</TableCell>
+                        <TableCell className="font-medium">{item.item_name}</TableCell>
+                        <TableCell>{item.category_name}</TableCell>
+                        <TableCell className="text-right">
+                          {item.current_qty.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {item.reorder_level?.toLocaleString() || '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          ₹{item.unit_cost?.toFixed(2) || '0.00'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          ₹{item.total_value?.toLocaleString() || '0'}
+                        </TableCell>
+                         <TableCell>{item.location}</TableCell>
+                         <TableCell>
+                           <Badge variant={status.color as any}>
+                             {status.label}
+                           </Badge>
+                         </TableCell>
+                         <TableCell>
+                           {new Date(item.last_updated).toLocaleDateString()}
+                         </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="movements" className="space-y-4">
+          <StockMovementChart 
+            data={[]} 
+            selectedItem={searchTerm || undefined}
+          />
+        </TabsContent>
+
+        <TabsContent value="aging" className="space-y-4">
+          <StockAgingChart data={[]} />
+        </TabsContent>
+
+        <TabsContent value="pricing" className="space-y-4">
+          <PricingDashboard 
+            onCalculatePricing={analytics.calculateItemPricing}
+            items={stockItems.map(item => ({ 
+              item_code: item.item_code, 
+              item_name: item.item_name || ''
+            }))}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -3087,6 +3087,35 @@ export type Database = {
           count: number
         }[]
       }
+      dkegl_analyze_consumption_patterns: {
+        Args: { _org_id: string; _item_code?: string }
+        Returns: {
+          item_code: string
+          item_name: string
+          avg_monthly_consumption: number
+          consumption_trend: string
+          seasonality_factor: number
+          recommended_reorder_level: number
+          recommended_reorder_quantity: number
+          next_reorder_date: string
+        }[]
+      }
+      dkegl_calculate_item_pricing: {
+        Args: {
+          _org_id: string
+          _item_code: string
+          _customer_tier?: string
+          _quantity?: number
+        }
+        Returns: {
+          pricing_source: string
+          unit_price: number
+          total_price: number
+          discount_applied: number
+          margin_percentage: number
+          is_primary: boolean
+        }[]
+      }
       dkegl_capture_daily_stock_snapshot: {
         Args: { _org_id: string }
         Returns: Json
@@ -3128,6 +3157,32 @@ export type Database = {
       dkegl_get_current_user_org: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      dkegl_get_stock_aging: {
+        Args: { _org_id: string }
+        Returns: {
+          item_code: string
+          item_name: string
+          category_name: string
+          current_qty: number
+          last_movement_date: string
+          days_since_movement: number
+          aging_category: string
+          estimated_value: number
+        }[]
+      }
+      dkegl_get_stock_movements: {
+        Args: { _org_id: string; _item_code?: string; _days?: number }
+        Returns: {
+          transaction_date: string
+          transaction_type: string
+          item_code: string
+          item_name: string
+          quantity: number
+          running_balance: number
+          source_reference: string
+          unit_cost: number
+        }[]
       }
       dkegl_get_workflow_status: {
         Args: Record<PropertyKey, never>
