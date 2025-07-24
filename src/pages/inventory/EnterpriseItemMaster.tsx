@@ -373,10 +373,11 @@ export const EnterpriseItemMaster = () => {
         categoryCodeMap.set('ink', cat.id);
         categoryCodeMap.set('printing', cat.id);
       }
-      if (name.includes('ldpe') || name.includes('lamination')) {
+      if (name.includes('ldpe') || name.includes('lamination') || name.includes('laminated')) {
         categoryCodeMap.set('ldpelam', cat.id);
         categoryCodeMap.set('ldpe', cat.id);
         categoryCodeMap.set('lamination', cat.id);
+        categoryCodeMap.set('laminated', cat.id);
       }
       if (name.includes('machinery') || name.includes('equipment')) {
         categoryCodeMap.set('machinery', cat.id);
@@ -959,11 +960,11 @@ export const EnterpriseItemMaster = () => {
                 Bulk Import
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Bulk Import Item Master</DialogTitle>
               </DialogHeader>
-              <div className="space-y-6">
+              <div className="space-y-6 min-h-0">
                 {!bulkUploadState.isUploading && bulkUploadState.totalCount === 0 && (
                   <>
                     {/* File Upload Section */}
