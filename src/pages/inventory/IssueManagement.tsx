@@ -96,7 +96,7 @@ export default function IssueManagement() {
         .from('dkegl_issue_log')
         .select(`
           *,
-          dkegl_item_master!inner(item_name, uom)
+          dkegl_item_master!fk_issue_item_master(item_name, uom)
         `)
         .order('created_at', { ascending: false });
 
@@ -116,7 +116,7 @@ export default function IssueManagement() {
         .select(`
           item_code,
           current_qty,
-          dkegl_item_master!inner(id, item_name, uom)
+          dkegl_item_master!fk_stock_item_master(id, item_name, uom)
         `)
         .gt('current_qty', 0)
         .order('dkegl_item_master.item_name');
@@ -181,8 +181,13 @@ export default function IssueManagement() {
         throw new Error('Organization not found');
       }
 
+      // Generate issue number
+      const issueNumber = `ISS-${Date.now()}`;
+      
       const issueData = {
         ...issueForm,
+        issue_number: issueNumber,
+        uom: getUom(issueForm.item_code),
         organization_id: userProfile.organization_id,
         requested_by: issueForm.requested_by || userProfile.full_name,
         approved_by: userProfile.full_name, // Auto-approve for now

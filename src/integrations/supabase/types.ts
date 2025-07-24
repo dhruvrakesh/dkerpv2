@@ -700,6 +700,13 @@ export type Database = {
             referencedRelation: "dkegl_organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_grn_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_item_master"
+            referencedColumns: ["organization_id", "item_code"]
+          },
         ]
       }
       dkegl_issue_audit_log: {
@@ -808,6 +815,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "dkegl_organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_issue_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_item_master"
+            referencedColumns: ["organization_id", "item_code"]
           },
         ]
       }
@@ -1464,6 +1478,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "dkegl_organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_item_master"
+            referencedColumns: ["organization_id", "item_code"]
           },
         ]
       }

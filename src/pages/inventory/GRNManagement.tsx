@@ -37,7 +37,7 @@ interface GRNRecord {
   total_amount?: number;
   invoice_number?: string;
   invoice_date?: string;
-  quality_status: 'pending' | 'approved' | 'rejected';
+  quality_status: 'pending' | 'approved' | 'in_review' | 'passed' | 'failed' | 'rework_required';
   remarks?: string;
   created_at: string;
   uom?: string;
@@ -52,7 +52,7 @@ interface GRNForm {
   unit_rate: number;
   invoice_number: string;
   invoice_date: string;
-  quality_status: 'pending' | 'approved' | 'rejected';
+  quality_status: 'pending' | 'approved' | 'in_review' | 'passed' | 'failed' | 'rework_required';
   remarks: string;
   uom: string;
 }
@@ -95,7 +95,7 @@ export default function GRNManagement() {
         .from('dkegl_grn_log')
         .select(`
           *,
-          dkegl_item_master!inner(item_name, uom)
+          dkegl_item_master!fk_grn_item_master(item_name, uom)
         `)
         .order('created_at', { ascending: false });
 
@@ -440,7 +440,10 @@ export default function GRNManagement() {
                       <SelectContent>
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
+                        <SelectItem value="in_review">In Review</SelectItem>
+                        <SelectItem value="passed">Passed</SelectItem>
+                        <SelectItem value="failed">Failed</SelectItem>
+                        <SelectItem value="rework_required">Rework Required</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

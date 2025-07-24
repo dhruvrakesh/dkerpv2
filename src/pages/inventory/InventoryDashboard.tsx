@@ -68,7 +68,7 @@ export default function InventoryDashboard() {
         .from('dkegl_stock')
         .select(`
           *,
-          dkegl_item_master!inner(
+          dkegl_item_master!fk_stock_item_master(
             item_name,
             reorder_level,
             dkegl_categories(category_name)
@@ -101,7 +101,7 @@ export default function InventoryDashboard() {
         .from('dkegl_grn_log')
         .select(`
           *,
-          dkegl_item_master!inner(item_name)
+          dkegl_item_master!fk_grn_item_master(item_name)
         `)
         .eq('organization_id', userProfile.organization_id)
         .order('created_at', { ascending: false })
@@ -119,7 +119,7 @@ export default function InventoryDashboard() {
         .from('dkegl_issue_log')
         .select(`
           *,
-          dkegl_item_master!inner(item_name)
+          dkegl_item_master!fk_issue_item_master(item_name)
         `)
         .eq('organization_id', userProfile.organization_id)
         .order('created_at', { ascending: false })
