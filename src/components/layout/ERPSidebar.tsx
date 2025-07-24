@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { DKEGLLogo } from '@/components/DKEGLLogo';
 import {
@@ -23,9 +24,8 @@ interface SidebarProps {
 const navigation = [
   {
     name: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-    current: true
+    href: '/',
+    icon: LayoutDashboard
   },
   {
     name: 'Manufacturing',
@@ -83,7 +83,9 @@ const bottomNavigation = [
 ];
 
 export function ERPSidebar({ className }: SidebarProps) {
-  const [expandedItems, setExpandedItems] = React.useState<string[]>(['Manufacturing']);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [expandedItems, setExpandedItems] = React.useState<string[]>(['Manufacturing', 'Inventory']);
 
   const toggleExpanded = (name: string) => {
     setExpandedItems(prev =>
@@ -91,6 +93,14 @@ export function ERPSidebar({ className }: SidebarProps) {
         ? prev.filter(item => item !== name)
         : [...prev, name]
     );
+  };
+
+  const handleNavigation = (href: string) => {
+    navigate(href);
+  };
+
+  const isCurrentPath = (href: string) => {
+    return location.pathname === href || location.pathname.startsWith(href + '/');
   };
 
   return (
@@ -109,10 +119,16 @@ export function ERPSidebar({ className }: SidebarProps) {
         {navigation.map((item) => (
           <div key={item.name}>
             <button
-              onClick={() => item.children && toggleExpanded(item.name)}
+              onClick={() => {
+                if (item.children) {
+                  toggleExpanded(item.name);
+                } else {
+                  handleNavigation(item.href);
+                }
+              }}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors",
-                item.current
+                isCurrentPath(item.href)
                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
@@ -139,7 +155,13 @@ export function ERPSidebar({ className }: SidebarProps) {
                 {item.children.map((child) => (
                   <button
                     key={child.name}
-                    className="w-full flex items-center px-3 py-2 text-sm text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 rounded-md transition-colors"
+                    onClick={() => handleNavigation(child.href)}
+                    className={cn(
+                      "w-full flex items-center px-3 py-2 text-sm rounded-md transition-colors",
+                      isCurrentPath(child.href)
+                        ? "text-sidebar-primary bg-sidebar-accent font-medium"
+                        : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                    )}
                   >
                     {child.name}
                   </button>
@@ -155,7 +177,13 @@ export function ERPSidebar({ className }: SidebarProps) {
         {bottomNavigation.map((item) => (
           <button
             key={item.name}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg transition-colors"
+            onClick={() => handleNavigation(item.href)}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors",
+              isCurrentPath(item.href)
+                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+                : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            )}
           >
             <item.icon className="h-5 w-5 flex-shrink-0" />
             <span>{item.name}</span>
