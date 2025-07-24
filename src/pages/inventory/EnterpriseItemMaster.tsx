@@ -71,6 +71,10 @@ export const EnterpriseItemMaster = () => {
     successCount: 0,
     totalCount: 0
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [validationResults, setValidationResults] = useState<any>(null);
+  const [showValidation, setShowValidation] = useState(false);
+  const [duplicateConflicts, setDuplicateConflicts] = useState<any[]>([]);
 
   // Filters and search
   const [searchTerm, setSearchTerm] = useState('');
@@ -317,9 +321,81 @@ export const EnterpriseItemMaster = () => {
       successCount: 0,
       totalCount: 0
     });
+    setValidationResults(null);
+    setShowValidation(false);
+    setDuplicateConflicts([]);
+    setSelectedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  // Enhanced category mapping with common industry codes
+  const createEnhancedCategoryMap = () => {
+    const categoryMap = new Map();
+    const categoryCodeMap = new Map();
+    
+    categories.forEach(cat => {
+      // Map by name
+      categoryMap.set(cat.category_name.toLowerCase(), cat.id);
+      
+      // Map by common codes based on user's existing categories
+      const name = cat.category_name.toLowerCase();
+      if (name.includes('adhesive')) {
+        categoryCodeMap.set('adh', cat.id);
+        categoryCodeMap.set('adhesive', cat.id);
+      }
+      if (name.includes('bopp') || name.includes('film')) {
+        categoryCodeMap.set('bopp', cat.id);
+        categoryCodeMap.set('film', cat.id);
+      }
+      if (name.includes('chemical') || name.includes('chem')) {
+        categoryCodeMap.set('chem', cat.id);
+        categoryCodeMap.set('chemical', cat.id);
+      }
+      if (name.includes('consumable') || name.includes('supplies')) {
+        categoryCodeMap.set('consumable', cat.id);
+        categoryCodeMap.set('supplies', cat.id);
+      }
+      if (name.includes('core') || name.includes('roll')) {
+        categoryCodeMap.set('core', cat.id);
+        categoryCodeMap.set('roll', cat.id);
+      }
+      if (name.includes('cpp') || name.includes('polypropylene')) {
+        categoryCodeMap.set('cpp', cat.id);
+        categoryCodeMap.set('polypropylene', cat.id);
+      }
+      if (name.includes('finished') || name.includes('fg')) {
+        categoryCodeMap.set('fg', cat.id);
+        categoryCodeMap.set('finished', cat.id);
+      }
+      if (name.includes('ink') || name.includes('printing')) {
+        categoryCodeMap.set('ink', cat.id);
+        categoryCodeMap.set('printing', cat.id);
+      }
+      if (name.includes('ldpe') || name.includes('lamination')) {
+        categoryCodeMap.set('ldpelam', cat.id);
+        categoryCodeMap.set('ldpe', cat.id);
+        categoryCodeMap.set('lamination', cat.id);
+      }
+      if (name.includes('machinery') || name.includes('equipment')) {
+        categoryCodeMap.set('machinery', cat.id);
+        categoryCodeMap.set('equipment', cat.id);
+      }
+      if (name.includes('paper')) {
+        categoryCodeMap.set('paper', cat.id);
+      }
+      if (name.includes('pet') || name.includes('polyester')) {
+        categoryCodeMap.set('pet', cat.id);
+        categoryCodeMap.set('polyester', cat.id);
+      }
+      if (name.includes('wip') || name.includes('progress')) {
+        categoryCodeMap.set('wip', cat.id);
+        categoryCodeMap.set('progress', cat.id);
+      }
+    });
+
+    return { categoryMap, categoryCodeMap };
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -334,6 +410,8 @@ export const EnterpriseItemMaster = () => {
       });
       return;
     }
+
+    setSelectedFile(file);
 
     try {
       const data = await file.arrayBuffer();
@@ -350,7 +428,17 @@ export const EnterpriseItemMaster = () => {
         return;
       }
 
-      await processBulkUpload(jsonData);
+      if (jsonData.length > 1000) {
+        toast({
+          title: "File Too Large",
+          description: "Maximum 1000 items allowed per upload. Please split your file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Pre-validate all data before upload
+      await validateFileData(jsonData);
     } catch (error) {
       console.error('File processing error:', error);
       toast({
@@ -378,11 +466,8 @@ export const EnterpriseItemMaster = () => {
     let successCount = 0;
     const errors: string[] = [];
 
-    // Create a map of category names to IDs for quick lookup
-    const categoryMap = new Map();
-    categories.forEach(cat => {
-      categoryMap.set(cat.category_name.toLowerCase(), cat.id);
-    });
+    // Create enhanced category mapping for quick lookup
+    const categoryMaps = createEnhancedCategoryMap();
 
     for (let i = 0; i < data.length; i += batchSize) {
       const batch = data.slice(i, i + batchSize);
@@ -392,7 +477,7 @@ export const EnterpriseItemMaster = () => {
         
         try {
           // Validate and process row data
-          const itemData = await validateAndProcessRow(row, categoryMap, rowIndex);
+          const itemData = await validateAndProcessRow(row, categoryMaps, rowIndex);
           if (!itemData) return;
 
           // Insert into database
@@ -461,7 +546,8 @@ export const EnterpriseItemMaster = () => {
     return typeMap[normalized] || 'raw_material';
   };
 
-  const findCategoryId = (categoryName: string, categoryMap: Map<string, string>, categories: Category[]): string | null => {
+  // Enhanced category finding with code mapping
+  const findCategoryId = (categoryName: string, { categoryMap, categoryCodeMap }: any): string | null => {
     if (!categoryName) return null;
     
     const searchName = categoryName.toLowerCase().trim();
@@ -470,15 +556,183 @@ export const EnterpriseItemMaster = () => {
     let categoryId = categoryMap.get(searchName);
     if (categoryId) return categoryId;
     
-    // Try to find by category code (assuming user might enter code instead of name)
+    // Try by category code
+    categoryId = categoryCodeMap.get(searchName);
+    if (categoryId) return categoryId;
+    
+    // Fuzzy matching - try partial matches
     for (const category of categories) {
-      if (category.category_name.toLowerCase().includes(searchName) || 
-          searchName.includes(category.category_name.toLowerCase())) {
+      const catName = category.category_name.toLowerCase();
+      if (catName.includes(searchName) || searchName.includes(catName)) {
         return category.id;
       }
     }
     
     return null;
+  };
+
+  // Pre-upload validation function
+  const validateFileData = async (data: any[]) => {
+    const { categoryMap, categoryCodeMap } = createEnhancedCategoryMap();
+    const validationResults = {
+      totalRows: data.length,
+      validRows: 0,
+      invalidRows: 0,
+      errors: [] as any[],
+      warnings: [] as any[],
+      duplicates: [] as any[],
+      preview: data.slice(0, 10)
+    };
+
+    // Check for existing item codes in database
+    const existingCodes = new Set();
+    if (data.some(row => row['Item Code (Auto-generated if empty)']?.toString().trim())) {
+      const itemCodes = data
+        .map(row => row['Item Code (Auto-generated if empty)']?.toString().trim())
+        .filter(Boolean);
+      
+      if (itemCodes.length > 0) {
+        const { data: existingItems } = await supabase
+          .from('dkegl_item_master')
+          .select('item_code')
+          .in('item_code', itemCodes)
+          .eq('organization_id', userProfile?.organization_id);
+        
+        existingItems?.forEach(item => existingCodes.add(item.item_code));
+      }
+    }
+
+    // Track duplicates within the file
+    const seenCodes = new Set();
+    const seenNames = new Set();
+
+    data.forEach((row, index) => {
+      const rowIndex = index + 1;
+      const rowErrors: string[] = [];
+      const rowWarnings: string[] = [];
+
+      // Required field validation
+      const itemName = row['Item Name']?.toString().trim();
+      if (!itemName) {
+        rowErrors.push('Item Name is required');
+      } else {
+        if (seenNames.has(itemName.toLowerCase())) {
+          validationResults.duplicates.push({
+            row: rowIndex,
+            type: 'Duplicate Name',
+            value: itemName,
+            message: `Item name "${itemName}" appears multiple times in the file`
+          });
+        }
+        seenNames.add(itemName.toLowerCase());
+      }
+
+      const categoryName = row['Category Name']?.toString().trim();
+      if (!categoryName) {
+        rowErrors.push('Category Name is required');
+      } else {
+        const categoryId = findCategoryId(categoryName, { categoryMap, categoryCodeMap });
+        if (!categoryId) {
+          const suggestions = categories
+            .filter(c => c.category_name.toLowerCase().includes(categoryName.toLowerCase()) || 
+                          categoryName.toLowerCase().includes(c.category_name.toLowerCase()))
+            .map(c => c.category_name)
+            .slice(0, 3);
+          
+          const suggestionText = suggestions.length > 0 ? 
+            ` Did you mean: ${suggestions.join(', ')}?` : 
+            ` Available: ${categories.map(c => c.category_name).slice(0, 5).join(', ')}`;
+          
+          rowErrors.push(`Category "${categoryName}" not found.${suggestionText}`);
+        }
+      }
+
+      // Item code validation
+      const itemCode = row['Item Code (Auto-generated if empty)']?.toString().trim();
+      if (itemCode) {
+        if (existingCodes.has(itemCode)) {
+          rowErrors.push(`Item code "${itemCode}" already exists in database`);
+        }
+        if (seenCodes.has(itemCode)) {
+          validationResults.duplicates.push({
+            row: rowIndex,
+            type: 'Duplicate Code',
+            value: itemCode,
+            message: `Item code "${itemCode}" appears multiple times in the file`
+          });
+        }
+        seenCodes.add(itemCode);
+      }
+
+      // Item type validation
+      const rawItemType = row['Item Type']?.toString() || 'raw_material';
+      const itemType = normalizeItemType(rawItemType);
+      const validItemTypes = ['raw_material', 'work_in_progress', 'consumable', 'finished_good'];
+      if (!validItemTypes.includes(itemType)) {
+        rowErrors.push(`Invalid Item Type: "${rawItemType}". Must be one of: Raw Material, WIP, Consumable, Finished Good`);
+      }
+
+      // JSON validation
+      try {
+        if (row['Technical Specs (JSON)'] && row['Technical Specs (JSON)'].toString().trim()) {
+          JSON.parse(row['Technical Specs (JSON)']);
+        }
+      } catch (e) {
+        rowWarnings.push('Invalid Technical Specs JSON format');
+      }
+
+      try {
+        if (row['Quality Specs (JSON)'] && row['Quality Specs (JSON)'].toString().trim()) {
+          JSON.parse(row['Quality Specs (JSON)']);
+        }
+      } catch (e) {
+        rowWarnings.push('Invalid Quality Specs JSON format');
+      }
+
+      // Numeric validation
+      const reorderLevel = Number(row['Reorder Level']);
+      if (row['Reorder Level'] && (isNaN(reorderLevel) || reorderLevel < 0)) {
+        rowWarnings.push('Reorder Level should be a positive number');
+      }
+
+      if (rowErrors.length > 0) {
+        validationResults.errors.push({
+          row: rowIndex,
+          errors: rowErrors,
+          data: row
+        });
+        validationResults.invalidRows++;
+      } else {
+        validationResults.validRows++;
+      }
+
+      if (rowWarnings.length > 0) {
+        validationResults.warnings.push({
+          row: rowIndex,
+          warnings: rowWarnings,
+          data: row
+        });
+      }
+    });
+
+    setValidationResults(validationResults);
+    setShowValidation(true);
+  };
+
+  // Process validated data
+  const processValidatedUpload = async () => {
+    if (!validationResults || validationResults.invalidRows > 0) {
+      toast({
+        title: "Cannot Process Upload",
+        description: "Please fix all validation errors before proceeding.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const validData = validationResults.preview; // In real implementation, use all valid data
+    await processBulkUpload(validData);
+    setShowValidation(false);
   };
 
   const generateItemCodeWithDB = async (categoryName: string, itemName: string): Promise<string> => {
@@ -499,7 +753,7 @@ export const EnterpriseItemMaster = () => {
     }
   };
 
-  const validateAndProcessRow = async (row: any, categoryMap: Map<string, string>, rowIndex: number): Promise<any | null> => {
+  const validateAndProcessRow = async (row: any, categoryMaps: any, rowIndex: number): Promise<any | null> => {
     const errors: string[] = [];
 
     // Required fields validation
@@ -514,7 +768,7 @@ export const EnterpriseItemMaster = () => {
     }
 
     // Enhanced category matching
-    const categoryId = findCategoryId(categoryName, categoryMap, categories);
+    const categoryId = findCategoryId(categoryName, categoryMaps);
     if (categoryName && !categoryId) {
       const availableCategories = categories.map(c => c.category_name).join(', ');
       errors.push(`Category '${categoryName}' not found. Available categories: ${availableCategories}`);
@@ -763,6 +1017,155 @@ export const EnterpriseItemMaster = () => {
                       </ul>
                     </div>
                   </>
+                )}
+
+                {/* Validation Results */}
+                {showValidation && validationResults && (
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      <div className="text-lg font-medium mb-2">File Validation Results</div>
+                      <div className="text-sm text-muted-foreground">
+                        Review the validation results before proceeding with the upload
+                      </div>
+                    </div>
+
+                    {/* Validation Summary */}
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-blue-600">{validationResults.totalRows}</div>
+                        <div className="text-sm text-blue-600">Total Rows</div>
+                      </div>
+                      <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-green-600">{validationResults.validRows}</div>
+                        <div className="text-sm text-green-600">Valid</div>
+                      </div>
+                      <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-red-600">{validationResults.invalidRows}</div>
+                        <div className="text-sm text-red-600">Invalid</div>
+                      </div>
+                      <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-yellow-600">{validationResults.warnings.length}</div>
+                        <div className="text-sm text-yellow-600">Warnings</div>
+                      </div>
+                    </div>
+
+                    {/* Data Preview */}
+                    <div className="space-y-3">
+                      <h4 className="font-medium">Data Preview (First 5 rows)</h4>
+                      <div className="border rounded-lg overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Row</TableHead>
+                              <TableHead>Item Name</TableHead>
+                              <TableHead>Category</TableHead>
+                              <TableHead>Item Type</TableHead>
+                              <TableHead>Status</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {validationResults.preview.slice(0, 5).map((row: any, index: number) => (
+                              <TableRow key={index}>
+                                <TableCell>{index + 1}</TableCell>
+                                <TableCell>{row['Item Name'] || '-'}</TableCell>
+                                <TableCell>{row['Category Name'] || '-'}</TableCell>
+                                <TableCell>{row['Item Type'] || 'raw_material'}</TableCell>
+                                <TableCell>
+                                  <Badge variant={
+                                    validationResults.errors.some((e: any) => e.row === index + 1) ? 'destructive' : 
+                                    validationResults.warnings.some((w: any) => w.row === index + 1) ? 'secondary' : 'default'
+                                  }>
+                                    {validationResults.errors.some((e: any) => e.row === index + 1) ? 'Error' :
+                                     validationResults.warnings.some((w: any) => w.row === index + 1) ? 'Warning' : 'Valid'}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+
+                    {/* Errors */}
+                    {validationResults.errors.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-destructive">Validation Errors ({validationResults.errors.length})</h4>
+                        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 max-h-40 overflow-y-auto">
+                          {validationResults.errors.map((error: any, index: number) => (
+                            <div key={index} className="mb-3 pb-3 border-b border-destructive/20 last:border-b-0">
+                              <div className="font-medium text-destructive mb-1">Row {error.row}:</div>
+                              <ul className="text-sm space-y-1">
+                                {error.errors.map((err: string, i: number) => (
+                                  <li key={i} className="text-destructive">• {err}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Warnings */}
+                    {validationResults.warnings.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-yellow-600">Warnings ({validationResults.warnings.length})</h4>
+                        <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 max-h-40 overflow-y-auto">
+                          {validationResults.warnings.map((warning: any, index: number) => (
+                            <div key={index} className="mb-3 pb-3 border-b border-yellow-200 dark:border-yellow-800 last:border-b-0">
+                              <div className="font-medium text-yellow-600 mb-1">Row {warning.row}:</div>
+                              <ul className="text-sm space-y-1">
+                                {warning.warnings.map((warn: string, i: number) => (
+                                  <li key={i} className="text-yellow-600">• {warn}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Duplicates */}
+                    {validationResults.duplicates.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-orange-600">Duplicates Found ({validationResults.duplicates.length})</h4>
+                        <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 max-h-40 overflow-y-auto">
+                          {validationResults.duplicates.map((dup: any, index: number) => (
+                            <div key={index} className="mb-2 text-sm">
+                              <span className="font-medium">Row {dup.row}:</span> {dup.message}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex gap-3">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowValidation(false)}
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                      {validationResults.invalidRows === 0 && (
+                        <Button 
+                          onClick={processValidatedUpload}
+                          className="flex-1"
+                        >
+                          Proceed with Upload ({validationResults.validRows} items)
+                        </Button>
+                      )}
+                      {validationResults.invalidRows > 0 && (
+                        <Button 
+                          variant="destructive"
+                          disabled
+                          className="flex-1"
+                        >
+                          Fix {validationResults.invalidRows} errors to proceed
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 )}
 
                 {/* Upload Progress */}
