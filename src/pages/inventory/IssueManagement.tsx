@@ -21,8 +21,10 @@ import {
   AlertTriangle,
   Save,
   X,
-  Package
+  Package,
+  FileSpreadsheet
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface IssueRecord {
   id: string;
@@ -118,8 +120,7 @@ export default function IssueManagement() {
           current_qty,
           dkegl_item_master!fk_stock_item_master(id, item_name, uom)
         `)
-        .gt('current_qty', 0)
-        .order('dkegl_item_master.item_name');
+        .gt('current_qty', 0);
 
       if (stockError) throw stockError;
       
@@ -129,7 +130,7 @@ export default function IssueManagement() {
         item_name: stock.dkegl_item_master.item_name,
         uom: stock.dkegl_item_master.uom,
         current_qty: stock.current_qty
-      })) || [];
+      })).sort((a, b) => a.item_name.localeCompare(b.item_name)) || [];
       
       setAvailableItems(formattedStock);
 
@@ -280,6 +281,197 @@ export default function IssueManagement() {
     return stockInfo[itemCode]?.uom || 'PCS';
   };
 
+  const handleExport = () => {
+    try {
+      const exportData = filteredIssues.map(issue => ({
+        'Issue Number': issue.id.slice(0, 8),
+        'Date': issue.date,
+        'Item Code': issue.item_code,
+        'Item Name': issue.item_name || '',
+        'Quantity Issued': issue.qty_issued,
+        'UOM': issue.uom || '',
+        'Department': issue.department || '',
+        'Purpose': issue.purpose || '',
+        'Requested By': issue.requested_by || '',
+        'Approved By': issue.approved_by || '',
+        'Remarks': issue.remarks || '',
+        'Created At': new Date(issue.created_at).toLocaleString()
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Issue Records');
+      
+      // Auto-size columns
+      const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+      const colWidths = [];
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        let maxWidth = 10;
+        for (let row = range.s.r; row <= range.e.r; row++) {
+          const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+          const cell = worksheet[cellAddress];
+          if (cell && cell.v) {
+            maxWidth = Math.max(maxWidth, cell.v.toString().length);
+          }
+        }
+        colWidths.push({ width: Math.min(maxWidth + 2, 50) });
+      }
+      worksheet['!cols'] = colWidths;
+
+      const fileName = `issue_records_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+      
+      toast({
+        title: "Export successful",
+        description: `${exportData.length} records exported to ${fileName}`
+      });
+    } catch (error: any) {
+      toast({
+        title: "Export failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setLoading(true);
+      
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      const { data: userProfile } = await supabase
+        .from('dkegl_user_profiles')
+        .select('organization_id, full_name')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!userProfile?.organization_id) {
+        throw new Error('Organization not found');
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      for (const [index, row] of jsonData.entries()) {
+        try {
+          const rowData = row as any;
+          
+          // Validate required fields
+          if (!rowData['Item Code'] || !rowData['Quantity Issued'] || !rowData['Department']) {
+            errors.push(`Row ${index + 2}: Missing required fields (Item Code, Quantity Issued, Department)`);
+            errorCount++;
+            continue;
+          }
+
+          // Check if item exists
+          const itemExists = availableItems.find(item => item.item_code === rowData['Item Code']);
+          if (!itemExists) {
+            errors.push(`Row ${index + 2}: Item '${rowData['Item Code']}' not found`);
+            errorCount++;
+            continue;
+          }
+
+          // Check stock availability
+          const currentStock = getCurrentStock(rowData['Item Code']);
+          const qtyToIssue = parseFloat(rowData['Quantity Issued']) || 0;
+          if (qtyToIssue > currentStock) {
+            errors.push(`Row ${index + 2}: Insufficient stock for '${rowData['Item Code']}' (Available: ${currentStock}, Requested: ${qtyToIssue})`);
+            errorCount++;
+            continue;
+          }
+
+          const issueData = {
+            issue_number: `ISS-${Date.now()}-${index}`,
+            item_code: rowData['Item Code'],
+            date: rowData['Date'] ? new Date(rowData['Date']).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            qty_issued: qtyToIssue,
+            department: rowData['Department'],
+            purpose: rowData['Purpose'] || '',
+            requested_by: rowData['Requested By'] || userProfile.full_name,
+            approved_by: userProfile.full_name,
+            remarks: rowData['Remarks'] || '',
+            uom: getUom(rowData['Item Code']),
+            organization_id: userProfile.organization_id,
+            created_by: (await supabase.auth.getUser()).data.user?.id
+          };
+
+          const { error } = await supabase
+            .from('dkegl_issue_log')
+            .insert([issueData]);
+
+          if (error) throw error;
+          successCount++;
+
+        } catch (error: any) {
+          errors.push(`Row ${index + 2}: ${error.message}`);
+          errorCount++;
+        }
+      }
+
+      // Reset file input
+      event.target.value = '';
+
+      if (successCount > 0) {
+        toast({
+          title: "Bulk upload completed",
+          description: `${successCount} records processed successfully${errorCount > 0 ? `, ${errorCount} errors` : ''}`
+        });
+        loadData();
+      }
+
+      if (errors.length > 0) {
+        console.error('Upload errors:', errors);
+        toast({
+          title: errorCount === jsonData.length ? "Upload failed" : "Partial upload completed",
+          description: `${errorCount} errors occurred. Check console for details.`,
+          variant: errorCount === jsonData.length ? "destructive" : "default"
+        });
+      }
+
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadTemplate = () => {
+    const templateData = [
+      {
+        'Item Code': 'RAW_ADHESIVE_001',
+        'Date': new Date().toISOString().split('T')[0],
+        'Quantity Issued': 10,
+        'Department': 'Production',
+        'Purpose': 'Production Order #123',
+        'Requested By': 'John Doe',
+        'Remarks': 'For urgent production'
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Issue Template');
+    
+    XLSX.writeFile(workbook, 'issue_upload_template.xlsx');
+    
+    toast({
+      title: "Template downloaded",
+      description: "Use this template for bulk upload"
+    });
+  };
+
   const filteredIssues = issueRecords.filter(issue => {
     const matchesSearch = issue.item_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          issue.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -323,13 +515,28 @@ export default function IssueManagement() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button variant="outline" size="sm">
-            <Upload className="h-4 w-4 mr-2" />
-            Bulk Upload
+          <div className="relative">
+            <input
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFileUpload}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              id="bulk-upload"
+            />
+            <Button variant="outline" size="sm" asChild>
+              <label htmlFor="bulk-upload" className="cursor-pointer">
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Upload
+              </label>
+            </Button>
+          </div>
+          <Button variant="outline" size="sm" onClick={downloadTemplate}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Template
           </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>

@@ -22,8 +22,10 @@ import {
   AlertCircle,
   Clock,
   Save,
-  X
+  X,
+  FileSpreadsheet
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface GRNRecord {
   id: string;
@@ -267,6 +269,195 @@ export default function GRNManagement() {
     }
   };
 
+  const handleExport = () => {
+    try {
+      const exportData = filteredGrn.map(grn => ({
+        'GRN Number': grn.grn_number,
+        'Date': grn.date,
+        'Item Code': grn.item_code,
+        'Item Name': grn.item_name || '',
+        'Supplier Name': grn.supplier_name || '',
+        'Quantity Received': grn.qty_received,
+        'UOM': grn.uom || '',
+        'Unit Rate': grn.unit_rate || 0,
+        'Total Amount': grn.total_amount || 0,
+        'Invoice Number': grn.invoice_number || '',
+        'Invoice Date': grn.invoice_date || '',
+        'Quality Status': grn.quality_status,
+        'Remarks': grn.remarks || '',
+        'Created At': new Date(grn.created_at).toLocaleString()
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'GRN Records');
+      
+      // Auto-size columns
+      const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+      const colWidths = [];
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        let maxWidth = 10;
+        for (let row = range.s.r; row <= range.e.r; row++) {
+          const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+          const cell = worksheet[cellAddress];
+          if (cell && cell.v) {
+            maxWidth = Math.max(maxWidth, cell.v.toString().length);
+          }
+        }
+        colWidths.push({ width: Math.min(maxWidth + 2, 50) });
+      }
+      worksheet['!cols'] = colWidths;
+
+      const fileName = `grn_records_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+      
+      toast({
+        title: "Export successful",
+        description: `${exportData.length} records exported to ${fileName}`
+      });
+    } catch (error: any) {
+      toast({
+        title: "Export failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setLoading(true);
+      
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      const { data: userProfile } = await supabase
+        .from('dkegl_user_profiles')
+        .select('organization_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!userProfile?.organization_id) {
+        throw new Error('Organization not found');
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      for (const [index, row] of jsonData.entries()) {
+        try {
+          const rowData = row as any;
+          
+          // Validate required fields
+          if (!rowData['GRN Number'] || !rowData['Item Code'] || !rowData['Quantity Received']) {
+            errors.push(`Row ${index + 2}: Missing required fields (GRN Number, Item Code, Quantity Received)`);
+            errorCount++;
+            continue;
+          }
+
+          // Check if item exists
+          const itemExists = availableItems.find(item => item.item_code === rowData['Item Code']);
+          if (!itemExists) {
+            errors.push(`Row ${index + 2}: Item '${rowData['Item Code']}' not found`);
+            errorCount++;
+            continue;
+          }
+
+          const grnData = {
+            grn_number: rowData['GRN Number'],
+            item_code: rowData['Item Code'],
+            supplier_name: rowData['Supplier Name'] || '',
+            date: rowData['Date'] ? new Date(rowData['Date']).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            qty_received: parseFloat(rowData['Quantity Received']) || 0,
+            unit_rate: parseFloat(rowData['Unit Rate']) || 0,
+            total_amount: (parseFloat(rowData['Quantity Received']) || 0) * (parseFloat(rowData['Unit Rate']) || 0),
+            invoice_number: rowData['Invoice Number'] || '',
+            invoice_date: rowData['Invoice Date'] || '',
+            quality_status: rowData['Quality Status'] || 'pending',
+            remarks: rowData['Remarks'] || '',
+            uom: itemExists.uom,
+            organization_id: userProfile.organization_id,
+            created_by: (await supabase.auth.getUser()).data.user?.id
+          };
+
+          const { error } = await supabase
+            .from('dkegl_grn_log')
+            .insert([grnData]);
+
+          if (error) throw error;
+          successCount++;
+
+        } catch (error: any) {
+          errors.push(`Row ${index + 2}: ${error.message}`);
+          errorCount++;
+        }
+      }
+
+      // Reset file input
+      event.target.value = '';
+
+      if (successCount > 0) {
+        toast({
+          title: "Bulk upload completed",
+          description: `${successCount} records processed successfully${errorCount > 0 ? `, ${errorCount} errors` : ''}`
+        });
+        loadData();
+      }
+
+      if (errors.length > 0) {
+        console.error('Upload errors:', errors);
+        toast({
+          title: errorCount === jsonData.length ? "Upload failed" : "Partial upload completed",
+          description: `${errorCount} errors occurred. Check console for details.`,
+          variant: errorCount === jsonData.length ? "destructive" : "default"
+        });
+      }
+
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadTemplate = () => {
+    const templateData = [
+      {
+        'GRN Number': 'GRN202501010001',
+        'Date': new Date().toISOString().split('T')[0],
+        'Item Code': 'RAW_ADHESIVE_001',
+        'Supplier Name': 'ABC Suppliers Ltd',
+        'Quantity Received': 100,
+        'Unit Rate': 25.50,
+        'Invoice Number': 'INV-2025-001',
+        'Invoice Date': new Date().toISOString().split('T')[0],
+        'Quality Status': 'pending',
+        'Remarks': 'Material received in good condition'
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'GRN Template');
+    
+    XLSX.writeFile(workbook, 'grn_upload_template.xlsx');
+    
+    toast({
+      title: "Template downloaded",
+      description: "Use this template for bulk upload"
+    });
+  };
+
   const filteredGrn = grnRecords.filter(grn => {
     const matchesSearch = grn.grn_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          grn.item_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -310,13 +501,28 @@ export default function GRNManagement() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button variant="outline" size="sm">
-            <Upload className="h-4 w-4 mr-2" />
-            Bulk Upload
+          <div className="relative">
+            <input
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFileUpload}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              id="grn-bulk-upload"
+            />
+            <Button variant="outline" size="sm" asChild>
+              <label htmlFor="grn-bulk-upload" className="cursor-pointer">
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Upload
+              </label>
+            </Button>
+          </div>
+          <Button variant="outline" size="sm" onClick={downloadTemplate}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Template
           </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
