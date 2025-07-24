@@ -74,9 +74,9 @@ export const EnterpriseItemMaster = () => {
 
   // Filters and search
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [itemTypeFilter, setItemTypeFilter] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [itemTypeFilter, setItemTypeFilter] = useState<string>('all');
   const [activeView, setActiveView] = useState<string>('all');
 
   // Form data
@@ -312,9 +312,9 @@ export const EnterpriseItemMaster = () => {
   const filteredItems = items.filter(item => {
     const matchesSearch = item.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.item_code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !selectedCategory || item.category_id === selectedCategory;
-    const matchesStatus = !statusFilter || item.status === statusFilter;
-    const matchesItemType = !itemTypeFilter || item.item_type === itemTypeFilter;
+    const matchesCategory = selectedCategory === 'all' || item.category_id === selectedCategory;
+    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+    const matchesItemType = itemTypeFilter === 'all' || item.item_type === itemTypeFilter;
     
     return matchesSearch && matchesCategory && matchesStatus && matchesItemType;
   });
@@ -419,7 +419,7 @@ export const EnterpriseItemMaster = () => {
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Categories</SelectItem>
+                    <SelectItem value="all">All Categories</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.category_name}
@@ -433,7 +433,7 @@ export const EnterpriseItemMaster = () => {
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
@@ -445,7 +445,7 @@ export const EnterpriseItemMaster = () => {
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Types</SelectItem>
+                      <SelectItem value="all">All Types</SelectItem>
                       <SelectItem value="raw_material">Raw Material</SelectItem>
                       <SelectItem value="work_in_progress">Work in Progress</SelectItem>
                       <SelectItem value="consumable">Consumable</SelectItem>
