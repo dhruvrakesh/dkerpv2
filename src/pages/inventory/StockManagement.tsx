@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,12 +8,15 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { StockMovementChart } from '@/components/analytics/StockMovementChart';
 import { StockAgingChart } from '@/components/analytics/StockAgingChart';
 import { PricingDashboard } from '@/components/analytics/PricingDashboard';
 import { useStockAnalytics } from '@/hooks/useStockAnalytics';
+import * as XLSX from 'xlsx';
 import { 
   Package, 
   Plus, 
@@ -26,7 +29,11 @@ import {
   TrendingUp,
   Warehouse,
   BarChart3,
-  PieChart
+  PieChart,
+  FileSpreadsheet,
+  CheckCircle,
+  XCircle,
+  Info
 } from 'lucide-react';
 
 interface StockItem {
@@ -52,9 +59,29 @@ interface OpeningStockForm {
   date: string;
 }
 
+interface BulkUploadState {
+  isOpen: boolean;
+  isProcessing: boolean;
+  progress: number;
+  processedRows: number;
+  totalRows: number;
+  errors: Array<{ row: number; error: string; data: any }>;
+  successCount: number;
+  file: File | null;
+}
+
+interface BulkUploadRow {
+  item_code: string;
+  opening_qty: number;
+  unit_cost: number;
+  location: string;
+  date: string;
+}
+
 export default function StockManagement() {
   const { toast } = useToast();
   const analytics = useStockAnalytics();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [stockItems, setStockItems] = useState<StockItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -63,6 +90,18 @@ export default function StockManagement() {
   const [isOpeningStockDialogOpen, setIsOpeningStockDialogOpen] = useState(false);
   const [availableItems, setAvailableItems] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Bulk upload state
+  const [bulkUpload, setBulkUpload] = useState<BulkUploadState>({
+    isOpen: false,
+    isProcessing: false,
+    progress: 0,
+    processedRows: 0,
+    totalRows: 0,
+    errors: [],
+    successCount: 0,
+    file: null
+  });
 
   const [openingStockForm, setOpeningStockForm] = useState<OpeningStockForm>({
     item_code: '',
@@ -216,6 +255,299 @@ export default function StockManagement() {
     outOfStockItems: stockItems.filter(item => item.current_qty <= 0).length
   };
 
+  // Enterprise-grade Export functionality
+  const handleExport = async (format: 'excel' | 'csv' = 'excel') => {
+    try {
+      const dataToExport = filteredStock.map(item => ({
+        'Item Code': item.item_code,
+        'Item Name': item.item_name || '',
+        'Category': item.category_name || '',
+        'Current Stock': item.current_qty,
+        'Opening Stock': item.opening_qty,
+        'Reorder Level': item.reorder_level || 0,
+        'Unit Cost': item.unit_cost || 0,
+        'Total Value': item.total_value || 0,
+        'Location': item.location || '',
+        'Last Transaction Date': item.last_transaction_date || '',
+        'Last Updated': new Date(item.last_updated).toLocaleDateString(),
+        'Stock Status': getStockStatus(item.current_qty, item.reorder_level || 0).label
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Stock Data');
+
+      // Auto-size columns
+      const colWidths = Object.keys(dataToExport[0] || {}).map(key => ({
+        wch: Math.max(key.length, 15)
+      }));
+      ws['!cols'] = colWidths;
+
+      const fileName = `stock_export_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+      
+      if (format === 'excel') {
+        XLSX.writeFile(wb, fileName);
+      } else {
+        XLSX.writeFile(wb, fileName, { bookType: 'csv' });
+      }
+
+      toast({
+        title: "Export successful",
+        description: `Stock data exported to ${fileName}`
+      });
+    } catch (error: any) {
+      toast({
+        title: "Export failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Generate Excel template for bulk upload
+  const downloadTemplate = () => {
+    const templateData = [
+      {
+        'item_code': 'SAMPLE-001',
+        'opening_qty': 100,
+        'unit_cost': 25.50,
+        'location': 'MAIN-STORE',
+        'date': '2025-03-31'
+      },
+      {
+        'item_code': 'SAMPLE-002',
+        'opening_qty': 50,
+        'unit_cost': 45.00,
+        'location': 'RAW-MATERIAL',
+        'date': '2025-03-31'
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Opening Stock Template');
+
+    // Add instructions sheet
+    const instructions = [
+      { Field: 'item_code', Description: 'Required. User-defined item code (must exist in Item Master)', Example: 'PROD-001' },
+      { Field: 'opening_qty', Description: 'Required. Opening quantity (numeric)', Example: '100' },
+      { Field: 'unit_cost', Description: 'Required. Unit cost (numeric with 2 decimals)', Example: '25.50' },
+      { Field: 'location', Description: 'Required. Storage location', Example: 'MAIN-STORE, RAW-MATERIAL, FINISHED-GOODS, WORK-IN-PROGRESS' },
+      { Field: 'date', Description: 'Required. Date in YYYY-MM-DD format', Example: '2025-03-31' }
+    ];
+
+    const instructionsWs = XLSX.utils.json_to_sheet(instructions);
+    XLSX.utils.book_append_sheet(wb, instructionsWs, 'Instructions');
+
+    XLSX.writeFile(wb, 'opening_stock_template.xlsx');
+
+    toast({
+      title: "Template downloaded",
+      description: "Opening stock template downloaded successfully"
+    });
+  };
+
+  // Validate bulk upload data
+  const validateUploadData = (data: any[]): { isValid: boolean; errors: Array<{ row: number; error: string; data: any }> } => {
+    const errors: Array<{ row: number; error: string; data: any }> = [];
+    const availableItemCodes = new Set(availableItems.map(item => item.item_code));
+    const validLocations = ['MAIN-STORE', 'RAW-MATERIAL', 'FINISHED-GOODS', 'WORK-IN-PROGRESS'];
+
+    data.forEach((row, index) => {
+      const rowNum = index + 2; // Excel row number (1-indexed + header)
+
+      // Check required fields
+      if (!row.item_code) {
+        errors.push({ row: rowNum, error: 'Item code is required', data: row });
+        return;
+      }
+
+      if (!availableItemCodes.has(row.item_code)) {
+        errors.push({ row: rowNum, error: `Item code '${row.item_code}' not found in Item Master`, data: row });
+      }
+
+      if (typeof row.opening_qty !== 'number' || row.opening_qty < 0) {
+        errors.push({ row: rowNum, error: 'Opening quantity must be a positive number', data: row });
+      }
+
+      if (typeof row.unit_cost !== 'number' || row.unit_cost < 0) {
+        errors.push({ row: rowNum, error: 'Unit cost must be a positive number', data: row });
+      }
+
+      if (!validLocations.includes(row.location)) {
+        errors.push({ row: rowNum, error: `Invalid location. Must be one of: ${validLocations.join(', ')}`, data: row });
+      }
+
+      if (!row.date || !/^\d{4}-\d{2}-\d{2}$/.test(row.date)) {
+        errors.push({ row: rowNum, error: 'Date must be in YYYY-MM-DD format', data: row });
+      }
+    });
+
+    return { isValid: errors.length === 0, errors };
+  };
+
+  // Process bulk upload
+  const processBulkUpload = async (data: BulkUploadRow[]) => {
+    setBulkUpload(prev => ({ ...prev, isProcessing: true, progress: 0, errors: [], successCount: 0 }));
+
+    try {
+      const { data: userProfile } = await supabase
+        .from('dkegl_user_profiles')
+        .select('organization_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!userProfile?.organization_id) {
+        throw new Error('Organization not found');
+      }
+
+      const batchSize = 10;
+      let successCount = 0;
+      const errors: Array<{ row: number; error: string; data: any }> = [];
+
+      for (let i = 0; i < data.length; i += batchSize) {
+        const batch = data.slice(i, i + batchSize);
+        
+        for (const row of batch) {
+          try {
+            const { error } = await supabase
+              .from('dkegl_stock')
+              .upsert({
+                organization_id: userProfile.organization_id,
+                item_code: row.item_code,
+                opening_qty: row.opening_qty,
+                current_qty: row.opening_qty,
+                unit_cost: row.unit_cost,
+                total_value: row.opening_qty * row.unit_cost,
+                location: row.location,
+                last_transaction_date: row.date,
+                last_updated: new Date().toISOString()
+              }, {
+                onConflict: 'organization_id,item_code,location'
+              });
+
+            if (error) throw error;
+            successCount++;
+          } catch (error: any) {
+            errors.push({ 
+              row: data.indexOf(row) + 2, 
+              error: error.message, 
+              data: row 
+            });
+          }
+        }
+
+        // Update progress
+        const progress = Math.min(((i + batchSize) / data.length) * 100, 100);
+        setBulkUpload(prev => ({ 
+          ...prev, 
+          progress, 
+          processedRows: i + batchSize,
+          successCount,
+          errors 
+        }));
+
+        // Small delay to prevent overwhelming the database
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      setBulkUpload(prev => ({ ...prev, isProcessing: false }));
+
+      toast({
+        title: "Bulk upload completed",
+        description: `Successfully processed ${successCount} records${errors.length > 0 ? ` with ${errors.length} errors` : ''}`
+      });
+
+      if (errors.length === 0) {
+        loadData(); // Refresh data
+      }
+
+    } catch (error: any) {
+      setBulkUpload(prev => ({ ...prev, isProcessing: false }));
+      toast({
+        title: "Bulk upload failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setBulkUpload(prev => ({ ...prev, file }));
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet) as BulkUploadRow[];
+
+          if (jsonData.length === 0) {
+            throw new Error('No data found in the uploaded file');
+          }
+
+          setBulkUpload(prev => ({ ...prev, totalRows: jsonData.length }));
+
+          // Validate data
+          const validation = validateUploadData(jsonData);
+          
+          if (!validation.isValid) {
+            setBulkUpload(prev => ({ ...prev, errors: validation.errors }));
+            toast({
+              title: "Validation failed",
+              description: `Found ${validation.errors.length} validation errors. Please fix them before proceeding.`,
+              variant: "destructive"
+            });
+            return;
+          }
+
+          // Process the upload
+          await processBulkUpload(jsonData);
+
+        } catch (error: any) {
+          toast({
+            title: "File processing failed",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    } catch (error: any) {
+      toast({
+        title: "File upload failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const resetBulkUpload = () => {
+    setBulkUpload({
+      isOpen: false,
+      isProcessing: false,
+      progress: 0,
+      processedRows: 0,
+      totalRows: 0,
+      errors: [],
+      successCount: 0,
+      file: null
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -235,14 +567,143 @@ export default function StockManagement() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => handleExport('excel')}>
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Export Excel
           </Button>
-          <Button variant="outline" size="sm">
-            <Upload className="h-4 w-4 mr-2" />
-            Bulk Upload
+          <Button variant="outline" size="sm" onClick={() => handleExport('csv')}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
           </Button>
+          <Dialog open={bulkUpload.isOpen} onOpenChange={(open) => setBulkUpload(prev => ({ ...prev, isOpen: open }))}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" onClick={() => setBulkUpload(prev => ({ ...prev, isOpen: true }))}>
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Upload
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-5 w-5" />
+                  Enterprise Bulk Upload - Opening Stock
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-6">
+                {/* Template Download */}
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Info className="h-4 w-4 text-blue-500" />
+                        Download Template First
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Download the Excel template with sample data and instructions
+                      </p>
+                    </div>
+                    <Button variant="outline" onClick={downloadTemplate}>
+                      <FileSpreadsheet className="h-4 w-4 mr-2" />
+                      Download Template
+                    </Button>
+                  </div>
+                </div>
+
+                {/* File Upload */}
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="bulk-upload">Upload Excel File</Label>
+                    <Input
+                      id="bulk-upload"
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      onChange={handleFileUpload}
+                      disabled={bulkUpload.isProcessing}
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Supported formats: Excel (.xlsx, .xls) and CSV (.csv)
+                    </p>
+                  </div>
+
+                  {/* Upload Progress */}
+                  {bulkUpload.isProcessing && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Processing...</span>
+                        <span>{bulkUpload.processedRows} / {bulkUpload.totalRows} rows</span>
+                      </div>
+                      <Progress value={bulkUpload.progress} className="w-full" />
+                      <div className="flex items-center gap-4 text-sm">
+                        <span className="flex items-center gap-1 text-green-600">
+                          <CheckCircle className="h-4 w-4" />
+                          {bulkUpload.successCount} successful
+                        </span>
+                        {bulkUpload.errors.length > 0 && (
+                          <span className="flex items-center gap-1 text-red-600">
+                            <XCircle className="h-4 w-4" />
+                            {bulkUpload.errors.length} errors
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Upload Summary */}
+                  {!bulkUpload.isProcessing && bulkUpload.totalRows > 0 && (
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        {bulkUpload.errors.length === 0 ? (
+                          <span className="text-green-600">
+                            ✅ Successfully processed {bulkUpload.successCount} records
+                          </span>
+                        ) : (
+                          <span>
+                            Processed {bulkUpload.successCount} records with {bulkUpload.errors.length} errors
+                          </span>
+                        )}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Error Display */}
+                  {bulkUpload.errors.length > 0 && !bulkUpload.isProcessing && (
+                    <div className="border rounded-lg p-4 max-h-60 overflow-y-auto">
+                      <h4 className="font-semibold text-red-600 mb-3 flex items-center gap-2">
+                        <XCircle className="h-4 w-4" />
+                        Validation Errors ({bulkUpload.errors.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {bulkUpload.errors.map((error, index) => (
+                          <div key={index} className="bg-red-50 border border-red-200 p-3 rounded text-sm">
+                            <div className="font-medium text-red-800">Row {error.row}: {error.error}</div>
+                            <div className="text-red-600 mt-1">
+                              Data: {JSON.stringify(error.data)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button variant="outline" onClick={resetBulkUpload}>
+                    {bulkUpload.errors.length === 0 && bulkUpload.successCount > 0 ? 'Close' : 'Cancel'}
+                  </Button>
+                  {bulkUpload.errors.length > 0 && (
+                    <Button variant="outline" onClick={() => setBulkUpload(prev => ({ ...prev, errors: [] }))}>
+                      Clear Errors
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Dialog open={isOpeningStockDialogOpen} onOpenChange={setIsOpeningStockDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={resetOpeningStockForm}>
