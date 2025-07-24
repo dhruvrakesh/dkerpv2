@@ -16,6 +16,7 @@ import { StockMovementChart } from '@/components/analytics/StockMovementChart';
 import { StockAgingChart } from '@/components/analytics/StockAgingChart';
 import { PricingDashboard } from '@/components/analytics/PricingDashboard';
 import { useStockAnalytics } from '@/hooks/useStockAnalytics';
+import { usePricingMaster } from '@/hooks/usePricingMaster';
 import * as XLSX from 'xlsx';
 import { 
   Package, 
@@ -44,11 +45,12 @@ interface StockItem {
   current_qty: number;
   opening_qty: number;
   unit_cost?: number;
-  total_value?: number;
   location?: string;
   last_transaction_date?: string;
   reorder_level?: number;
   last_updated: string;
+  calculated_value?: number;
+  pricing_method?: string;
 }
 
 interface OpeningStockForm {
@@ -81,6 +83,7 @@ interface BulkUploadRow {
 export default function StockManagement() {
   const { toast } = useToast();
   const analytics = useStockAnalytics();
+  const pricingMaster = usePricingMaster();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stockItems, setStockItems] = useState<StockItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,12 +137,20 @@ export default function StockManagement() {
 
       if (stockError) throw stockError;
       
-      const formattedStock = stockData?.map(stock => ({
-        ...stock,
-        item_name: stock.dkegl_item_master?.item_name,
-        category_name: stock.dkegl_item_master?.dkegl_categories?.category_name,
-        reorder_level: stock.dkegl_item_master?.reorder_level
-      })) || [];
+      const formattedStock = await Promise.all(stockData?.map(async (stock) => {
+        // Calculate value using pricing master or fallback to unit_cost
+        const currentCost = await pricingMaster.getCurrentItemCost(stock.item_code);
+        const finalCost = currentCost || stock.unit_cost || 0;
+        
+        return {
+          ...stock,
+          item_name: stock.dkegl_item_master?.item_name,
+          category_name: stock.dkegl_item_master?.dkegl_categories?.category_name,
+          reorder_level: stock.dkegl_item_master?.reorder_level,
+          calculated_value: stock.current_qty * finalCost,
+          pricing_method: currentCost > 0 ? 'Pricing Master' : 'Unit Cost'
+        };
+      }) || []);
       
       setStockItems(formattedStock);
 
@@ -189,7 +200,6 @@ export default function StockManagement() {
           opening_qty: openingStockForm.opening_qty,
           current_qty: openingStockForm.opening_qty,
           unit_cost: openingStockForm.unit_cost,
-          total_value: openingStockForm.opening_qty * openingStockForm.unit_cost,
           location: openingStockForm.location,
           last_transaction_date: openingStockForm.date,
           last_updated: new Date().toISOString()
@@ -250,7 +260,7 @@ export default function StockManagement() {
 
   const stockSummary = {
     totalItems: stockItems.length,
-    totalValue: stockItems.reduce((sum, item) => sum + (item.total_value || 0), 0),
+    totalValue: stockItems.reduce((sum, item) => sum + (item.calculated_value || 0), 0),
     lowStockItems: stockItems.filter(item => item.current_qty <= (item.reorder_level || 0)).length,
     outOfStockItems: stockItems.filter(item => item.current_qty <= 0).length
   };
@@ -266,7 +276,8 @@ export default function StockManagement() {
         'Opening Stock': item.opening_qty,
         'Reorder Level': item.reorder_level || 0,
         'Unit Cost': item.unit_cost || 0,
-        'Total Value': item.total_value || 0,
+        'Calculated Value': item.calculated_value || 0,
+        'Pricing Method': item.pricing_method || 'Unit Cost',
         'Location': item.location || '',
         'Last Transaction Date': item.last_transaction_date || '',
         'Last Updated': new Date(item.last_updated).toLocaleDateString(),
@@ -418,7 +429,6 @@ export default function StockManagement() {
                 opening_qty: row.opening_qty,
                 current_qty: row.opening_qty,
                 unit_cost: row.unit_cost,
-                total_value: row.opening_qty * row.unit_cost,
                 location: row.location,
                 last_transaction_date: row.date,
                 last_updated: new Date().toISOString()
@@ -948,7 +958,7 @@ export default function StockManagement() {
                           ₹{item.unit_cost?.toFixed(2) || '0.00'}
                         </TableCell>
                         <TableCell className="text-right">
-                          ₹{item.total_value?.toLocaleString() || '0'}
+                          ₹{item.calculated_value?.toLocaleString() || '0'}
                         </TableCell>
                          <TableCell>{item.location}</TableCell>
                          <TableCell>
