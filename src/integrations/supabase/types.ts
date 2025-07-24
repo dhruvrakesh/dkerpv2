@@ -2520,6 +2520,10 @@ export type Database = {
           count: number
         }[]
       }
+      dkegl_capture_daily_stock_snapshot: {
+        Args: { _org_id: string }
+        Returns: Json
+      }
       dkegl_count_adhesive_started: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2544,6 +2548,20 @@ export type Database = {
           count: number
         }[]
       }
+      dkegl_generate_item_code: {
+        Args: {
+          _org_id: string
+          category_name: string
+          qualifier?: string
+          size_mm?: string
+          gsm?: number
+        }
+        Returns: string
+      }
+      dkegl_get_current_user_org: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       dkegl_get_workflow_status: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2555,6 +2573,18 @@ export type Database = {
           adhesive_coating: string
           slitting: string
         }[]
+      }
+      dkegl_has_role: {
+        Args: {
+          _user_id: string
+          _org_id: string
+          _role: Database["public"]["Enums"]["dkegl_user_role"]
+        }
+        Returns: boolean
+      }
+      dkegl_refresh_stock_summary: {
+        Args: { _org_id: string }
+        Returns: undefined
       }
       generate_item_code: {
         Args: {
