@@ -704,7 +704,35 @@ export type Database = {
             foreignKeyName: "fk_grn_item_master"
             columns: ["organization_id", "item_code"]
             isOneToOne: false
+            referencedRelation: "dkegl_consumable_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_grn_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_fg_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_grn_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
             referencedRelation: "dkegl_item_master"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_grn_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_rm_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_grn_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_wip_items_view"
             referencedColumns: ["organization_id", "item_code"]
           },
         ]
@@ -820,13 +848,43 @@ export type Database = {
             foreignKeyName: "fk_issue_item_master"
             columns: ["organization_id", "item_code"]
             isOneToOne: false
+            referencedRelation: "dkegl_consumable_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_issue_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_fg_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_issue_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
             referencedRelation: "dkegl_item_master"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_issue_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_rm_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_issue_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_wip_items_view"
             referencedColumns: ["organization_id", "item_code"]
           },
         ]
       }
       dkegl_item_master: {
         Row: {
+          artwork_reference: string | null
+          bom_structure: Json | null
           category_id: string | null
           created_at: string
           dimensions: Json | null
@@ -834,22 +892,29 @@ export type Database = {
           id: string
           item_code: string
           item_name: string
+          item_type: Database["public"]["Enums"]["dkegl_item_type"] | null
           lead_time_days: number | null
           material_properties: Json | null
           organization_id: string | null
+          parent_item_code: string | null
           pricing_info: Json | null
           quality_parameters: Json | null
+          quality_specs: Json | null
           reorder_level: number | null
           reorder_quantity: number | null
+          specification_reference: string | null
           specifications: Json | null
           status: string | null
           storage_location: string | null
           supplier_info: Json | null
+          technical_specs: Json | null
           uom: string
           updated_at: string
           weight_per_unit: number | null
         }
         Insert: {
+          artwork_reference?: string | null
+          bom_structure?: Json | null
           category_id?: string | null
           created_at?: string
           dimensions?: Json | null
@@ -857,22 +922,29 @@ export type Database = {
           id?: string
           item_code: string
           item_name: string
+          item_type?: Database["public"]["Enums"]["dkegl_item_type"] | null
           lead_time_days?: number | null
           material_properties?: Json | null
           organization_id?: string | null
+          parent_item_code?: string | null
           pricing_info?: Json | null
           quality_parameters?: Json | null
+          quality_specs?: Json | null
           reorder_level?: number | null
           reorder_quantity?: number | null
+          specification_reference?: string | null
           specifications?: Json | null
           status?: string | null
           storage_location?: string | null
           supplier_info?: Json | null
+          technical_specs?: Json | null
           uom?: string
           updated_at?: string
           weight_per_unit?: number | null
         }
         Update: {
+          artwork_reference?: string | null
+          bom_structure?: Json | null
           category_id?: string | null
           created_at?: string
           dimensions?: Json | null
@@ -880,17 +952,22 @@ export type Database = {
           id?: string
           item_code?: string
           item_name?: string
+          item_type?: Database["public"]["Enums"]["dkegl_item_type"] | null
           lead_time_days?: number | null
           material_properties?: Json | null
           organization_id?: string | null
+          parent_item_code?: string | null
           pricing_info?: Json | null
           quality_parameters?: Json | null
+          quality_specs?: Json | null
           reorder_level?: number | null
           reorder_quantity?: number | null
+          specification_reference?: string | null
           specifications?: Json | null
           status?: string | null
           storage_location?: string | null
           supplier_info?: Json | null
+          technical_specs?: Json | null
           uom?: string
           updated_at?: string
           weight_per_unit?: number | null
@@ -909,6 +986,94 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "dkegl_organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_item_specifications: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          item_code: string
+          organization_id: string | null
+          specification_data: Json
+          specification_type: string
+          updated_at: string | null
+          version: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_code: string
+          organization_id?: string | null
+          specification_data?: Json
+          specification_type: string
+          updated_at?: string | null
+          version?: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_code?: string
+          organization_id?: string | null
+          specification_data?: Json
+          specification_type?: string
+          updated_at?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_item_specifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_item_specifications_organization_id_item_code_fkey"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_consumable_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "dkegl_item_specifications_organization_id_item_code_fkey"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_fg_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "dkegl_item_specifications_organization_id_item_code_fkey"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_item_master"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "dkegl_item_specifications_organization_id_item_code_fkey"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_rm_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "dkegl_item_specifications_organization_id_item_code_fkey"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_wip_items_view"
+            referencedColumns: ["organization_id", "item_code"]
           },
         ]
       }
@@ -1483,7 +1648,35 @@ export type Database = {
             foreignKeyName: "fk_stock_item_master"
             columns: ["organization_id", "item_code"]
             isOneToOne: false
+            referencedRelation: "dkegl_consumable_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_fg_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
             referencedRelation: "dkegl_item_master"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_rm_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_wip_items_view"
             referencedColumns: ["organization_id", "item_code"]
           },
         ]
@@ -2597,6 +2790,211 @@ export type Database = {
       }
     }
     Views: {
+      dkegl_consumable_items_view: {
+        Row: {
+          artwork_reference: string | null
+          bom_structure: Json | null
+          category_id: string | null
+          category_name: string | null
+          created_at: string | null
+          dimensions: Json | null
+          hsn_code: string | null
+          id: string | null
+          item_code: string | null
+          item_name: string | null
+          item_type: Database["public"]["Enums"]["dkegl_item_type"] | null
+          lead_time_days: number | null
+          material_properties: Json | null
+          organization_id: string | null
+          parent_item_code: string | null
+          pricing_info: Json | null
+          quality_parameters: Json | null
+          quality_specs: Json | null
+          reorder_level: number | null
+          reorder_quantity: number | null
+          specification_reference: string | null
+          specifications: Json | null
+          status: string | null
+          stock_qty: number | null
+          stock_status: string | null
+          storage_location: string | null
+          supplier_info: Json | null
+          technical_specs: Json | null
+          uom: string | null
+          updated_at: string | null
+          weight_per_unit: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_item_master_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_item_master_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_fg_items_view: {
+        Row: {
+          artwork_file: string | null
+          artwork_notes: string | null
+          artwork_reference: string | null
+          bom_structure: Json | null
+          category_id: string | null
+          category_name: string | null
+          created_at: string | null
+          dimensions: Json | null
+          hsn_code: string | null
+          id: string | null
+          item_code: string | null
+          item_name: string | null
+          item_type: Database["public"]["Enums"]["dkegl_item_type"] | null
+          lead_time_days: number | null
+          material_properties: Json | null
+          organization_id: string | null
+          parent_item_code: string | null
+          pricing_info: Json | null
+          quality_parameters: Json | null
+          quality_specs: Json | null
+          reorder_level: number | null
+          reorder_quantity: number | null
+          specification_reference: string | null
+          specifications: Json | null
+          status: string | null
+          stock_qty: number | null
+          storage_location: string | null
+          supplier_info: Json | null
+          technical_specs: Json | null
+          uom: string | null
+          updated_at: string | null
+          weight_per_unit: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_item_master_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_item_master_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_rm_items_view: {
+        Row: {
+          artwork_reference: string | null
+          bom_structure: Json | null
+          category_id: string | null
+          category_name: string | null
+          created_at: string | null
+          dimensions: Json | null
+          effective_reorder_level: number | null
+          hsn_code: string | null
+          id: string | null
+          item_code: string | null
+          item_name: string | null
+          item_type: Database["public"]["Enums"]["dkegl_item_type"] | null
+          lead_time_days: number | null
+          material_properties: Json | null
+          organization_id: string | null
+          parent_item_code: string | null
+          pricing_info: Json | null
+          quality_parameters: Json | null
+          quality_specs: Json | null
+          reorder_level: number | null
+          reorder_quantity: number | null
+          specification_reference: string | null
+          specifications: Json | null
+          status: string | null
+          stock_qty: number | null
+          storage_location: string | null
+          supplier_info: Json | null
+          technical_specs: Json | null
+          uom: string | null
+          updated_at: string | null
+          weight_per_unit: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_item_master_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_item_master_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_wip_items_view: {
+        Row: {
+          artwork_reference: string | null
+          bom_structure: Json | null
+          category_id: string | null
+          category_name: string | null
+          created_at: string | null
+          dimensions: Json | null
+          hsn_code: string | null
+          id: string | null
+          item_code: string | null
+          item_name: string | null
+          item_type: Database["public"]["Enums"]["dkegl_item_type"] | null
+          lead_time_days: number | null
+          material_properties: Json | null
+          organization_id: string | null
+          parent_item_code: string | null
+          parent_item_name: string | null
+          pricing_info: Json | null
+          quality_parameters: Json | null
+          quality_specs: Json | null
+          reorder_level: number | null
+          reorder_quantity: number | null
+          specification_reference: string | null
+          specifications: Json | null
+          status: string | null
+          stock_qty: number | null
+          storage_location: string | null
+          supplier_info: Json | null
+          technical_specs: Json | null
+          uom: string | null
+          updated_at: string | null
+          weight_per_unit: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_item_master_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_item_master_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       eligible_adhesive_coating_uiorns: {
         Row: {
           deckle: number | null
@@ -2840,6 +3238,11 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      dkegl_item_type:
+        | "raw_material"
+        | "work_in_progress"
+        | "consumable"
+        | "finished_good"
       dkegl_order_status:
         | "draft"
         | "confirmed"
@@ -3007,6 +3410,12 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      dkegl_item_type: [
+        "raw_material",
+        "work_in_progress",
+        "consumable",
+        "finished_good",
+      ],
       dkegl_order_status: [
         "draft",
         "confirmed",
