@@ -389,6 +389,21 @@ export const EnterpriseItemMaster = () => {
         categoryCodeMap.set('pet', cat.id);
         categoryCodeMap.set('polyester', cat.id);
       }
+      if (name.includes('wip') || name.includes('work in progress')) {
+        categoryCodeMap.set('wip', cat.id);
+        categoryCodeMap.set('work in progress', cat.id);
+      }
+      if (name.includes('machinery') || name.includes('equipment')) {
+        categoryCodeMap.set('machinery', cat.id);
+        categoryCodeMap.set('equipment', cat.id);
+      }
+      if (name.includes('paper')) {
+        categoryCodeMap.set('paper', cat.id);
+      }
+      if (name.includes('pet') || name.includes('polyester')) {
+        categoryCodeMap.set('pet', cat.id);
+        categoryCodeMap.set('polyester', cat.id);
+      }
       if (name.includes('wip') || name.includes('progress')) {
         categoryCodeMap.set('wip', cat.id);
         categoryCodeMap.set('progress', cat.id);
@@ -581,7 +596,8 @@ export const EnterpriseItemMaster = () => {
       errors: [] as any[],
       warnings: [] as any[],
       duplicates: [] as any[],
-      preview: data.slice(0, 10)
+      preview: data.slice(0, 10), // Preview for display only
+      validatedData: [] as any[] // All valid data for processing
     };
 
     // Check for existing item codes in database
@@ -704,6 +720,7 @@ export const EnterpriseItemMaster = () => {
         validationResults.invalidRows++;
       } else {
         validationResults.validRows++;
+        validationResults.validatedData.push(row); // Add valid row to validated data
       }
 
       if (rowWarnings.length > 0) {
@@ -730,7 +747,7 @@ export const EnterpriseItemMaster = () => {
       return;
     }
 
-    const validData = validationResults.preview; // In real implementation, use all valid data
+    const validData = validationResults.validatedData; // Use all validated data
     await processBulkUpload(validData);
     setShowValidation(false);
   };
