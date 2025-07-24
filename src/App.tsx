@@ -10,7 +10,7 @@ import Index from "./pages/Index";
 import DKEGLAuth from "./pages/DKEGLAuth";
 import NotFound from "./pages/NotFound";
 import InventoryDashboard from "./pages/inventory/InventoryDashboard";
-import ItemMaster from "./pages/inventory/ItemMaster";
+import { ItemMaster } from "./pages/inventory/ItemMaster";
 import GRNManagement from "./pages/inventory/GRNManagement";
 import IssueManagement from "./pages/inventory/IssueManagement";
 import StockManagement from "./pages/inventory/StockManagement";
