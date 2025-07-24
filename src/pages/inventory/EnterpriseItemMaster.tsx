@@ -309,6 +309,247 @@ export const EnterpriseItemMaster = () => {
     setIsDialogOpen(false);
   };
 
+  const resetBulkUpload = () => {
+    setBulkUploadState({
+      isUploading: false,
+      progress: 0,
+      errors: [],
+      successCount: 0,
+      totalCount: 0
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload an Excel file (.xlsx or .xls)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      if (jsonData.length === 0) {
+        toast({
+          title: "Empty File",
+          description: "The uploaded file contains no data.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await processBulkUpload(jsonData);
+    } catch (error) {
+      console.error('File processing error:', error);
+      toast({
+        title: "File Processing Error",
+        description: "Failed to process the Excel file. Please check the format.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const processBulkUpload = async (data: any[]) => {
+    if (!userProfile?.organization_id) return;
+
+    setBulkUploadState(prev => ({
+      ...prev,
+      isUploading: true,
+      progress: 0,
+      errors: [],
+      successCount: 0,
+      totalCount: data.length
+    }));
+
+    const batchSize = 10;
+    let processedCount = 0;
+    let successCount = 0;
+    const errors: string[] = [];
+
+    // Create a map of category names to IDs for quick lookup
+    const categoryMap = new Map();
+    categories.forEach(cat => {
+      categoryMap.set(cat.category_name.toLowerCase(), cat.id);
+    });
+
+    for (let i = 0; i < data.length; i += batchSize) {
+      const batch = data.slice(i, i + batchSize);
+      
+      await Promise.all(batch.map(async (row, batchIndex) => {
+        const rowIndex = i + batchIndex + 1;
+        
+        try {
+          // Validate and process row data
+          const itemData = await validateAndProcessRow(row, categoryMap, rowIndex);
+          if (!itemData) return;
+
+          // Insert into database
+          const { error } = await supabase
+            .from('dkegl_item_master')
+            .insert({
+              ...itemData,
+              organization_id: userProfile.organization_id
+            });
+
+          if (error) {
+            errors.push(`Row ${rowIndex}: Database error - ${error.message}`);
+          } else {
+            successCount++;
+          }
+        } catch (error) {
+          errors.push(`Row ${rowIndex}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+
+        processedCount++;
+        setBulkUploadState(prev => ({
+          ...prev,
+          progress: (processedCount / data.length) * 100,
+          successCount,
+          errors: [...errors]
+        }));
+      }));
+
+      // Small delay to prevent overwhelming the database
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    setBulkUploadState(prev => ({
+      ...prev,
+      isUploading: false
+    }));
+
+    toast({
+      title: "Bulk Upload Completed",
+      description: `Successfully imported ${successCount} out of ${data.length} items.`,
+      variant: successCount === data.length ? "default" : "destructive",
+    });
+
+    if (successCount > 0) {
+      loadData(); // Refresh the data
+    }
+  };
+
+  const validateAndProcessRow = async (row: any, categoryMap: Map<string, string>, rowIndex: number): Promise<any | null> => {
+    const errors: string[] = [];
+
+    // Required fields validation
+    const itemName = row['Item Name']?.toString().trim();
+    if (!itemName) {
+      errors.push('Item Name is required');
+    }
+
+    const categoryName = row['Category Name']?.toString().trim();
+    if (!categoryName) {
+      errors.push('Category Name is required');
+    }
+
+    const categoryId = categoryMap.get(categoryName?.toLowerCase());
+    if (categoryName && !categoryId) {
+      errors.push(`Category '${categoryName}' not found`);
+    }
+
+    const uom = row['UOM']?.toString().trim() || 'PCS';
+    const status = row['Status']?.toString().toLowerCase() || 'active';
+    const itemType = row['Item Type']?.toString().toLowerCase() || 'raw_material';
+
+    // Validate item type
+    const validItemTypes = ['raw_material', 'work_in_progress', 'consumable', 'finished_good'];
+    if (!validItemTypes.includes(itemType)) {
+      errors.push(`Invalid Item Type: ${itemType}. Must be one of: ${validItemTypes.join(', ')}`);
+    }
+
+    // Validate status
+    const validStatuses = ['active', 'inactive'];
+    if (!validStatuses.includes(status)) {
+      errors.push(`Invalid Status: ${status}. Must be 'active' or 'inactive'`);
+    }
+
+    if (errors.length > 0) {
+      throw new Error(errors.join('; '));
+    }
+
+    // Generate item code if not provided
+    let itemCode = row['Item Code (Auto-generated if empty)']?.toString().trim();
+    if (!itemCode) {
+      const prefix = itemType.substring(0, 2).toUpperCase();
+      const timestamp = Date.now().toString().slice(-6);
+      itemCode = `${prefix}${timestamp}`;
+    }
+
+    // Parse JSON fields safely
+    let technicalSpecs = {};
+    let qualitySpecs = {};
+
+    try {
+      if (row['Technical Specs (JSON)']) {
+        technicalSpecs = JSON.parse(row['Technical Specs (JSON)']);
+      }
+    } catch (e) {
+      console.warn(`Row ${rowIndex}: Invalid Technical Specs JSON, using empty object`);
+    }
+
+    try {
+      if (row['Quality Specs (JSON)']) {
+        qualitySpecs = JSON.parse(row['Quality Specs (JSON)']);
+      }
+    } catch (e) {
+      console.warn(`Row ${rowIndex}: Invalid Quality Specs JSON, using empty object`);
+    }
+
+    return {
+      item_code: itemCode,
+      item_name: itemName,
+      category_id: categoryId,
+      uom,
+      reorder_level: Number(row['Reorder Level']) || 0,
+      reorder_quantity: Number(row['Reorder Quantity']) || 0,
+      status,
+      item_type: itemType,
+      artwork_reference: row['Artwork Reference']?.toString().trim() || '',
+      specification_reference: row['Specification Reference']?.toString().trim() || '',
+      parent_item_code: row['Parent Item Code']?.toString().trim() || '',
+      technical_specs: technicalSpecs,
+      quality_specs: qualitySpecs,
+      hsn_code: row['HSN Code']?.toString().trim() || '',
+      storage_location: row['Storage Location']?.toString().trim() || '',
+      lead_time_days: Number(row['Lead Time (Days)']) || 0,
+      weight_per_unit: Number(row['Weight Per Unit']) || 0
+    };
+  };
+
+  const downloadErrorReport = () => {
+    if (bulkUploadState.errors.length === 0) return;
+
+    const errorData = bulkUploadState.errors.map((error, index) => ({
+      'Error #': index + 1,
+      'Description': error
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(errorData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Bulk Upload Errors');
+    
+    const filename = `bulk_upload_errors_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, filename);
+
+    toast({
+      title: "Error Report Downloaded",
+      description: `Error report saved as ${filename}`,
+    });
+  };
+
   const filteredItems = items.filter(item => {
     const matchesSearch = item.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.item_code.toLowerCase().includes(searchTerm.toLowerCase());
@@ -376,6 +617,194 @@ export const EnterpriseItemMaster = () => {
                 Bulk Import
               </Button>
             </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Bulk Import Item Master</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6">
+                {!bulkUploadState.isUploading && bulkUploadState.totalCount === 0 && (
+                  <>
+                    {/* File Upload Section */}
+                    <div className="space-y-4">
+                      <div className="text-sm text-muted-foreground">
+                        Upload an Excel file (.xlsx or .xls) with item master data. Download the template first to see the required format.
+                      </div>
+                      
+                      {/* Hidden file input */}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".xlsx,.xls"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      
+                      {/* Drag and Drop Area */}
+                      <div 
+                        className="border-2 border-dashed border-muted rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
+                        onClick={() => fileInputRef.current?.click()}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const files = e.dataTransfer.files;
+                          if (files[0]) {
+                            const event = { target: { files } } as any;
+                            handleFileChange(event);
+                          }
+                        }}
+                      >
+                        <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <div className="text-lg font-medium mb-2">
+                          Drop your Excel file here or click to browse
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Supports .xlsx and .xls files
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex-1"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Choose File
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={downloadTemplate}
+                          className="flex-1"
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Download Template
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Instructions */}
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <h4 className="font-medium mb-2">Upload Instructions:</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Download the template and fill in your data</li>
+                        <li>• Required fields: Item Name, Category Name</li>
+                        <li>• Item codes will be auto-generated if left empty</li>
+                        <li>• Category names must match existing categories</li>
+                        <li>• Technical and Quality specs should be valid JSON</li>
+                        <li>• Maximum 1000 items per upload</li>
+                      </ul>
+                    </div>
+                  </>
+                )}
+
+                {/* Upload Progress */}
+                {bulkUploadState.isUploading && (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="text-lg font-medium mb-2">Processing Upload...</div>
+                      <div className="text-sm text-muted-foreground">
+                        Processing {bulkUploadState.totalCount} items
+                      </div>
+                    </div>
+                    
+                    <Progress value={bulkUploadState.progress} className="w-full" />
+                    
+                    <div className="flex justify-between text-sm">
+                      <span>Progress: {Math.round(bulkUploadState.progress)}%</span>
+                      <span>Successful: {bulkUploadState.successCount}/{bulkUploadState.totalCount}</span>
+                    </div>
+
+                    {bulkUploadState.errors.length > 0 && (
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+                        <div className="flex items-center gap-2 text-destructive mb-2">
+                          <AlertCircle className="h-4 w-4" />
+                          <span className="font-medium">Errors Found ({bulkUploadState.errors.length})</span>
+                        </div>
+                        <div className="text-sm max-h-32 overflow-y-auto">
+                          {bulkUploadState.errors.slice(0, 5).map((error, index) => (
+                            <div key={index} className="mb-1">{error}</div>
+                          ))}
+                          {bulkUploadState.errors.length > 5 && (
+                            <div className="text-muted-foreground">
+                              ... and {bulkUploadState.errors.length - 5} more errors
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Upload Complete */}
+                {!bulkUploadState.isUploading && bulkUploadState.totalCount > 0 && (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="text-lg font-medium mb-2">Upload Complete</div>
+                      <div className="text-sm text-muted-foreground">
+                        {bulkUploadState.successCount} out of {bulkUploadState.totalCount} items imported successfully
+                      </div>
+                    </div>
+
+                    {/* Summary */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-green-600">{bulkUploadState.successCount}</div>
+                        <div className="text-sm text-green-600">Successful</div>
+                      </div>
+                      <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-red-600">{bulkUploadState.errors.length}</div>
+                        <div className="text-sm text-red-600">Errors</div>
+                      </div>
+                    </div>
+
+                    {/* Error Report */}
+                    {bulkUploadState.errors.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                          <div className="flex items-center gap-2 text-destructive mb-3">
+                            <AlertCircle className="h-4 w-4" />
+                            <span className="font-medium">Upload Errors</span>
+                          </div>
+                          <div className="text-sm max-h-40 overflow-y-auto space-y-1">
+                            {bulkUploadState.errors.map((error, index) => (
+                              <div key={index} className="font-mono text-xs bg-background/50 p-2 rounded border">
+                                {error}
+                              </div>
+                            ))}
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={downloadErrorReport}
+                            className="mt-3"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download Error Report
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={resetBulkUpload}
+                        className="flex-1"
+                      >
+                        Upload Another File
+                      </Button>
+                      <Button 
+                        onClick={() => setIsBulkDialogOpen(false)}
+                        className="flex-1"
+                      >
+                        Close
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
           </Dialog>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
