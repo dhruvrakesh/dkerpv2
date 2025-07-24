@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import * as XLSX from 'xlsx';
 import { 
   Package, 
   Plus, 
@@ -21,7 +22,9 @@ import {
   Eye,
   Trash2,
   Save,
-  X
+  X,
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 
 interface Category {
@@ -63,6 +66,11 @@ export default function ItemMaster() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ItemMaster | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadErrors, setUploadErrors] = useState<any[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     item_name: '',
@@ -249,6 +257,235 @@ export default function ItemMaster() {
     setIsEditMode(true);
   };
 
+  // Export functionality
+  const handleExport = () => {
+    try {
+      const exportData = filteredItems.map(item => ({
+        'Item Code': item.item_code,
+        'Item Name': item.item_name,
+        'Category': item.category_name,
+        'UOM': item.uom,
+        'HSN Code': item.hsn_code || '',
+        'Weight per Unit': item.weight_per_unit || 0,
+        'Reorder Level': item.reorder_level,
+        'Reorder Quantity': item.reorder_quantity,
+        'Lead Time (Days)': item.lead_time_days,
+        'Storage Location': item.storage_location || '',
+        'Status': item.status,
+        'Created At': new Date(item.created_at).toLocaleDateString('en-IN'),
+        'Updated At': new Date(item.updated_at).toLocaleDateString('en-IN')
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      
+      // Auto-size columns
+      const colWidths = Object.keys(exportData[0] || {}).map(key => ({
+        wch: Math.max(
+          key.length,
+          ...exportData.map(row => String(row[key as keyof typeof row] || '').length)
+        ) + 2
+      }));
+      ws['!cols'] = colWidths;
+      
+      XLSX.utils.book_append_sheet(wb, ws, 'Item Master');
+      
+      const fileName = `item_master_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      
+      toast({
+        title: "Export successful",
+        description: `${exportData.length} items exported to ${fileName}`
+      });
+    } catch (error: any) {
+      toast({
+        title: "Export failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Template download
+  const downloadTemplate = () => {
+    const template = [{
+      'Item Name': 'Example Item',
+      'Category Code': 'RAW',
+      'UOM': 'PCS',
+      'HSN Code': '48162000',
+      'Weight per Unit': 1.5,
+      'Reorder Level': 100,
+      'Reorder Quantity': 500,
+      'Lead Time (Days)': 7,
+      'Storage Location': 'A-01-001',
+      'Status': 'active'
+    }];
+
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    
+    // Auto-size columns
+    const colWidths = Object.keys(template[0]).map(key => ({
+      wch: Math.max(key.length, 15)
+    }));
+    ws['!cols'] = colWidths;
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Item Master Template');
+    XLSX.writeFile(wb, 'item_master_template.xlsx');
+    
+    toast({
+      title: "Template downloaded",
+      description: "Use this template to prepare your bulk upload file"
+    });
+  };
+
+  // File upload handling
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type === 'text/csv' || file.name.endsWith('.csv') || 
+          file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || file.name.endsWith('.xlsx')) {
+        setUploadFile(file);
+        setUploadErrors([]);
+      } else {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a CSV or Excel file",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  // Process bulk upload
+  const processBulkUpload = async () => {
+    if (!uploadFile) return;
+
+    try {
+      setLoading(true);
+      setUploadProgress(0);
+      setUploadErrors([]);
+
+      const data = await uploadFile.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      if (jsonData.length === 0) {
+        throw new Error('No data found in the uploaded file');
+      }
+
+      // Get organization ID
+      const { data: userProfile } = await supabase
+        .from('dkegl_user_profiles')
+        .select('organization_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      const orgId = userProfile?.organization_id;
+      if (!orgId) throw new Error('Organization not found');
+
+      const errors: any[] = [];
+      const validItems: any[] = [];
+      
+      // Validate each row
+      for (let i = 0; i < jsonData.length; i++) {
+        const row = jsonData[i] as any;
+        const rowNum = i + 2; // Excel row number (accounting for header)
+        
+        try {
+          // Required field validation
+          if (!row['Item Name']?.toString().trim()) {
+            errors.push({ row: rowNum, field: 'Item Name', message: 'Item Name is required' });
+            continue;
+          }
+
+          // Find category by code
+          let categoryId = null;
+          if (row['Category Code']) {
+            const category = categories.find(c => 
+              c.category_code.toLowerCase() === row['Category Code'].toString().toLowerCase()
+            );
+            if (!category) {
+              errors.push({ row: rowNum, field: 'Category Code', message: `Category with code '${row['Category Code']}' not found` });
+              continue;
+            }
+            categoryId = category.id;
+          }
+
+          // Generate item code
+          const itemCode = await generateItemCode(categoryId || categories[0]?.id || '');
+          if (!itemCode) {
+            errors.push({ row: rowNum, field: 'Item Code', message: 'Failed to generate item code' });
+            continue;
+          }
+
+          const validItem = {
+            organization_id: orgId,
+            item_code: itemCode,
+            item_name: row['Item Name'].toString().trim(),
+            category_id: categoryId,
+            uom: row['UOM']?.toString() || 'PCS',
+            hsn_code: row['HSN Code']?.toString() || '',
+            weight_per_unit: parseFloat(row['Weight per Unit']?.toString()) || 0,
+            reorder_level: parseInt(row['Reorder Level']?.toString()) || 0,
+            reorder_quantity: parseInt(row['Reorder Quantity']?.toString()) || 0,
+            lead_time_days: parseInt(row['Lead Time (Days)']?.toString()) || 0,
+            storage_location: row['Storage Location']?.toString() || '',
+            status: ['active', 'inactive', 'discontinued'].includes(row['Status']?.toString().toLowerCase()) 
+              ? row['Status'].toString().toLowerCase() 
+              : 'active',
+            specifications: {},
+            material_properties: {},
+            dimensions: {}
+          };
+
+          validItems.push(validItem);
+        } catch (error: any) {
+          errors.push({ row: rowNum, field: 'General', message: error.message });
+        }
+
+        setUploadProgress(Math.round(((i + 1) / jsonData.length) * 50));
+      }
+
+      if (validItems.length === 0) {
+        setUploadErrors(errors);
+        throw new Error('No valid records found to upload');
+      }
+
+      // Batch insert valid items
+      const { error: insertError } = await supabase
+        .from('dkegl_item_master')
+        .insert(validItems);
+
+      if (insertError) throw insertError;
+
+      setUploadProgress(100);
+      setUploadErrors(errors);
+
+      toast({
+        title: "Bulk upload completed",
+        description: `${validItems.length} items uploaded successfully${errors.length > 0 ? `, ${errors.length} errors` : ''}`
+      });
+
+      if (errors.length === 0) {
+        setIsUploadDialogOpen(false);
+        setUploadFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredItems = items.filter(item => {
     const matchesSearch = item.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.item_code.toLowerCase().includes(searchTerm.toLowerCase());
@@ -277,14 +514,110 @@ export default function ItemMaster() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={filteredItems.length === 0}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button variant="outline" size="sm">
-            <Upload className="h-4 w-4 mr-2" />
-            Import
-          </Button>
+          <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Upload className="h-4 w-4 mr-2" />
+                Import
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Bulk Upload Items</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+                  <h4 className="font-semibold mb-2">Upload Instructions:</h4>
+                  <ul className="text-sm space-y-1 text-muted-foreground">
+                    <li>• Upload CSV or Excel files with item data</li>
+                    <li>• Use the template to ensure correct format</li>
+                    <li>• Category Code must match existing categories</li>
+                    <li>• Item codes will be auto-generated</li>
+                  </ul>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={downloadTemplate} className="flex-1">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Download Template
+                  </Button>
+                </div>
+
+                <div>
+                  <Label htmlFor="file-upload">Select File</Label>
+                  <Input
+                    id="file-upload"
+                    type="file"
+                    ref={fileInputRef}
+                    accept=".csv,.xlsx"
+                    onChange={handleFileUpload}
+                    className="mt-1"
+                  />
+                  {uploadFile && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Selected: {uploadFile.name}
+                    </p>
+                  )}
+                </div>
+
+                {uploadProgress > 0 && uploadProgress < 100 && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Processing...</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full transition-all duration-300" 
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {uploadErrors.length > 0 && (
+                  <div className="max-h-48 overflow-y-auto border rounded p-3 bg-red-50 dark:bg-red-950">
+                    <h4 className="font-semibold mb-2 text-red-800 dark:text-red-200 flex items-center">
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      Upload Errors ({uploadErrors.length})
+                    </h4>
+                    <div className="space-y-1 text-sm">
+                      {uploadErrors.map((error, index) => (
+                        <div key={index} className="text-red-700 dark:text-red-300">
+                          Row {error.row}, {error.field}: {error.message}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsUploadDialogOpen(false);
+                      setUploadFile(null);
+                      setUploadErrors([]);
+                      setUploadProgress(0);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={processBulkUpload}
+                    disabled={!uploadFile || loading}
+                  >
+                    {loading ? 'Uploading...' : 'Upload Items'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => { resetForm(); setSelectedItem(null); setIsEditMode(false); }}>
