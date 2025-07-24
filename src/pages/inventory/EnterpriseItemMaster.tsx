@@ -730,10 +730,10 @@ export const EnterpriseItemMaster = () => {
 
   // Process validated data
   const processValidatedUpload = async () => {
-    if (!validationResults || validationResults.invalidRows > 0) {
+    if (!validationResults || validationResults.validRows === 0) {
       toast({
         title: "Cannot Process Upload",
-        description: "Please fix all validation errors before proceeding.",
+        description: "No valid records found to upload.",
         variant: "destructive",
       });
       return;
@@ -1157,12 +1157,13 @@ export const EnterpriseItemMaster = () => {
                       >
                         Cancel
                       </Button>
-                      {validationResults.invalidRows === 0 && (
+                      {validationResults.validRows > 0 && (
                         <Button 
                           onClick={processValidatedUpload}
                           className="flex-1"
                         >
-                          Proceed with Upload ({validationResults.validRows} items)
+                          Upload {validationResults.validRows} Valid Items
+                          {validationResults.invalidRows > 0 && ` (Skip ${validationResults.invalidRows} Errors)`}
                         </Button>
                       )}
                       {validationResults.invalidRows > 0 && (
