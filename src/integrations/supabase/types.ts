@@ -1268,6 +1268,72 @@ export type Database = {
         }
         Relationships: []
       }
+      dkegl_pricing_audit_log: {
+        Row: {
+          action: string
+          business_justification: string | null
+          change_reason: string | null
+          created_at: string
+          id: string
+          impact_analysis: Json | null
+          ip_address: string | null
+          item_code: string
+          new_values: Json | null
+          old_values: Json | null
+          organization_id: string | null
+          pricing_master_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          business_justification?: string | null
+          change_reason?: string | null
+          created_at?: string
+          id?: string
+          impact_analysis?: Json | null
+          ip_address?: string | null
+          item_code: string
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string | null
+          pricing_master_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          business_justification?: string | null
+          change_reason?: string | null
+          created_at?: string
+          id?: string
+          impact_analysis?: Json | null
+          ip_address?: string | null
+          item_code?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string | null
+          pricing_master_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_pricing_audit_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_pricing_audit_log_pricing_master_id_fkey"
+            columns: ["pricing_master_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_pricing_master"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_pricing_hierarchy: {
         Row: {
           base_price: number
@@ -1332,6 +1398,145 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "dkegl_pricing_hierarchy_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_pricing_master: {
+        Row: {
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          current_weighted_avg: number | null
+          effective_from: string
+          effective_until: string | null
+          id: string
+          is_active: boolean | null
+          item_code: string
+          last_grn_price: number | null
+          organization_id: string | null
+          price_tolerance_percentage: number | null
+          pricing_notes: string | null
+          standard_cost: number
+          updated_at: string
+          valuation_method: string
+          version_number: number | null
+        }
+        Insert: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_weighted_avg?: number | null
+          effective_from?: string
+          effective_until?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_code: string
+          last_grn_price?: number | null
+          organization_id?: string | null
+          price_tolerance_percentage?: number | null
+          pricing_notes?: string | null
+          standard_cost?: number
+          updated_at?: string
+          valuation_method?: string
+          version_number?: number | null
+        }
+        Update: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_weighted_avg?: number | null
+          effective_from?: string
+          effective_until?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_code?: string
+          last_grn_price?: number | null
+          organization_id?: string | null
+          price_tolerance_percentage?: number | null
+          pricing_notes?: string | null
+          standard_cost?: number
+          updated_at?: string
+          valuation_method?: string
+          version_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_pricing_master_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_pricing_variance_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_data: Json | null
+          alert_severity: string | null
+          alert_type: string
+          created_at: string
+          current_master_price: number | null
+          grn_reference: string | null
+          id: string
+          item_code: string
+          new_market_price: number | null
+          organization_id: string | null
+          resolution_notes: string | null
+          status: string | null
+          updated_at: string
+          variance_percentage: number | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_data?: Json | null
+          alert_severity?: string | null
+          alert_type: string
+          created_at?: string
+          current_master_price?: number | null
+          grn_reference?: string | null
+          id?: string
+          item_code: string
+          new_market_price?: number | null
+          organization_id?: string | null
+          resolution_notes?: string | null
+          status?: string | null
+          updated_at?: string
+          variance_percentage?: number | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_data?: Json | null
+          alert_severity?: string | null
+          alert_type?: string
+          created_at?: string
+          current_master_price?: number | null
+          grn_reference?: string | null
+          id?: string
+          item_code?: string
+          new_market_price?: number | null
+          organization_id?: string | null
+          resolution_notes?: string | null
+          status?: string | null
+          updated_at?: string
+          variance_percentage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_pricing_variance_alerts_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "dkegl_organizations"
@@ -1634,11 +1839,12 @@ export type Database = {
           item_code: string
           last_transaction_date: string | null
           last_updated: string
+          last_valuation_date: string | null
           location: string | null
           opening_qty: number
           organization_id: string | null
+          pricing_method: string | null
           reserved_qty: number | null
-          total_value: number | null
           unit_cost: number | null
           valuation_method: string | null
         }
@@ -1649,11 +1855,12 @@ export type Database = {
           item_code: string
           last_transaction_date?: string | null
           last_updated?: string
+          last_valuation_date?: string | null
           location?: string | null
           opening_qty?: number
           organization_id?: string | null
+          pricing_method?: string | null
           reserved_qty?: number | null
-          total_value?: number | null
           unit_cost?: number | null
           valuation_method?: string | null
         }
@@ -1664,11 +1871,12 @@ export type Database = {
           item_code?: string
           last_transaction_date?: string | null
           last_updated?: string
+          last_valuation_date?: string | null
           location?: string | null
           opening_qty?: number
           organization_id?: string | null
+          pricing_method?: string | null
           reserved_qty?: number | null
-          total_value?: number | null
           unit_cost?: number | null
           valuation_method?: string | null
         }
@@ -3152,6 +3360,10 @@ export type Database = {
           is_primary: boolean
         }[]
       }
+      dkegl_calculate_stock_valuation: {
+        Args: { _org_id: string; _item_code: string; _quantity: number }
+        Returns: number
+      }
       dkegl_capture_daily_stock_snapshot: {
         Args: { _org_id: string }
         Returns: Json
@@ -3184,6 +3396,15 @@ export type Database = {
           count: number
         }[]
       }
+      dkegl_detect_pricing_variance: {
+        Args: {
+          _org_id: string
+          _item_code: string
+          _grn_price: number
+          _grn_reference: string
+        }
+        Returns: undefined
+      }
       dkegl_generate_item_code: {
         Args: {
           _org_id: string
@@ -3193,6 +3414,16 @@ export type Database = {
           gsm?: number
         }
         Returns: string
+      }
+      dkegl_get_current_item_pricing: {
+        Args: { _org_id: string; _item_code: string }
+        Returns: {
+          standard_cost: number
+          valuation_method: string
+          last_updated: string
+          approved_by: string
+          price_tolerance: number
+        }[]
       }
       dkegl_get_current_user_org: {
         Args: Record<PropertyKey, never>
