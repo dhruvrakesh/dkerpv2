@@ -295,6 +295,101 @@ export type Database = {
         }
         Relationships: []
       }
+      dkegl_categories: {
+        Row: {
+          category_code: string
+          category_name: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          organization_id: string | null
+          parent_category_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_code: string
+          category_name: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          parent_category_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_code?: string
+          category_name?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          parent_category_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_categories_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_categories_parent_category_id_fkey"
+            columns: ["parent_category_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_daily_stock_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string | null
+          record_count: number
+          snapshot_data: Json
+          snapshot_date: string
+          total_value: number | null
+          updated_at: string
+          variance_analysis: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          record_count?: number
+          snapshot_data: Json
+          snapshot_date: string
+          total_value?: number | null
+          updated_at?: string
+          variance_analysis?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          record_count?: number
+          snapshot_data?: Json
+          snapshot_date?: string
+          total_value?: number | null
+          updated_at?: string
+          variance_analysis?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_daily_stock_snapshots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_eligible_adhesive_coating_uiorns: {
         Row: {
           deckle: number | null
@@ -412,6 +507,320 @@ export type Database = {
         }
         Relationships: []
       }
+      dkegl_grn_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          grn_id: string
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          organization_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          grn_id: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          grn_id?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_grn_audit_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_grn_log: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date: string
+          grn_number: string
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          item_code: string
+          organization_id: string | null
+          qty_received: number
+          quality_status:
+            | Database["public"]["Enums"]["dkegl_quality_status"]
+            | null
+          remarks: string | null
+          supplier_name: string | null
+          total_amount: number | null
+          unit_rate: number | null
+          uom: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          grn_number: string
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          item_code: string
+          organization_id?: string | null
+          qty_received: number
+          quality_status?:
+            | Database["public"]["Enums"]["dkegl_quality_status"]
+            | null
+          remarks?: string | null
+          supplier_name?: string | null
+          total_amount?: number | null
+          unit_rate?: number | null
+          uom: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          grn_number?: string
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          item_code?: string
+          organization_id?: string | null
+          qty_received?: number
+          quality_status?:
+            | Database["public"]["Enums"]["dkegl_quality_status"]
+            | null
+          remarks?: string | null
+          supplier_name?: string | null
+          total_amount?: number | null
+          unit_rate?: number | null
+          uom?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_grn_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_issue_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          issue_id: string
+          new_values: Json | null
+          old_values: Json | null
+          organization_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          issue_id: string
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          issue_id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_issue_audit_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_issue_log: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          department: string | null
+          id: string
+          issue_number: string
+          item_code: string
+          job_order_ref: string | null
+          organization_id: string | null
+          purpose: string | null
+          qty_issued: number
+          remarks: string | null
+          requested_by: string | null
+          uom: string
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          department?: string | null
+          id?: string
+          issue_number: string
+          item_code: string
+          job_order_ref?: string | null
+          organization_id?: string | null
+          purpose?: string | null
+          qty_issued: number
+          remarks?: string | null
+          requested_by?: string | null
+          uom: string
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          department?: string | null
+          id?: string
+          issue_number?: string
+          item_code?: string
+          job_order_ref?: string | null
+          organization_id?: string | null
+          purpose?: string | null
+          qty_issued?: number
+          remarks?: string | null
+          requested_by?: string | null
+          uom?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_issue_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_item_master: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          dimensions: Json | null
+          hsn_code: string | null
+          id: string
+          item_code: string
+          item_name: string
+          lead_time_days: number | null
+          material_properties: Json | null
+          organization_id: string | null
+          pricing_info: Json | null
+          quality_parameters: Json | null
+          reorder_level: number | null
+          reorder_quantity: number | null
+          specifications: Json | null
+          status: string | null
+          storage_location: string | null
+          supplier_info: Json | null
+          uom: string
+          updated_at: string
+          weight_per_unit: number | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          dimensions?: Json | null
+          hsn_code?: string | null
+          id?: string
+          item_code: string
+          item_name: string
+          lead_time_days?: number | null
+          material_properties?: Json | null
+          organization_id?: string | null
+          pricing_info?: Json | null
+          quality_parameters?: Json | null
+          reorder_level?: number | null
+          reorder_quantity?: number | null
+          specifications?: Json | null
+          status?: string | null
+          storage_location?: string | null
+          supplier_info?: Json | null
+          uom?: string
+          updated_at?: string
+          weight_per_unit?: number | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          dimensions?: Json | null
+          hsn_code?: string | null
+          id?: string
+          item_code?: string
+          item_name?: string
+          lead_time_days?: number | null
+          material_properties?: Json | null
+          organization_id?: string | null
+          pricing_info?: Json | null
+          quality_parameters?: Json | null
+          reorder_level?: number | null
+          reorder_quantity?: number | null
+          specifications?: Json | null
+          status?: string | null
+          storage_location?: string | null
+          supplier_info?: Json | null
+          uom?: string
+          updated_at?: string
+          weight_per_unit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_item_master_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_item_master_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_lamination: {
         Row: {
           created_at: string | null
@@ -496,6 +905,322 @@ export type Database = {
         }
         Relationships: []
       }
+      dkegl_orders: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          customer_info: Json | null
+          delivery_date: string | null
+          id: string
+          item_code: string
+          item_name: string
+          order_number: string
+          order_quantity: number
+          organization_id: string | null
+          printing_details: Json | null
+          priority_level: number | null
+          specifications: Json | null
+          status: Database["public"]["Enums"]["dkegl_order_status"] | null
+          substrate_details: Json | null
+          uiorn: string
+          updated_at: string
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_info?: Json | null
+          delivery_date?: string | null
+          id?: string
+          item_code: string
+          item_name: string
+          order_number: string
+          order_quantity: number
+          organization_id?: string | null
+          printing_details?: Json | null
+          priority_level?: number | null
+          specifications?: Json | null
+          status?: Database["public"]["Enums"]["dkegl_order_status"] | null
+          substrate_details?: Json | null
+          uiorn: string
+          updated_at?: string
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_info?: Json | null
+          delivery_date?: string | null
+          id?: string
+          item_code?: string
+          item_name?: string
+          order_number?: string
+          order_quantity?: number
+          organization_id?: string | null
+          printing_details?: Json | null
+          priority_level?: number | null
+          specifications?: Json | null
+          status?: Database["public"]["Enums"]["dkegl_order_status"] | null
+          substrate_details?: Json | null
+          uiorn?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_orders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_organizations: {
+        Row: {
+          address: string | null
+          code: string
+          contact_details: Json | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          settings: Json | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          code: string
+          contact_details?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          settings?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          code?: string
+          contact_details?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          settings?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dkegl_production_metrics: {
+        Row: {
+          capacity_utilization: number | null
+          completed_orders: number | null
+          created_at: string
+          date: string
+          downtime_hours: number | null
+          efficiency_percentage: number | null
+          id: string
+          metrics_data: Json | null
+          on_time_delivery_rate: number | null
+          organization_id: string | null
+          pending_orders: number | null
+          process_name: string
+          quality_rejection_rate: number | null
+          total_orders: number | null
+          updated_at: string
+        }
+        Insert: {
+          capacity_utilization?: number | null
+          completed_orders?: number | null
+          created_at?: string
+          date?: string
+          downtime_hours?: number | null
+          efficiency_percentage?: number | null
+          id?: string
+          metrics_data?: Json | null
+          on_time_delivery_rate?: number | null
+          organization_id?: string | null
+          pending_orders?: number | null
+          process_name: string
+          quality_rejection_rate?: number | null
+          total_orders?: number | null
+          updated_at?: string
+        }
+        Update: {
+          capacity_utilization?: number | null
+          completed_orders?: number | null
+          created_at?: string
+          date?: string
+          downtime_hours?: number | null
+          efficiency_percentage?: number | null
+          id?: string
+          metrics_data?: Json | null
+          on_time_delivery_rate?: number | null
+          organization_id?: string | null
+          pending_orders?: number | null
+          process_name?: string
+          quality_rejection_rate?: number | null
+          total_orders?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_production_metrics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_production_schedule: {
+        Row: {
+          actual_duration_hours: number | null
+          actual_end_date: string | null
+          actual_start_date: string | null
+          assigned_operator: string | null
+          created_at: string
+          estimated_duration_hours: number | null
+          id: string
+          machine_allocated: string | null
+          notes: string | null
+          order_id: string | null
+          organization_id: string | null
+          priority: number | null
+          process_name: string
+          scheduled_end_date: string | null
+          scheduled_start_date: string | null
+          status: Database["public"]["Enums"]["dkegl_process_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          actual_duration_hours?: number | null
+          actual_end_date?: string | null
+          actual_start_date?: string | null
+          assigned_operator?: string | null
+          created_at?: string
+          estimated_duration_hours?: number | null
+          id?: string
+          machine_allocated?: string | null
+          notes?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          priority?: number | null
+          process_name: string
+          scheduled_end_date?: string | null
+          scheduled_start_date?: string | null
+          status?: Database["public"]["Enums"]["dkegl_process_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          actual_duration_hours?: number | null
+          actual_end_date?: string | null
+          actual_start_date?: string | null
+          assigned_operator?: string | null
+          created_at?: string
+          estimated_duration_hours?: number | null
+          id?: string
+          machine_allocated?: string | null
+          notes?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          priority?: number | null
+          process_name?: string
+          scheduled_end_date?: string | null
+          scheduled_start_date?: string | null
+          status?: Database["public"]["Enums"]["dkegl_process_status"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_production_schedule_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_production_schedule_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_quality_control: {
+        Row: {
+          approval_date: string | null
+          approval_status: string | null
+          approved_by: string | null
+          corrective_action: string | null
+          created_at: string
+          defect_details: string | null
+          id: string
+          inspection_date: string | null
+          inspector_name: string | null
+          order_id: string | null
+          organization_id: string | null
+          process_name: string
+          quality_parameters: Json | null
+          status: Database["public"]["Enums"]["dkegl_quality_status"] | null
+          test_results: Json | null
+          updated_at: string
+        }
+        Insert: {
+          approval_date?: string | null
+          approval_status?: string | null
+          approved_by?: string | null
+          corrective_action?: string | null
+          created_at?: string
+          defect_details?: string | null
+          id?: string
+          inspection_date?: string | null
+          inspector_name?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          process_name: string
+          quality_parameters?: Json | null
+          status?: Database["public"]["Enums"]["dkegl_quality_status"] | null
+          test_results?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          approval_date?: string | null
+          approval_status?: string | null
+          approved_by?: string | null
+          corrective_action?: string | null
+          created_at?: string
+          defect_details?: string | null
+          id?: string
+          inspection_date?: string | null
+          inspector_name?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          process_name?: string
+          quality_parameters?: Json | null
+          status?: Database["public"]["Enums"]["dkegl_quality_status"] | null
+          test_results?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_quality_control_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_quality_control_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_slitting: {
         Row: {
           created_at: string | null
@@ -537,6 +1262,145 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      dkegl_stock: {
+        Row: {
+          available_qty: number | null
+          current_qty: number
+          id: string
+          item_code: string
+          last_transaction_date: string | null
+          last_updated: string
+          location: string | null
+          opening_qty: number
+          organization_id: string | null
+          reserved_qty: number | null
+          total_value: number | null
+          unit_cost: number | null
+          valuation_method: string | null
+        }
+        Insert: {
+          available_qty?: number | null
+          current_qty?: number
+          id?: string
+          item_code: string
+          last_transaction_date?: string | null
+          last_updated?: string
+          location?: string | null
+          opening_qty?: number
+          organization_id?: string | null
+          reserved_qty?: number | null
+          total_value?: number | null
+          unit_cost?: number | null
+          valuation_method?: string | null
+        }
+        Update: {
+          available_qty?: number | null
+          current_qty?: number
+          id?: string
+          item_code?: string
+          last_transaction_date?: string | null
+          last_updated?: string
+          location?: string | null
+          opening_qty?: number
+          organization_id?: string | null
+          reserved_qty?: number | null
+          total_value?: number | null
+          unit_cost?: number | null
+          valuation_method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_stock_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_stock_summary: {
+        Row: {
+          calculated_qty: number | null
+          category_name: string | null
+          consumption_rate_30d: number | null
+          consumption_rate_7d: number | null
+          consumption_rate_90d: number | null
+          current_qty: number | null
+          days_of_cover: number | null
+          id: string
+          issue_30d: number | null
+          issue_7d: number | null
+          issue_90d: number | null
+          item_code: string
+          item_name: string | null
+          last_transaction_date: string | null
+          last_updated: string
+          opening_qty: number | null
+          organization_id: string | null
+          reorder_level: number | null
+          reorder_suggested: boolean | null
+          total_grn_qty: number | null
+          total_issued_qty: number | null
+          variance_qty: number | null
+        }
+        Insert: {
+          calculated_qty?: number | null
+          category_name?: string | null
+          consumption_rate_30d?: number | null
+          consumption_rate_7d?: number | null
+          consumption_rate_90d?: number | null
+          current_qty?: number | null
+          days_of_cover?: number | null
+          id?: string
+          issue_30d?: number | null
+          issue_7d?: number | null
+          issue_90d?: number | null
+          item_code: string
+          item_name?: string | null
+          last_transaction_date?: string | null
+          last_updated?: string
+          opening_qty?: number | null
+          organization_id?: string | null
+          reorder_level?: number | null
+          reorder_suggested?: boolean | null
+          total_grn_qty?: number | null
+          total_issued_qty?: number | null
+          variance_qty?: number | null
+        }
+        Update: {
+          calculated_qty?: number | null
+          category_name?: string | null
+          consumption_rate_30d?: number | null
+          consumption_rate_7d?: number | null
+          consumption_rate_90d?: number | null
+          current_qty?: number | null
+          days_of_cover?: number | null
+          id?: string
+          issue_30d?: number | null
+          issue_7d?: number | null
+          issue_90d?: number | null
+          item_code?: string
+          item_name?: string | null
+          last_transaction_date?: string | null
+          last_updated?: string
+          opening_qty?: number | null
+          organization_id?: string | null
+          reorder_level?: number | null
+          reorder_suggested?: boolean | null
+          total_grn_qty?: number | null
+          total_issued_qty?: number | null
+          variance_qty?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_stock_summary_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dkegl_tape_orders: {
         Row: {
@@ -591,6 +1455,100 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      dkegl_user_profiles: {
+        Row: {
+          contact_number: string | null
+          created_at: string
+          department: string | null
+          designation: string | null
+          email: string | null
+          employee_id: string | null
+          full_name: string | null
+          id: string
+          is_active: boolean | null
+          organization_id: string | null
+          preferences: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contact_number?: string | null
+          created_at?: string
+          department?: string | null
+          designation?: string | null
+          email?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          preferences?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contact_number?: string | null
+          created_at?: string
+          department?: string | null
+          designation?: string | null
+          email?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          preferences?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_user_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string | null
+          permissions: Json | null
+          role: Database["public"]["Enums"]["dkegl_user_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          permissions?: Json | null
+          role?: Database["public"]["Enums"]["dkegl_user_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          permissions?: Json | null
+          role?: Database["public"]["Enums"]["dkegl_user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_user_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gravure_printing: {
         Row: {
@@ -1632,12 +2590,44 @@ export type Database = {
           slitting: string
         }[]
       }
+      gtrgm_compress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_decompress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_in: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_options: {
+        Args: { "": unknown }
+        Returns: undefined
+      }
+      gtrgm_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
       has_role: {
         Args: {
           _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      set_limit: {
+        Args: { "": number }
+        Returns: number
+      }
+      show_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      show_trgm: {
+        Args: { "": string }
+        Returns: string[]
       }
       validate_item_code_params: {
         Args: {
@@ -1651,6 +2641,45 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      dkegl_order_status:
+        | "draft"
+        | "confirmed"
+        | "in_production"
+        | "completed"
+        | "shipped"
+        | "delivered"
+        | "cancelled"
+      dkegl_process_status:
+        | "pending"
+        | "in_progress"
+        | "completed"
+        | "on_hold"
+        | "cancelled"
+        | "quality_check"
+        | "approved"
+        | "rejected"
+      dkegl_quality_status:
+        | "pending"
+        | "in_review"
+        | "passed"
+        | "failed"
+        | "rework_required"
+        | "approved"
+      dkegl_transaction_type:
+        | "opening_stock"
+        | "purchase"
+        | "production"
+        | "issue"
+        | "adjustment"
+        | "transfer"
+        | "return"
+      dkegl_user_role:
+        | "admin"
+        | "manager"
+        | "operator"
+        | "viewer"
+        | "quality_controller"
+        | "production_planner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1779,6 +2808,50 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      dkegl_order_status: [
+        "draft",
+        "confirmed",
+        "in_production",
+        "completed",
+        "shipped",
+        "delivered",
+        "cancelled",
+      ],
+      dkegl_process_status: [
+        "pending",
+        "in_progress",
+        "completed",
+        "on_hold",
+        "cancelled",
+        "quality_check",
+        "approved",
+        "rejected",
+      ],
+      dkegl_quality_status: [
+        "pending",
+        "in_review",
+        "passed",
+        "failed",
+        "rework_required",
+        "approved",
+      ],
+      dkegl_transaction_type: [
+        "opening_stock",
+        "purchase",
+        "production",
+        "issue",
+        "adjustment",
+        "transfer",
+        "return",
+      ],
+      dkegl_user_role: [
+        "admin",
+        "manager",
+        "operator",
+        "viewer",
+        "quality_controller",
+        "production_planner",
+      ],
     },
   },
 } as const
