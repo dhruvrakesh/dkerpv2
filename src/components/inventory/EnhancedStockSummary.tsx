@@ -48,7 +48,12 @@ export const EnhancedStockSummary = () => {
       setLoading(true);
       
       const { data: orgId } = await supabase.rpc('dkegl_get_current_user_org');
-      if (!orgId) throw new Error('Organization not found');
+      if (!orgId) {
+        console.log('No organization found for user');
+        throw new Error('Organization not found');
+      }
+
+      console.log('Loading stock summary for org:', orgId);
 
       const { data, error } = await supabase
         .from('dkegl_stock_summary')
@@ -56,8 +61,12 @@ export const EnhancedStockSummary = () => {
         .eq('organization_id', orgId)
         .order('item_code');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
+      console.log('Stock summary data loaded:', data?.length || 0, 'records');
       const stockBreakdown = data || [];
       setBreakdown(stockBreakdown);
 
@@ -79,11 +88,20 @@ export const EnhancedStockSummary = () => {
       });
 
       setSummaryTotals(totals);
+
+      // If no data found, show informative message
+      if (stockBreakdown.length === 0) {
+        toast({
+          title: "No Stock Data",
+          description: "No stock summary data found. Click refresh to generate it.",
+          variant: "default"
+        });
+      }
     } catch (error) {
       console.error('Error loading stock summary:', error);
       toast({
         title: "Error",
-        description: "Failed to load stock summary",
+        description: `Failed to load stock summary: ${error.message}`,
         variant: "destructive"
       });
     } finally {

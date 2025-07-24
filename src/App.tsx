@@ -95,6 +95,16 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/analytics/stock" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <StockManagement />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
