@@ -389,9 +389,10 @@ export const EnterpriseItemMaster = () => {
         categoryCodeMap.set('pet', cat.id);
         categoryCodeMap.set('polyester', cat.id);
       }
-      if (name.includes('wip') || name.includes('work in progress')) {
+      if (name.includes('wip') || name.includes('work in progress') || name.includes('progress')) {
         categoryCodeMap.set('wip', cat.id);
         categoryCodeMap.set('work in progress', cat.id);
+        categoryCodeMap.set('progress', cat.id);
       }
       if (name.includes('machinery') || name.includes('equipment')) {
         categoryCodeMap.set('machinery', cat.id);
@@ -404,9 +405,10 @@ export const EnterpriseItemMaster = () => {
         categoryCodeMap.set('pet', cat.id);
         categoryCodeMap.set('polyester', cat.id);
       }
-      if (name.includes('wip') || name.includes('progress')) {
-        categoryCodeMap.set('wip', cat.id);
-        categoryCodeMap.set('progress', cat.id);
+      if (name.includes('finished') || name.includes('fg')) {
+        categoryCodeMap.set('fg', cat.id);
+        categoryCodeMap.set('finished', cat.id);
+        categoryCodeMap.set('finished goods', cat.id);
       }
     });
 
