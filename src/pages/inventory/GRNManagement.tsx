@@ -26,6 +26,8 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { PricingVarianceIndicator } from '@/components/inventory/PricingVarianceIndicator';
+import { usePricingMaster } from '@/hooks/usePricingMaster';
 
 interface GRNRecord {
   id: string;
@@ -61,6 +63,7 @@ interface GRNForm {
 
 export default function GRNManagement() {
   const { toast } = useToast();
+  const pricing = usePricingMaster();
   const [grnRecords, setGrnRecords] = useState<GRNRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -746,9 +749,10 @@ export default function GRNManagement() {
                 <TableHead>Item</TableHead>
                 <TableHead>Supplier</TableHead>
                 <TableHead>Quantity</TableHead>
-                <TableHead>Unit Rate</TableHead>
-                <TableHead>Total Amount</TableHead>
-                <TableHead>Quality Status</TableHead>
+                    <TableHead>Unit Rate</TableHead>
+                    <TableHead>Total Amount</TableHead>
+                    <TableHead>Price Variance</TableHead>
+                    <TableHead>Quality Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -767,18 +771,25 @@ export default function GRNManagement() {
                   <TableCell className="text-right">
                     {grn.qty_received.toLocaleString()} {grn.uom}
                   </TableCell>
-                  <TableCell className="text-right">
-                    ₹{grn.unit_rate?.toFixed(2) || '0.00'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    ₹{grn.total_amount?.toLocaleString() || '0'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusColor(grn.quality_status) as any} className="flex items-center gap-1 w-fit">
-                      {getStatusIcon(grn.quality_status)}
-                      {grn.quality_status.charAt(0).toUpperCase() + grn.quality_status.slice(1)}
-                    </Badge>
-                  </TableCell>
+                   <TableCell>₹{grn.unit_rate?.toFixed(2) || 0}</TableCell>
+                   <TableCell>₹{grn.total_amount?.toFixed(2) || 0}</TableCell>
+                   <TableCell>
+                     {grn.unit_rate && (
+                       <PricingVarianceIndicator
+                         itemCode={grn.item_code}
+                         currentPrice={grn.unit_rate}
+                         showTooltip={true}
+                       />
+                     )}
+                   </TableCell>
+                   <TableCell>
+                     <div className="flex items-center space-x-2">
+                       {getStatusIcon(grn.quality_status)}
+                       <Badge variant={getStatusColor(grn.quality_status) as any}>
+                         {grn.quality_status}
+                       </Badge>
+                     </div>
+                   </TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"

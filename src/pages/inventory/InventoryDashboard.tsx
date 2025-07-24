@@ -80,7 +80,7 @@ export default function InventoryDashboard() {
 
       // Calculate stock metrics
       const totalItems = stockData?.length || 0;
-      const totalStockValue = stockData?.reduce((sum, item) => sum + (item.total_value || 0), 0) || 0;
+      const totalStockValue = stockData?.reduce((sum, item) => sum + (item.current_qty * (item.unit_cost || 0)), 0) || 0;
       const lowStockItems = stockData?.filter(item => 
         item.current_qty <= (item.dkegl_item_master?.reorder_level || 0) && item.current_qty > 0
       ).length || 0;

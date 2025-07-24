@@ -14,6 +14,7 @@ import { ItemMaster } from "./pages/inventory/ItemMaster";
 import GRNManagement from "./pages/inventory/GRNManagement";
 import IssueManagement from "./pages/inventory/IssueManagement";
 import StockManagement from "./pages/inventory/StockManagement";
+import PricingMasterPage from "./pages/inventory/PricingMasterPage";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,16 @@ const App = () => (
                 <ProtectedRoute>
                   <InventoryLayout>
                     <StockManagement />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/inventory/pricing" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <PricingMasterPage />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 
