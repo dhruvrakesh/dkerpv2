@@ -17,6 +17,7 @@ import { StockAgingChart } from '@/components/analytics/StockAgingChart';
 import { PricingDashboard } from '@/components/analytics/PricingDashboard';
 import { useStockAnalytics } from '@/hooks/useStockAnalytics';
 import { usePricingMaster } from '@/hooks/usePricingMaster';
+import { EnhancedStockSummary } from '@/components/inventory/EnhancedStockSummary';
 import * as XLSX from 'xlsx';
 import { 
   Package, 
@@ -872,6 +873,9 @@ export default function StockManagement() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
+          {/* Enhanced Stock Summary */}
+          <EnhancedStockSummary />
+          
           {/* Filters */}
           <Card>
             <CardContent className="p-4">
