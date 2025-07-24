@@ -441,6 +441,64 @@ export const EnterpriseItemMaster = () => {
     }
   };
 
+  const normalizeItemType = (itemType: string): string => {
+    const typeMap: Record<string, string> = {
+      'raw material': 'raw_material',
+      'raw materials': 'raw_material',
+      'raw_material': 'raw_material',
+      'work in progress': 'work_in_progress',
+      'wip': 'work_in_progress',
+      'work_in_progress': 'work_in_progress',
+      'consumable': 'consumable',
+      'consumables': 'consumable',
+      'finished good': 'finished_good',
+      'finished goods': 'finished_good',
+      'finished_good': 'finished_good',
+      'fg': 'finished_good'
+    };
+    
+    const normalized = itemType.toLowerCase().trim();
+    return typeMap[normalized] || 'raw_material';
+  };
+
+  const findCategoryId = (categoryName: string, categoryMap: Map<string, string>, categories: Category[]): string | null => {
+    if (!categoryName) return null;
+    
+    const searchName = categoryName.toLowerCase().trim();
+    
+    // First try exact match by name
+    let categoryId = categoryMap.get(searchName);
+    if (categoryId) return categoryId;
+    
+    // Try to find by category code (assuming user might enter code instead of name)
+    for (const category of categories) {
+      if (category.category_name.toLowerCase().includes(searchName) || 
+          searchName.includes(category.category_name.toLowerCase())) {
+        return category.id;
+      }
+    }
+    
+    return null;
+  };
+
+  const generateItemCodeWithDB = async (categoryName: string, itemName: string): Promise<string> => {
+    try {
+      const { data, error } = await supabase.rpc('dkegl_generate_item_code', {
+        _org_id: userProfile?.organization_id,
+        category_name: categoryName,
+        qualifier: itemName.split(' ')[0] || '',
+        size_mm: '',
+        gsm: null
+      });
+      
+      if (error) throw error;
+      return data || `GEN_${Date.now().toString().slice(-6)}`;
+    } catch (error) {
+      console.warn('DB item code generation failed, using fallback:', error);
+      return `GEN_${Date.now().toString().slice(-6)}`;
+    }
+  };
+
   const validateAndProcessRow = async (row: any, categoryMap: Map<string, string>, rowIndex: number): Promise<any | null> => {
     const errors: string[] = [];
 
@@ -455,19 +513,24 @@ export const EnterpriseItemMaster = () => {
       errors.push('Category Name is required');
     }
 
-    const categoryId = categoryMap.get(categoryName?.toLowerCase());
+    // Enhanced category matching
+    const categoryId = findCategoryId(categoryName, categoryMap, categories);
     if (categoryName && !categoryId) {
-      errors.push(`Category '${categoryName}' not found`);
+      const availableCategories = categories.map(c => c.category_name).join(', ');
+      errors.push(`Category '${categoryName}' not found. Available categories: ${availableCategories}`);
     }
 
     const uom = row['UOM']?.toString().trim() || 'PCS';
     const status = row['Status']?.toString().toLowerCase() || 'active';
-    const itemType = row['Item Type']?.toString().toLowerCase() || 'raw_material';
+    
+    // Enhanced item type normalization
+    const rawItemType = row['Item Type']?.toString() || 'raw_material';
+    const itemType = normalizeItemType(rawItemType);
 
-    // Validate item type
+    // Validate item type (after normalization)
     const validItemTypes = ['raw_material', 'work_in_progress', 'consumable', 'finished_good'];
     if (!validItemTypes.includes(itemType)) {
-      errors.push(`Invalid Item Type: ${itemType}. Must be one of: ${validItemTypes.join(', ')}`);
+      errors.push(`Invalid Item Type: '${rawItemType}' (normalized to '${itemType}'). Must be one of: Raw Material, Work in Progress, Consumable, Finished Good`);
     }
 
     // Validate status
@@ -480,12 +543,17 @@ export const EnterpriseItemMaster = () => {
       throw new Error(errors.join('; '));
     }
 
-    // Generate item code if not provided
+    // Enhanced item code generation
     let itemCode = row['Item Code (Auto-generated if empty)']?.toString().trim();
     if (!itemCode) {
-      const prefix = itemType.substring(0, 2).toUpperCase();
-      const timestamp = Date.now().toString().slice(-6);
-      itemCode = `${prefix}${timestamp}`;
+      try {
+        itemCode = await generateItemCodeWithDB(categoryName, itemName);
+      } catch (error) {
+        console.warn('Fallback to simple item code generation:', error);
+        const prefix = itemType.substring(0, 2).toUpperCase();
+        const timestamp = Date.now().toString().slice(-6);
+        itemCode = `${prefix}${timestamp}`;
+      }
     }
 
     // Parse JSON fields safely
