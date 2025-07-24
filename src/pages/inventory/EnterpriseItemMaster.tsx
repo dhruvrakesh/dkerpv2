@@ -623,7 +623,6 @@ export const EnterpriseItemMaster = () => {
 
     // Track duplicates within the file
     const seenCodes = new Set();
-    const seenNames = new Set();
 
     data.forEach((row, index) => {
       const rowIndex = index + 1;
@@ -634,16 +633,6 @@ export const EnterpriseItemMaster = () => {
       const itemName = row['Item Name']?.toString().trim();
       if (!itemName) {
         rowErrors.push('Item Name is required');
-      } else {
-        if (seenNames.has(itemName.toLowerCase())) {
-          validationResults.duplicates.push({
-            row: rowIndex,
-            type: 'Duplicate Name',
-            value: itemName,
-            message: `Item name "${itemName}" appears multiple times in the file`
-          });
-        }
-        seenNames.add(itemName.toLowerCase());
       }
 
       const categoryName = row['Category Name']?.toString().trim();
