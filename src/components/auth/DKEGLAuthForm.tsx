@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Building2, Mail, Lock, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +10,8 @@ import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 import { DKEGLLogo } from '@/components/DKEGLLogo';
 
 export const DKEGLAuthForm = () => {
-  const { signIn, signUp, loading } = useDKEGLAuth();
+  const { signIn, signUp, loading, user } = useDKEGLAuth();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -18,6 +20,13 @@ export const DKEGLAuthForm = () => {
     fullName: '',
     confirmPassword: ''
   });
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (user) {
+      navigate('/', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
