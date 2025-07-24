@@ -1548,6 +1548,42 @@ export type Database = {
           },
         ]
       }
+      dkegl_security_audit_log: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          organization_id: string | null
+          risk_level: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          organization_id?: string | null
+          risk_level?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          organization_id?: string | null
+          risk_level?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       dkegl_slitting: {
         Row: {
           created_at: string | null
@@ -3120,6 +3156,10 @@ export type Database = {
         Args: { _org_id: string }
         Returns: Json
       }
+      dkegl_cleanup_old_security_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       dkegl_count_adhesive_started: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -3203,6 +3243,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["dkegl_user_role"]
         }
         Returns: boolean
+      }
+      dkegl_log_security_event: {
+        Args: { _event_type: string; _event_data?: Json; _risk_level?: string }
+        Returns: undefined
       }
       dkegl_refresh_stock_summary: {
         Args: { _org_id: string }
