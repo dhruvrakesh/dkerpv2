@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -328,111 +328,8 @@ export default function GRNManagement() {
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setLoading(true);
-      
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-      const { data: userProfile } = await supabase
-        .from('dkegl_user_profiles')
-        .select('organization_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (!userProfile?.organization_id) {
-        throw new Error('Organization not found');
-      }
-
-      let successCount = 0;
-      let errorCount = 0;
-      const errors: string[] = [];
-
-      for (const [index, row] of jsonData.entries()) {
-        try {
-          const rowData = row as any;
-          
-          // Validate required fields
-          if (!rowData['GRN Number'] || !rowData['Item Code'] || !rowData['Quantity Received']) {
-            errors.push(`Row ${index + 2}: Missing required fields (GRN Number, Item Code, Quantity Received)`);
-            errorCount++;
-            continue;
-          }
-
-          // Check if item exists
-          const itemExists = availableItems.find(item => item.item_code === rowData['Item Code']);
-          if (!itemExists) {
-            errors.push(`Row ${index + 2}: Item '${rowData['Item Code']}' not found`);
-            errorCount++;
-            continue;
-          }
-
-          const grnData = {
-            grn_number: rowData['GRN Number'],
-            item_code: rowData['Item Code'],
-            supplier_name: rowData['Supplier Name'] || '',
-            date: rowData['Date'] ? new Date(rowData['Date']).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            qty_received: parseFloat(rowData['Quantity Received']) || 0,
-            unit_rate: parseFloat(rowData['Unit Rate']) || 0,
-            total_amount: (parseFloat(rowData['Quantity Received']) || 0) * (parseFloat(rowData['Unit Rate']) || 0),
-            invoice_number: rowData['Invoice Number'] || '',
-            invoice_date: rowData['Invoice Date'] || '',
-            quality_status: rowData['Quality Status'] || 'pending',
-            remarks: rowData['Remarks'] || '',
-            uom: itemExists.uom,
-            organization_id: userProfile.organization_id,
-            created_by: (await supabase.auth.getUser()).data.user?.id
-          };
-
-          const { error } = await supabase
-            .from('dkegl_grn_log')
-            .insert([grnData]);
-
-          if (error) throw error;
-          successCount++;
-
-        } catch (error: any) {
-          errors.push(`Row ${index + 2}: ${error.message}`);
-          errorCount++;
-        }
-      }
-
-      // Reset file input
-      event.target.value = '';
-
-      if (successCount > 0) {
-        toast({
-          title: "Bulk upload completed",
-          description: `${successCount} records processed successfully${errorCount > 0 ? `, ${errorCount} errors` : ''}`
-        });
-        loadData();
-      }
-
-      if (errors.length > 0) {
-        console.error('Upload errors:', errors);
-        toast({
-          title: errorCount === jsonData.length ? "Upload failed" : "Partial upload completed",
-          description: `${errorCount} errors occurred. Check console for details.`,
-          variant: errorCount === jsonData.length ? "destructive" : "default"
-        });
-      }
-
-    } catch (error: any) {
-      toast({
-        title: "Upload failed",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Legacy upload function removed - now using Enterprise Bulk Upload system
+  // This ensures all uploads go through proper validation, staging, and approval workflow
 
   const downloadTemplate = () => {
     const templateData = [
@@ -509,21 +406,6 @@ export default function GRNManagement() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <div className="relative">
-            <input
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              onChange={handleFileUpload}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              id="grn-bulk-upload"
-            />
-            <Button variant="outline" size="sm" asChild>
-              <label htmlFor="grn-bulk-upload" className="cursor-pointer">
-                <Upload className="h-4 w-4 mr-2" />
-                Bulk Upload
-              </label>
-            </Button>
-          </div>
           <Button variant="outline" size="sm" onClick={downloadTemplate}>
             <FileSpreadsheet className="h-4 w-4 mr-2" />
             Template
@@ -690,6 +572,22 @@ export default function GRNManagement() {
           </Dialog>
         </div>
       </div>
+
+      {/* Enterprise Bulk Upload */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Upload className="h-5 w-5" />
+            <span>Enterprise Bulk Upload</span>
+          </CardTitle>
+          <CardDescription>
+            Advanced GRN bulk upload with validation, staging, and approval workflow
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EnterpriseBulkUpload />
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card>

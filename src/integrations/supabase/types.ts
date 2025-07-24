@@ -3850,6 +3850,10 @@ export type Database = {
         Args: { _staging_id: string }
         Returns: Json
       }
+      dkegl_validate_grn_staging_record_enhanced: {
+        Args: { _staging_id: string }
+        Returns: Json
+      }
       generate_item_code: {
         Args: {
           category_name: string

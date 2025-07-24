@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from 'xlsx';
+import { ExcelDateConverter, ExcelDataProcessor } from '@/utils/excelDateUtils';
 
 export interface UploadSession {
   id: string;
@@ -191,24 +192,31 @@ export const useEnterpriseBulkUpload = () => {
       throw new Error('User not authenticated');
     }
 
-    const stagingData = records.map((row: any, index: number) => ({
-      organization_id: userProfile.organization_id,
-      upload_session_id: sessionId,
-      grn_number: row['GRN Number'] || '',
-      item_code: row['Item Code'] || '',
-      supplier_name: row['Supplier Name'] || '',
-      date: row['Date'] ? new Date(row['Date']).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      qty_received: parseFloat(row['Quantity Received']) || 0,
-      unit_rate: parseFloat(row['Unit Rate']) || 0,
-      total_amount: (parseFloat(row['Quantity Received']) || 0) * (parseFloat(row['Unit Rate']) || 0),
-      invoice_number: row['Invoice Number'] || '',
-      invoice_date: row['Invoice Date'] ? new Date(row['Invoice Date']).toISOString().split('T')[0] : null,
-      quality_status: row['Quality Status'] || 'pending',
-      remarks: row['Remarks'] || '',
-      uom: 'PCS', // Will be updated during validation
-      created_by: currentUser.id,
-      source_row_number: index + 2 // Excel row number (1-based + header)
-    }));
+    const stagingData = records.map((row: any, index: number) => {
+      // Enhanced date conversion for GRN date
+      const grnDateResult = ExcelDateConverter.convertAndValidateGRNDate(row['Date']);
+      const invoiceDateResult = ExcelDateConverter.convertAndValidateGRNDate(row['Invoice Date']);
+      
+      return {
+        organization_id: userProfile.organization_id,
+        upload_session_id: sessionId,
+        grn_number: ExcelDataProcessor.normalizeGRNNumber(row['GRN Number']),
+        item_code: ExcelDataProcessor.validateItemCode(row['Item Code']).code,
+        supplier_name: ExcelDataProcessor.cleanTextValue(row['Supplier Name']),
+        date: grnDateResult.date || new Date().toISOString().split('T')[0],
+        qty_received: ExcelDataProcessor.toNumber(row['Quantity Received']),
+        unit_rate: ExcelDataProcessor.toNumber(row['Unit Rate']),
+        total_amount: ExcelDataProcessor.toNumber(row['Quantity Received']) * ExcelDataProcessor.toNumber(row['Unit Rate']),
+        invoice_number: ExcelDataProcessor.cleanTextValue(row['Invoice Number']),
+        invoice_date: invoiceDateResult.date,
+        quality_status: ExcelDataProcessor.cleanTextValue(row['Quality Status']) || 'pending',
+        remarks: ExcelDataProcessor.cleanTextValue(row['Remarks']),
+        uom: 'PCS', // Will be updated during validation
+        created_by: currentUser.id,
+        source_row_number: index + 2, // Excel row number (1-based + header)
+        source_file_name: sessionId // Reference to the upload session
+      };
+    });
 
     // Insert staging records
     const { data: insertedRecords, error: insertError } = await supabase
@@ -218,12 +226,20 @@ export const useEnterpriseBulkUpload = () => {
 
     if (insertError) throw insertError;
 
-    // Validate each record
-    const validationPromises = insertedRecords.map(record => 
-      supabase.rpc('dkegl_validate_grn_staging_record', { _staging_id: record.id })
-    );
+    // Use enhanced validation with better error handling
+    const validationPromises = insertedRecords.map(async (record) => {
+      try {
+        return await supabase.rpc('dkegl_validate_grn_staging_record_enhanced', { 
+          _staging_id: record.id 
+        });
+      } catch (error) {
+        console.error(`Validation failed for record ${record.id}:`, error);
+        // Continue with other validations even if one fails
+        return null;
+      }
+    });
 
-    await Promise.all(validationPromises);
+    await Promise.allSettled(validationPromises);
   };
 
   const updateUploadSessionStatus = async (sessionId: string, status: string, summary?: any) => {
