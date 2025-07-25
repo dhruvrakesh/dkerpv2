@@ -65,6 +65,19 @@ export const GravurePrinting = () => {
     queryFn: async () => {
       if (!organization?.id) return [];
       
+      // First get the stage ID
+      const { data: stageData, error: stageError } = await supabase
+        .from('dkegl_workflow_stages')
+        .select('id')
+        .eq('stage_name', 'Gravure Printing')
+        .eq('organization_id', organization.id)
+        .limit(1);
+      
+      if (stageError) throw stageError;
+      if (!stageData || stageData.length === 0) return [];
+      
+      const stageId = stageData[0].id;
+      
       const { data, error } = await supabase
         .from('dkegl_workflow_progress')
         .select(`
@@ -77,13 +90,7 @@ export const GravurePrinting = () => {
           )
         `)
         .eq('organization_id', organization.id)
-        .eq('stage_id', (await supabase
-          .from('dkegl_workflow_stages')
-          .select('id')
-          .eq('stage_name', 'Gravure Printing')
-          .eq('organization_id', organization.id)
-          .single()
-        ).data?.id)
+        .eq('stage_id', stageId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

@@ -23,6 +23,7 @@ import { LaminationCoating } from "./components/manufacturing/LaminationCoating"
 import { SlittingPackaging } from "./components/manufacturing/SlittingPackaging";
 import { ManufacturingWorkflow } from "./components/manufacturing/ManufacturingWorkflow";
 import { WorkflowDashboard } from "./components/manufacturing/WorkflowDashboard";
+import { OrderPunching } from "./components/manufacturing/OrderPunching";
 
 const queryClient = new QueryClient();
 
@@ -159,6 +160,16 @@ const App = () => (
                 <ProtectedRoute>
                   <InventoryLayout>
                     <ManufacturingWorkflow />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/manufacturing/orders/new" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <OrderPunching />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 

@@ -32,6 +32,7 @@ const navigation = [
     href: '/manufacturing',
     icon: Workflow,
     children: [
+      { name: 'New Order', href: '/manufacturing/orders/new' },
       { name: 'Tape Orders', href: '/manufacturing/orders' },
       { name: 'Gravure Printing', href: '/manufacturing/gravure' },
       { name: 'Lamination', href: '/manufacturing/lamination' },
