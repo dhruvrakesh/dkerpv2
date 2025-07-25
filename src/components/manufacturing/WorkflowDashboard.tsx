@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { 
   ClipboardList, 
   Factory, 
@@ -14,9 +15,12 @@ import {
   CheckCircle,
   Play,
   Pause,
-  Eye
+  Eye,
+  ArrowRight,
+  PauseCircle
 } from 'lucide-react';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 
 interface WorkflowStage {
   id: string;
@@ -57,6 +61,13 @@ interface Order {
 export const WorkflowDashboard = () => {
   const { organization } = useDKEGLAuth();
   const [activeView, setActiveView] = useState('all');
+  const queryClient = useQueryClient();
+
+  // Enable real-time updates for workflow and orders
+  useRealtimeUpdates({
+    enableWorkflowProgress: true,
+    enableOrders: true,
+  });
 
   const { data: orders, isLoading, refetch } = useQuery({
     queryKey: ['workflow-orders', organization?.id],
@@ -75,7 +86,10 @@ export const WorkflowDashboard = () => {
         .eq('organization_id', organization.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching workflow orders:', error);
+        throw error;
+      }
       return data as Order[];
     },
     enabled: !!organization?.id,
@@ -97,6 +111,63 @@ export const WorkflowDashboard = () => {
       return data as WorkflowStage[];
     },
     enabled: !!organization?.id,
+  });
+
+  // Mutation for progressing to next stage
+  const progressToNextStage = useMutation({
+    mutationFn: async ({ orderId, currentStageId }: { orderId: string; currentStageId?: string }) => {
+      if (!organization?.id) throw new Error('No organization found');
+
+      // Call workflow automation edge function
+      const { data, error } = await supabase.functions.invoke('workflow-automation', {
+        body: {
+          action: 'auto_progress_workflow',
+          organizationId: organization.id,
+          data: { orderId }
+        }
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success(`Progressed to ${data.nextStage || 'next stage'}`);
+      queryClient.invalidateQueries({ queryKey: ['workflow-orders'] });
+    },
+    onError: (error) => {
+      toast.error(`Failed to progress workflow: ${error.message}`);
+    }
+  });
+
+  // Mutation for updating stage status
+  const updateStageStatus = useMutation({
+    mutationFn: async ({ progressId, status, notes }: { progressId: string; status: string; notes?: string }) => {
+      const { data, error } = await supabase
+        .from('dkegl_workflow_progress')
+        .update({
+          status,
+          notes,
+          updated_at: new Date().toISOString(),
+          ...(status === 'in_progress' && { started_at: new Date().toISOString() }),
+          ...(status === 'completed' && { 
+            completed_at: new Date().toISOString(),
+            progress_percentage: 100 
+          }),
+        })
+        .eq('id', progressId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Stage status updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['workflow-orders'] });
+    },
+    onError: (error) => {
+      toast.error(`Failed to update status: ${error.message}`);
+    }
   });
 
   const getStatusIcon = (status: string) => {
@@ -301,10 +372,40 @@ export const WorkflowDashboard = () => {
                       </div>
 
                       <div className="flex justify-between items-center pt-4 border-t">
-                        <div className="flex gap-2">
+                      <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="default"
+                            onClick={() => progressToNextStage.mutate({ orderId: order.id })}
+                            disabled={progressToNextStage.isPending || order.status === 'completed'}
+                          >
+                            <ArrowRight className="mr-2 h-4 w-4" />
+                            Next Stage
+                          </Button>
+                          
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              // Find in-progress stage and pause it
+                              const inProgressStage = order.workflow_progress.find(p => p.status === 'in_progress');
+                              if (inProgressStage) {
+                                updateStageStatus.mutate({
+                                  progressId: inProgressStage.id,
+                                  status: 'on_hold',
+                                  notes: 'Production paused by user'
+                                });
+                              }
+                            }}
+                            disabled={updateStageStatus.isPending || !order.workflow_progress.some(p => p.status === 'in_progress')}
+                          >
+                            <PauseCircle className="mr-2 h-4 w-4" />
+                            Hold
+                          </Button>
+
                           <Button size="sm" variant="outline">
                             <Eye className="mr-2 h-4 w-4" />
-                            View Details
+                            Details
                           </Button>
                         </div>
                         

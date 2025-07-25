@@ -19,6 +19,7 @@ export const useRealtimeUpdates = (config: RealtimeConfig = {}) => {
     
     // Invalidate relevant queries
     queryClient.invalidateQueries({ queryKey: ['workflow-progress'] });
+    queryClient.invalidateQueries({ queryKey: ['workflow-orders'] });
     queryClient.invalidateQueries({ queryKey: ['gravure-jobs'] });
     queryClient.invalidateQueries({ queryKey: ['slitting-jobs'] });
     queryClient.invalidateQueries({ queryKey: ['production-analytics'] });
@@ -45,6 +46,7 @@ export const useRealtimeUpdates = (config: RealtimeConfig = {}) => {
     
     // Invalidate order-related queries
     queryClient.invalidateQueries({ queryKey: ['orders'] });
+    queryClient.invalidateQueries({ queryKey: ['workflow-orders'] });
     queryClient.invalidateQueries({ queryKey: ['workflow-progress'] });
   }, [queryClient]);
 
