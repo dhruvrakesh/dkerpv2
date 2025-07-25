@@ -43,11 +43,14 @@ const navigation = [
     href: '/manufacturing',
     icon: Workflow,
     children: [
+      { name: 'Workflow Dashboard', href: '/manufacturing' },
+      { name: 'New Order', href: '/manufacturing/orders/new' },
+      { name: 'UIORN Tracking', href: '/manufacturing/tracking' },
       { name: 'Tape Orders', href: '/manufacturing/orders' },
       { name: 'Gravure Printing', href: '/manufacturing/gravure' },
-      { name: 'Lamination', href: '/manufacturing/lamination' },
+      { name: 'Lamination & Coating', href: '/manufacturing/lamination' },
       { name: 'Adhesive Coating', href: '/manufacturing/coating' },
-      { name: 'Slitting', href: '/manufacturing/slitting' }
+      { name: 'Slitting & Packaging', href: '/manufacturing/slitting' }
     ]
   },
   {

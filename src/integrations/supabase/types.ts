@@ -3426,6 +3426,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           organization_id: string | null
+          sequence_order: number | null
           stage_config: Json | null
           stage_name: string
           stage_order: number
@@ -3437,6 +3438,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           organization_id?: string | null
+          sequence_order?: number | null
           stage_config?: Json | null
           stage_name: string
           stage_order: number
@@ -3448,6 +3450,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           organization_id?: string | null
+          sequence_order?: number | null
           stage_config?: Json | null
           stage_name?: string
           stage_order?: number

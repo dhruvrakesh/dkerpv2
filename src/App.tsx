@@ -20,11 +20,13 @@ import { VendorManagement } from "./components/procurement/VendorManagement";
 import { QualityControlDashboard } from "./components/quality/QualityControlDashboard";
 import { GravurePrinting } from "./components/manufacturing/GravurePrinting";
 import { LaminationCoating } from "./components/manufacturing/LaminationCoating";
+import { AdhesiveCoating } from "./components/manufacturing/AdhesiveCoating";
 import { SlittingPackaging } from "./components/manufacturing/SlittingPackaging";
 import { ManufacturingWorkflow } from "./components/manufacturing/ManufacturingWorkflow";
 import { WorkflowDashboard } from "./components/manufacturing/WorkflowDashboard";
 import { OrderPunching } from "./components/manufacturing/OrderPunching";
 import { CostAnalysisDashboard } from "./components/manufacturing/CostAnalysisDashboard";
+import { UiornTrackingDashboard } from "./components/manufacturing/UiornTrackingDashboard";
 
 const queryClient = new QueryClient();
 
@@ -200,7 +202,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <InventoryLayout>
-                    <LaminationCoating />
+                    <AdhesiveCoating />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 
@@ -221,6 +223,16 @@ const App = () => (
                 <ProtectedRoute>
                   <InventoryLayout>
                     <CostAnalysisDashboard />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/manufacturing/tracking" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <UiornTrackingDashboard />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 
