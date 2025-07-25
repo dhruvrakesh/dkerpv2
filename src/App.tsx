@@ -16,6 +16,7 @@ import IssueManagement from "./pages/inventory/IssueManagement";
 import StockManagement from "./pages/inventory/StockManagement";
 import PricingMasterPage from "./pages/inventory/PricingMasterPage";
 import { ProductionAnalyticsDashboard } from "./components/analytics/ProductionAnalyticsDashboard";
+import { VendorManagement } from "./components/procurement/VendorManagement";
 
 const queryClient = new QueryClient();
 
@@ -112,6 +113,16 @@ const App = () => (
                 <ProtectedRoute>
                   <InventoryLayout>
                     <ProductionAnalyticsDashboard />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/procurement/vendors" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <VendorManagement />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 

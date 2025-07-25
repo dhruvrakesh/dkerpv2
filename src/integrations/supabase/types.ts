@@ -1775,6 +1775,69 @@ export type Database = {
         }
         Relationships: []
       }
+      dkegl_po_items: {
+        Row: {
+          created_at: string
+          delivery_date: string | null
+          id: string
+          item_code: string
+          item_name: string
+          notes: string | null
+          organization_id: string | null
+          po_id: string | null
+          quantity: number
+          total_amount: number | null
+          unit_price: number
+          uom: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_date?: string | null
+          id?: string
+          item_code: string
+          item_name: string
+          notes?: string | null
+          organization_id?: string | null
+          po_id?: string | null
+          quantity: number
+          total_amount?: number | null
+          unit_price: number
+          uom?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivery_date?: string | null
+          id?: string
+          item_code?: string
+          item_name?: string
+          notes?: string | null
+          organization_id?: string | null
+          po_id?: string | null
+          quantity?: number
+          total_amount?: number | null
+          unit_price?: number
+          uom?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_po_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_po_items_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_pricing_audit_log: {
         Row: {
           action: string
@@ -2184,6 +2247,75 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_purchase_orders: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          expected_delivery_date: string | null
+          id: string
+          notes: string | null
+          organization_id: string | null
+          po_date: string
+          po_number: string
+          status: string
+          total_amount: number | null
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          po_date?: string
+          po_number: string
+          status?: string
+          total_amount?: number | null
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          po_date?: string
+          po_number?: string
+          status?: string
+          total_amount?: number | null
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_purchase_orders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_purchase_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -2944,6 +3076,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "dkegl_user_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_vendors: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          created_at: string
+          credit_limit: number | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          organization_id: string | null
+          payment_terms: string | null
+          phone: string | null
+          tax_id: string | null
+          updated_at: string
+          vendor_code: string
+          vendor_name: string
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          credit_limit?: number | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          vendor_code: string
+          vendor_name: string
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          credit_limit?: number | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          vendor_code?: string
+          vendor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_vendors_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "dkegl_organizations"
