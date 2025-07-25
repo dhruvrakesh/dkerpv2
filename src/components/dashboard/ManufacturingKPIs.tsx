@@ -15,6 +15,7 @@ import {
   Activity
 } from 'lucide-react';
 import { useProductionAnalytics } from '@/hooks/useProductionAnalytics';
+import { LoadingState, ErrorState } from '@/components/ui/loading-spinner';
 
 
 export function ManufacturingKPIs() {
@@ -33,6 +34,7 @@ export function ManufacturingKPIs() {
     criticalDefects: 0
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { getProductionMetrics, getQualityMetrics } = useProductionAnalytics();
 
   useEffect(() => {
@@ -41,15 +43,35 @@ export function ManufacturingKPIs() {
 
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
       const [prodMetrics, qualMetrics] = await Promise.all([
-        getProductionMetrics(),
-        getQualityMetrics()
+        getProductionMetrics().catch(err => {
+          console.error('Error loading production metrics:', err);
+          return {
+            totalOrders: 0,
+            activeOrders: 0,
+            completedOrders: 0,
+            overallEfficiency: 0,
+            oeeScore: 0,
+            wastePercentage: 0
+          };
+        }),
+        getQualityMetrics().catch(err => {
+          console.error('Error loading quality metrics:', err);
+          return {
+            passRate: 0,
+            defectRate: 0,
+            totalInspections: 0,
+            criticalDefects: 0
+          };
+        })
       ]);
       setProductionMetrics(prodMetrics);
       setQualityMetrics(qualMetrics);
     } catch (error) {
       console.error('Error loading manufacturing KPIs:', error);
+      setError('Failed to load manufacturing data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -98,14 +120,11 @@ export function ManufacturingKPIs() {
   ];
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
-          <p className="mt-4 text-muted-foreground">Loading manufacturing KPIs...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState message="Loading manufacturing KPIs..." />;
+  }
+
+  if (error) {
+    return <ErrorState message={error} onRetry={loadData} />;
   }
 
   return (

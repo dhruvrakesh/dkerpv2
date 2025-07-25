@@ -67,42 +67,54 @@ export const QualityControlDashboard = () => {
 
   const loadQualityData = async () => {
     try {
-      // Load real quality metrics and inspections
+      // Load real quality metrics and inspections with proper error handling
       const [qualityMetrics, inspections] = await Promise.all([
-        getQualityMetrics(),
-        getQualityInspections()
+        getQualityMetrics().catch(err => {
+          console.error('Error loading quality metrics:', err);
+          return {
+            passRate: 0,
+            defectRate: 0, 
+            averageInspectionTime: 0,
+            totalInspections: 0,
+            criticalDefects: 0
+          };
+        }),
+        getQualityInspections().catch(err => {
+          console.error('Error loading quality inspections:', err);
+          return [];
+        })
       ]);
 
       setMetrics({
-        passRate: qualityMetrics.passRate,
-        defectRate: qualityMetrics.defectRate,
-        averageInspectionTime: qualityMetrics.averageInspectionTime,
-        totalInspections: qualityMetrics.totalInspections,
-        criticalDefects: qualityMetrics.criticalDefects
+        passRate: qualityMetrics.passRate || 0,
+        defectRate: qualityMetrics.defectRate || 0,
+        averageInspectionTime: qualityMetrics.averageInspectionTime || 0,
+        totalInspections: qualityMetrics.totalInspections || 0,
+        criticalDefects: qualityMetrics.criticalDefects || 0
       });
 
-      // Transform inspections to match our interface
+      // Transform inspections to match our interface with safe property access
       const transformedChecks: QualityCheck[] = inspections.map(inspection => ({
         id: inspection.id,
-        uiorn: `UIORN-${inspection.order_id?.slice(-4) || '0000'}`,
-        itemName: `Quality Check Item ${inspection.id.slice(-4)}`,
-        stage: `Stage ${inspection.stage_id?.slice(-4) || '0000'}`,
+        uiorn: `UIORN-${String(inspection.order_id).slice(-4) || '0000'}`,
+        itemName: `Quality Check Item ${String(inspection.id).slice(-4)}`,
+        stage: `Stage ${String(inspection.stage_id).slice(-4) || '0000'}`,
         checkType: 'visual' as QualityCheck['checkType'],
         status: (inspection.overall_result === 'passed' ? 'passed' : 
                  inspection.overall_result === 'failed' ? 'failed' : 
                  inspection.overall_result === 'in_review' ? 'in_review' : 'pending') as QualityCheck['status'],
-        inspector: `Inspector ${inspection.inspector_id?.slice(-4) || '0000'}`,
-        timestamp: inspection.inspection_date || new Date().toISOString(),
-        defects: inspection.defects_found || [],
-        measurements: inspection.inspection_results || {}
+        inspector: `Inspector ${String(inspection.inspector_id || 'unknown').slice(-4) || '0000'}`,
+        timestamp: inspection.inspection_date || inspection.created_at || new Date().toISOString(),
+        defects: Array.isArray(inspection.defects_found) ? inspection.defects_found : [],
+        measurements: typeof inspection.inspection_results === 'object' ? inspection.inspection_results : {}
       }));
 
       setQualityChecks(transformedChecks);
     } catch (error) {
       console.error('Error loading quality data:', error);
       toast({
-        title: "Error",
-        description: "Failed to load quality data",
+        title: "Warning",
+        description: "Some quality data could not be loaded. Showing available data.",
         variant: "destructive"
       });
     }
