@@ -13,7 +13,9 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Printer, Settings, CheckCircle, AlertTriangle, Clock, Play, Pause } from 'lucide-react';
+import { useQualityEnforcement } from '@/hooks/useQualityEnforcement';
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import { Printer, Settings, CheckCircle, AlertTriangle, Clock, Play, Pause, Shield } from 'lucide-react';
 
 interface GravureJob {
   id: string;
@@ -39,6 +41,13 @@ export const GravurePrinting = () => {
   const { user, organization } = useDKEGLAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { checkStageQualityStatus, createQualityCheckpoint } = useQualityEnforcement();
+  
+  // Enable real-time updates for workflow progress
+  useRealtimeUpdates({
+    enableWorkflowProgress: true,
+    enableQualityInspections: true,
+  });
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
   const [setupData, setSetupData] = useState({
     cylinder_pressure: '',
@@ -128,28 +137,53 @@ export const GravurePrinting = () => {
     },
   });
 
-  // Start job
-  const startJob = (jobId: string) => {
+  // Start job with quality enforcement
+  const startJob = async (jobId: string) => {
     const job = gravureJobs.find(j => j.id === jobId);
     if (!job) return;
 
-    updateJobStatus.mutate({
-      jobId,
-      status: 'in_progress',
-      progressPercentage: 10,
-      stageData: {
-        ...(typeof job.stage_data === 'object' && job.stage_data !== null ? job.stage_data : {}),
-        setup_parameters: setupData,
-        started_by: user?.id,
-        start_time: new Date().toISOString(),
+    try {
+      // Check quality status before starting
+      await checkStageQualityStatus.mutateAsync({ 
+        stageId: job.stage_id, 
+        orderId: job.order_id 
+      });
+
+      updateJobStatus.mutate({
+        jobId,
+        status: 'in_progress',
+        progressPercentage: 10,
+        stageData: {
+          ...(typeof job.stage_data === 'object' && job.stage_data !== null ? job.stage_data : {}),
+          setup_parameters: setupData,
+          started_by: user?.id,
+          start_time: new Date().toISOString(),
+        }
+      });
+    } catch (error: any) {
+      // Quality enforcement will show appropriate toast
+      if (error.message === 'QUALITY_CHECKPOINT_REQUIRED') {
+        // Create quality checkpoint automatically
+        await createQualityCheckpoint.mutateAsync({
+          stageId: job.stage_id,
+          orderId: job.order_id,
+          checkType: 'pre_stage'
+        });
       }
-    });
+    }
   };
 
-  // Complete job
-  const completeJob = (jobId: string) => {
+  // Complete job with quality checkpoint creation
+  const completeJob = async (jobId: string) => {
     const job = gravureJobs.find(j => j.id === jobId);
     if (!job) return;
+
+    // Create post-stage quality checkpoint
+    await createQualityCheckpoint.mutateAsync({
+      stageId: job.stage_id,
+      orderId: job.order_id,
+      checkType: 'post_stage'
+    });
 
     updateJobStatus.mutate({
       jobId,
@@ -159,7 +193,7 @@ export const GravurePrinting = () => {
         ...(typeof job.stage_data === 'object' && job.stage_data !== null ? job.stage_data : {}),
         completed_by: user?.id,
         completion_time: new Date().toISOString(),
-        final_quality_check: 'passed',
+        final_quality_check: 'pending_inspection',
       }
     });
   };
@@ -391,7 +425,7 @@ export const GravurePrinting = () => {
                           {job.status === 'pending' && (
                             <Button 
                               onClick={() => startJob(job.id)}
-                              disabled={updateJobStatus.isPending}
+                              disabled={updateJobStatus.isPending || checkStageQualityStatus.isPending}
                               className="flex-1"
                             >
                               <Play className="h-4 w-4 mr-2" />
@@ -402,7 +436,7 @@ export const GravurePrinting = () => {
                           {job.status === 'in_progress' && (
                             <Button 
                               onClick={() => completeJob(job.id)}
-                              disabled={updateJobStatus.isPending}
+                              disabled={updateJobStatus.isPending || createQualityCheckpoint.isPending}
                               className="flex-1"
                             >
                               <CheckCircle className="h-4 w-4 mr-2" />
@@ -411,10 +445,16 @@ export const GravurePrinting = () => {
                           )}
 
                           {job.status === 'completed' && (
-                            <Badge variant="default" className="flex-1 justify-center">
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Completed
-                            </Badge>
+                            <div className="flex gap-2 flex-1">
+                              <Badge variant="default" className="flex-1 justify-center">
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Completed
+                              </Badge>
+                              <Button variant="outline" size="sm">
+                                <Shield className="h-4 w-4 mr-2" />
+                                Quality
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </CardContent>
