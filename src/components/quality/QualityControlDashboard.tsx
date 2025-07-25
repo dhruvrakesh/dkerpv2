@@ -18,6 +18,8 @@ import {
   BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useProductionAnalytics } from '@/hooks/useProductionAnalytics';
+import { useToast } from '@/hooks/use-toast';
 
 interface QualityCheck {
   id: string;
@@ -41,6 +43,15 @@ interface QualityMetrics {
 }
 
 export const QualityControlDashboard = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const { toast } = useToast();
+  const { 
+    loading, 
+    getQualityMetrics, 
+    getQualityInspections,
+    updateQualityInspection 
+  } = useProductionAnalytics();
+  
   const [qualityChecks, setQualityChecks] = useState<QualityCheck[]>([]);
   const [metrics, setMetrics] = useState<QualityMetrics>({
     passRate: 0,
@@ -49,80 +60,49 @@ export const QualityControlDashboard = () => {
     totalInspections: 0,
     criticalDefects: 0
   });
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     loadQualityData();
   }, []);
 
   const loadQualityData = async () => {
-    setLoading(true);
     try {
-      // Simulate API call - in real implementation, fetch from Supabase
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockChecks: QualityCheck[] = [
-        {
-          id: 'QC001',
-          uiorn: 'UIORN001',
-          itemName: 'Premium Tape Roll - 24mm',
-          stage: 'Gravure Printing',
-          checkType: 'visual',
-          status: 'passed',
-          inspector: 'Alice Johnson',
-          timestamp: '2024-01-15T10:30:00Z',
-          measurements: { printQuality: 'Excellent', colorAccuracy: '98%' }
-        },
-        {
-          id: 'QC002',
-          uiorn: 'UIORN001',
-          itemName: 'Premium Tape Roll - 24mm',
-          stage: 'Lamination',
-          checkType: 'dimensional',
-          status: 'failed',
-          inspector: 'Bob Wilson',
-          timestamp: '2024-01-15T14:45:00Z',
-          defects: ['Thickness variance', 'Edge misalignment'],
-          measurements: { thickness: '0.52mm', tolerance: '±0.1mm' }
-        },
-        {
-          id: 'QC003',
-          uiorn: 'UIORN002',
-          itemName: 'Standard Label Set - 50x25mm',
-          stage: 'Gravure Printing',
-          checkType: 'visual',
-          status: 'in_review',
-          inspector: 'Charlie Brown',
-          timestamp: '2024-01-15T15:20:00Z',
-          measurements: { printQuality: 'Good', colorAccuracy: '95%' }
-        },
-        {
-          id: 'QC004',
-          uiorn: 'UIORN003',
-          itemName: 'Custom Packaging Film - 200mic',
-          stage: 'Order Punching',
-          checkType: 'material',
-          status: 'pending',
-          inspector: 'David Lee',
-          timestamp: '2024-01-15T16:00:00Z'
-        }
-      ];
+      // Load real quality metrics and inspections
+      const [qualityMetrics, inspections] = await Promise.all([
+        getQualityMetrics(),
+        getQualityInspections()
+      ]);
 
-      const mockMetrics: QualityMetrics = {
-        passRate: 87.5,
-        defectRate: 12.5,
-        averageInspectionTime: 25.4,
-        totalInspections: 156,
-        criticalDefects: 3
-      };
-      
-      setQualityChecks(mockChecks);
-      setMetrics(mockMetrics);
+      setMetrics({
+        passRate: qualityMetrics.passRate,
+        defectRate: qualityMetrics.defectRate,
+        averageInspectionTime: qualityMetrics.averageInspectionTime,
+        totalInspections: qualityMetrics.totalInspections,
+        criticalDefects: qualityMetrics.criticalDefects
+      });
+
+      // Transform inspections to match our interface
+      const transformedChecks: QualityCheck[] = inspections.map(inspection => ({
+        id: inspection.id,
+        uiorn: inspection.uiorn || 'N/A',
+        itemName: inspection.item_name || 'Unknown Item',
+        stage: inspection.stage_name || 'Unknown Stage',
+        checkType: (inspection.inspection_data?.check_type || 'visual') as QualityCheck['checkType'],
+        status: inspection.status as QualityCheck['status'],
+        inspector: inspection.inspector_name || 'Unknown Inspector',
+        timestamp: inspection.inspection_date || new Date().toISOString(),
+        defects: inspection.inspection_data?.defects || [],
+        measurements: inspection.inspection_data?.measurements || {}
+      }));
+
+      setQualityChecks(transformedChecks);
     } catch (error) {
       console.error('Error loading quality data:', error);
-    } finally {
-      setLoading(false);
+      toast({
+        title: "Error",
+        description: "Failed to load quality data",
+        variant: "destructive"
+      });
     }
   };
 

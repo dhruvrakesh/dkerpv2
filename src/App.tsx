@@ -15,6 +15,7 @@ import GRNManagement from "./pages/inventory/GRNManagement";
 import IssueManagement from "./pages/inventory/IssueManagement";
 import StockManagement from "./pages/inventory/StockManagement";
 import PricingMasterPage from "./pages/inventory/PricingMasterPage";
+import { ProductionAnalyticsDashboard } from "./components/analytics/ProductionAnalyticsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,16 @@ const App = () => (
                 <ProtectedRoute>
                   <InventoryLayout>
                     <StockManagement />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/analytics/production" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <ProductionAnalyticsDashboard />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 
