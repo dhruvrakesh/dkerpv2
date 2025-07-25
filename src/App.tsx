@@ -18,6 +18,11 @@ import PricingMasterPage from "./pages/inventory/PricingMasterPage";
 import { ProductionAnalyticsDashboard } from "./components/analytics/ProductionAnalyticsDashboard";
 import { VendorManagement } from "./components/procurement/VendorManagement";
 import { QualityControlDashboard } from "./components/quality/QualityControlDashboard";
+import { GravurePrinting } from "./components/manufacturing/GravurePrinting";
+import { LaminationCoating } from "./components/manufacturing/LaminationCoating";
+import { SlittingPackaging } from "./components/manufacturing/SlittingPackaging";
+import { ManufacturingWorkflow } from "./components/manufacturing/ManufacturingWorkflow";
+import { WorkflowDashboard } from "./components/manufacturing/WorkflowDashboard";
 
 const queryClient = new QueryClient();
 
@@ -134,6 +139,116 @@ const App = () => (
                 <ProtectedRoute>
                   <InventoryLayout>
                     <QualityControlDashboard />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/manufacturing" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <WorkflowDashboard />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/manufacturing/orders" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <ManufacturingWorkflow />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/manufacturing/gravure" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <GravurePrinting />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/manufacturing/lamination" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <LaminationCoating />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/manufacturing/coating" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <LaminationCoating />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/manufacturing/slitting" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <SlittingPackaging />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/analytics/kpi" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <ProductionAnalyticsDashboard />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/reports" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <ProductionAnalyticsDashboard />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/planning" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <ProductionAnalyticsDashboard />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/users" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <ProductionAnalyticsDashboard />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <ProductionAnalyticsDashboard />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 
