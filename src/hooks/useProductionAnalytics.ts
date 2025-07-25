@@ -204,7 +204,7 @@ export const useProductionAnalytics = () => {
           *,
           dkegl_orders!inner(order_number, uiorn, item_name),
           dkegl_workflow_stages!inner(stage_name),
-          dkegl_quality_templates!inner(template_name, check_type)
+          dkegl_quality_templates!inner(template_name)
         `)
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false })

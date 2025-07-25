@@ -2475,6 +2475,9 @@ export type Database = {
       dkegl_quality_templates: {
         Row: {
           acceptance_criteria: Json
+          check_type:
+            | Database["public"]["Enums"]["dkegl_quality_check_type"]
+            | null
           created_at: string
           created_by: string | null
           id: string
@@ -2487,6 +2490,9 @@ export type Database = {
         }
         Insert: {
           acceptance_criteria?: Json
+          check_type?:
+            | Database["public"]["Enums"]["dkegl_quality_check_type"]
+            | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -2499,6 +2505,9 @@ export type Database = {
         }
         Update: {
           acceptance_criteria?: Json
+          check_type?:
+            | Database["public"]["Enums"]["dkegl_quality_check_type"]
+            | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -4702,6 +4711,17 @@ export type Database = {
         | "quality_check"
         | "approved"
         | "rejected"
+      dkegl_quality_check_type:
+        | "dimensional"
+        | "visual"
+        | "functional"
+        | "material"
+        | "weight"
+        | "thickness"
+        | "color_match"
+        | "print_quality"
+        | "adhesion"
+        | "barrier_properties"
       dkegl_quality_status:
         | "pending"
         | "in_review"
@@ -4877,6 +4897,18 @@ export const Constants = {
         "quality_check",
         "approved",
         "rejected",
+      ],
+      dkegl_quality_check_type: [
+        "dimensional",
+        "visual",
+        "functional",
+        "material",
+        "weight",
+        "thickness",
+        "color_match",
+        "print_quality",
+        "adhesion",
+        "barrier_properties",
       ],
       dkegl_quality_status: [
         "pending",
