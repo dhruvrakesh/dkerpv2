@@ -270,7 +270,7 @@ export const UiornTrackingDashboard = () => {
                 <h4 className="font-medium">Workflow Progress</h4>
                 <div className="flex items-center gap-2 overflow-x-auto pb-2">
                   {order.stages.map((stage, index) => (
-                    <React.Fragment key={stage.stage_name}>
+                    <React.Fragment key={`${stage.stage_name}-${stage.sequence_order}-${index}`}>
                       <div className="flex flex-col items-center min-w-32 text-center">
                         <div className="flex items-center gap-2 mb-2">
                           {getStageIcon(stage.status)}
