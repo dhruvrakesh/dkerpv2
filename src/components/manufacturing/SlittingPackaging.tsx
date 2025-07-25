@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 import { useToast } from '@/hooks/use-toast';
+import { MaterialConsumptionCard } from './MaterialConsumptionCard';
 import { Package, Settings, CheckCircle, AlertTriangle, Clock, Play, Pause, Scissors } from 'lucide-react';
 
 interface SlittingJob {
@@ -244,8 +245,9 @@ export const SlittingPackaging = () => {
 
             <CardContent>
               <Tabs defaultValue="slitting" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="slitting">Slitting Parameters</TabsTrigger>
+                  <TabsTrigger value="materials">Materials</TabsTrigger>
                   <TabsTrigger value="packaging">Packaging & QC</TabsTrigger>
                   <TabsTrigger value="dispatch">Dispatch Preparation</TabsTrigger>
                 </TabsList>
@@ -369,6 +371,14 @@ export const SlittingPackaging = () => {
                       rows={3}
                     />
                   </div>
+                </TabsContent>
+
+                <TabsContent value="materials" className="space-y-4 mt-4">
+                  <MaterialConsumptionCard 
+                    workflowProgressId={job.id}
+                    stageName="Slitting & Packaging"
+                    orderId={job.order_id}
+                  />
                 </TabsContent>
 
                 <TabsContent value="packaging" className="space-y-4 mt-4">

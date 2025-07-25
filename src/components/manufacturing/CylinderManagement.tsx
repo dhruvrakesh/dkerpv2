@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
+import { MaterialConsumptionCard } from './MaterialConsumptionCard';
 import { 
   Cylinder, 
   Plus, 
