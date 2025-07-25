@@ -84,15 +84,17 @@ export const QualityControlDashboard = () => {
       // Transform inspections to match our interface
       const transformedChecks: QualityCheck[] = inspections.map(inspection => ({
         id: inspection.id,
-        uiorn: inspection.uiorn || 'N/A',
-        itemName: inspection.item_name || 'Unknown Item',
-        stage: inspection.stage_name || 'Unknown Stage',
-        checkType: (inspection.inspection_data?.check_type || 'visual') as QualityCheck['checkType'],
-        status: inspection.status as QualityCheck['status'],
-        inspector: inspection.inspector_name || 'Unknown Inspector',
+        uiorn: `UIORN-${inspection.order_id?.slice(-4) || '0000'}`,
+        itemName: `Quality Check Item ${inspection.id.slice(-4)}`,
+        stage: `Stage ${inspection.stage_id?.slice(-4) || '0000'}`,
+        checkType: 'visual' as QualityCheck['checkType'],
+        status: (inspection.overall_result === 'passed' ? 'passed' : 
+                 inspection.overall_result === 'failed' ? 'failed' : 
+                 inspection.overall_result === 'in_review' ? 'in_review' : 'pending') as QualityCheck['status'],
+        inspector: `Inspector ${inspection.inspector_id?.slice(-4) || '0000'}`,
         timestamp: inspection.inspection_date || new Date().toISOString(),
-        defects: inspection.inspection_data?.defects || [],
-        measurements: inspection.inspection_data?.measurements || {}
+        defects: inspection.defects_found || [],
+        measurements: inspection.inspection_results || {}
       }));
 
       setQualityChecks(transformedChecks);
