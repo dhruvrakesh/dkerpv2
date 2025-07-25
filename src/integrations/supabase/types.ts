@@ -4692,6 +4692,7 @@ export type Database = {
         | "shipped"
         | "delivered"
         | "cancelled"
+        | "pending"
       dkegl_process_status:
         | "pending"
         | "in_progress"
@@ -4865,6 +4866,7 @@ export const Constants = {
         "shipped",
         "delivered",
         "cancelled",
+        "pending",
       ],
       dkegl_process_status: [
         "pending",

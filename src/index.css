@@ -70,7 +70,7 @@
 
     --radius: 0.75rem;
 
-    /* DKEGL Sidebar */
+    /* DKEGL Sidebar - Enhanced Visibility */
     --sidebar-background: 215 25% 15%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 25 95% 53%;
@@ -115,6 +115,7 @@
     --input: 215 25% 20%;
     --ring: 25 95% 53%;
 
+    /* DKEGL Dark Mode Sidebar - Enhanced Visibility */
     --sidebar-background: 215 25% 8%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 25 95% 53%;
