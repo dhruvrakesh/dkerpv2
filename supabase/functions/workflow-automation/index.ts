@@ -50,68 +50,172 @@ serve(async (req) => {
 async function autoProgressWorkflow(supabase: any, organizationId: string, data: any) {
   const { orderId } = data;
 
-  // Get current workflow progress
+  console.log('Auto-progress workflow request:', { organizationId, orderId });
+
+  if (!organizationId || !orderId) {
+    throw new Error('Organization ID and Order ID are required');
+  }
+
+  // Get current workflow progress (in_progress and completed stages)
   const { data: currentProgress, error: progressError } = await supabase
     .from('dkegl_workflow_progress')
     .select(`
       *,
-      dkegl_workflow_stages (*)
+      dkegl_workflow_stages!inner(
+        id,
+        stage_name,
+        sequence_order,
+        is_active
+      )
     `)
     .eq('organization_id', organizationId)
     .eq('order_id', orderId)
-    .eq('status', 'completed');
+    .in('status', ['completed', 'in_progress'])
+    .eq('dkegl_workflow_stages.is_active', true);
 
-  if (progressError) throw progressError;
+  if (progressError) {
+    console.error('Error fetching current progress:', progressError);
+    throw progressError;
+  }
 
-  // Get all workflow stages for this organization
+  console.log('Current progress stages:', currentProgress?.length || 0);
+
+  // Get all available workflow stages for this organization
   const { data: allStages, error: stagesError } = await supabase
     .from('dkegl_workflow_stages')
     .select('*')
     .eq('organization_id', organizationId)
-    .order('stage_order', { ascending: true });
+    .eq('is_active', true)
+    .order('sequence_order', { ascending: true });
 
-  if (stagesError) throw stagesError;
+  if (stagesError) {
+    console.error('Error fetching workflow stages:', stagesError);
+    throw stagesError;
+  }
 
-  // Find next stage to create
-  const completedStageOrders = currentProgress.map(p => p.dkegl_workflow_stages.stage_order);
-  const nextStage = allStages.find(stage => 
-    !completedStageOrders.includes(stage.stage_order) &&
-    stage.stage_order > Math.min(...completedStageOrders)
-  );
+  console.log('Available workflow stages:', allStages?.length || 0);
 
-  if (!nextStage) {
+  if (!allStages || allStages.length === 0) {
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        message: 'Workflow completed - no more stages to progress to' 
+        success: false, 
+        message: 'No active workflow stages found for this organization',
+        error: 'NO_STAGES_CONFIGURED'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 
-  // Create next workflow progress entry
-  const { data: newProgress, error: createError } = await supabase
-    .from('dkegl_workflow_progress')
+  // Find completed and in-progress stage orders
+  const processedStageOrders = (currentProgress || [])
+    .map(p => p.dkegl_workflow_stages?.sequence_order)
+    .filter(order => order !== null && order !== undefined);
+
+  console.log('Processed stage orders:', processedStageOrders);
+
+  // Find the next stage that hasn't been started yet
+  const nextStage = allStages.find(stage => 
+    !processedStageOrders.includes(stage.sequence_order)
+  );
+
+  if (!nextStage) {
+    // Check if there are any incomplete stages
+    const incompleteStages = (currentProgress || []).filter(p => p.status !== 'completed');
+    
+    if (incompleteStages.length > 0) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'Please complete current stage before progressing',
+          currentStage: incompleteStages[0].dkegl_workflow_stages?.stage_name,
+          error: 'INCOMPLETE_CURRENT_STAGE'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        message: 'All workflow stages completed',
+        error: 'WORKFLOW_COMPLETE'
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  console.log('Creating next stage:', nextStage.stage_name);
+
+  // Create next workflow progress entry with retry logic
+  let retryCount = 0;
+  const maxRetries = 3;
+  let newProgress = null;
+
+  while (retryCount < maxRetries) {
+    try {
+      const { data, error: createError } = await supabase
+        .from('dkegl_workflow_progress')
+        .insert({
+          organization_id: organizationId,
+          order_id: orderId,
+          stage_id: nextStage.id,
+          status: 'pending',
+          progress_percentage: 0,
+          stage_data: {},
+          quality_status: 'pending',
+          notes: `Auto-generated from workflow automation at ${new Date().toISOString()}`,
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error(`Create attempt ${retryCount + 1} failed:`, createError);
+        if (retryCount === maxRetries - 1) throw createError;
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+        continue;
+      }
+
+      newProgress = data;
+      break;
+    } catch (error) {
+      console.error(`Retry ${retryCount + 1} failed:`, error);
+      retryCount++;
+      if (retryCount >= maxRetries) throw error;
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+    }
+  }
+
+  console.log('Successfully created workflow progress:', newProgress?.id);
+
+  // Log the auto-progression action for audit trail
+  await supabase
+    .from('dkegl_audit_log')
     .insert({
       organization_id: organizationId,
-      order_id: orderId,
-      stage_id: nextStage.id,
-      status: 'pending',
-      progress_percentage: 0,
-      stage_data: {},
-      quality_status: 'pending',
-      notes: `Auto-generated from workflow automation`,
+      table_name: 'dkegl_workflow_progress',
+      record_id: newProgress.id,
+      action: 'auto_progress',
+      old_values: null,
+      new_values: newProgress,
+      user_id: null, // System action
+      metadata: {
+        order_id: orderId,
+        auto_progressed_to: nextStage.stage_name,
+        sequence_order: nextStage.sequence_order
+      }
     })
-    .select()
-    .single();
-
-  if (createError) throw createError;
+    .then(({ error }) => {
+      if (error) console.error('Audit log error:', error);
+    });
 
   return new Response(
     JSON.stringify({ 
       success: true, 
+      message: `Progressed to ${nextStage.stage_name}`,
       nextStage: nextStage.stage_name,
-      progressId: newProgress.id
+      progressId: newProgress.id,
+      sequenceOrder: nextStage.sequence_order
     }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
