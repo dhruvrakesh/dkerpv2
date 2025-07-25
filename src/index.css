@@ -218,4 +218,100 @@
   .metric-success {
     @apply text-2xl font-bold text-success;
   }
+
+  /* Enhanced Enterprise Animations */
+  .fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  .pulse-subtle {
+    animation: pulseSubtle 2s ease-in-out infinite;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulseSubtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  /* Glass Effect for Premium Cards */
+  .glass-card {
+    @apply backdrop-blur-sm bg-card/80 border border-border/50 
+           shadow-[var(--shadow-elegant)] rounded-xl;
+  }
+
+  /* Enhanced Progress Indicators */
+  .progress-ring {
+    @apply relative inline-flex items-center justify-center;
+  }
+
+  .progress-ring svg {
+    transform: rotate(-90deg);
+  }
+
+  .progress-ring .progress-circle {
+    fill: transparent;
+    stroke: hsl(var(--muted));
+    stroke-width: 8;
+  }
+
+  .progress-ring .progress-fill {
+    fill: transparent;
+    stroke: hsl(var(--primary));
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.3s ease;
+  }
+
+  /* Enhanced Mobile Responsiveness */
+  .mobile-optimized {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  @media (max-width: 768px) {
+    .mobile-stack {
+      @apply flex-col space-y-4 space-x-0;
+    }
+
+    .mobile-full {
+      @apply w-full;
+    }
+
+    .mobile-hidden {
+      @apply hidden;
+    }
+
+    .mobile-compact {
+      @apply p-3 text-sm;
+    }
+  }
 }

@@ -30,22 +30,36 @@ const Index = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <ERPTopBar />
         
-        {/* Dashboard Content with Tabs */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="overview">Manufacturing Overview</TabsTrigger>
-              <TabsTrigger value="realtime">Live Updates</TabsTrigger>
-            </TabsList>
+        {/* Dashboard Content with Enhanced Tabs */}
+        <main className="flex-1 overflow-y-auto p-3 md:p-6">
+          <div className="fade-in">
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-2 glass-card">
+                <TabsTrigger 
+                  value="overview" 
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300"
+                >
+                  <span className="hidden sm:inline">Manufacturing Overview</span>
+                  <span className="sm:hidden">Overview</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="realtime"
+                  className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground transition-all duration-300"
+                >
+                  <span className="hidden sm:inline">Live Updates</span>
+                  <span className="sm:hidden">Live</span>
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="overview" className="space-y-6">
-              <ERPDashboard />
-            </TabsContent>
+              <TabsContent value="overview" className="space-y-6 slide-up">
+                <ERPDashboard />
+              </TabsContent>
 
-            <TabsContent value="realtime" className="space-y-6">
-              <RealtimeDashboard />
-            </TabsContent>
-          </Tabs>
+              <TabsContent value="realtime" className="space-y-6 slide-up">
+                <RealtimeDashboard />
+              </TabsContent>
+            </Tabs>
+          </div>
         </main>
       </div>
     </div>
