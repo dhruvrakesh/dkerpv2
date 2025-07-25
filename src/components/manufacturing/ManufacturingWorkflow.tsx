@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,135 +18,161 @@ import {
   Printer,
   Layers,
   Droplets,
-  Scissors
+  Scissors,
+  PauseCircle,
+  Eye
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import { toast } from 'sonner';
 
-interface WorkflowStage {
+interface DBWorkflowStage {
   id: string;
-  name: string;
-  icon: React.ComponentType<any>;
-  status: 'pending' | 'in_progress' | 'completed' | 'blocked';
-  progress: number;
-  startTime?: string;
-  endTime?: string;
-  assignee?: string;
+  stage_name: string;
+  stage_order: number;
+  stage_type: string;
+  stage_config: any;
+  is_active: boolean;
 }
 
-interface WorkflowItem {
+interface WorkflowProgress {
+  id: string;
+  order_id: string;
+  stage_id: string;
+  status: string;
+  started_at: string | null;
+  completed_at: string | null;
+  assigned_to: string | null;
+  stage_data: any;
+  quality_status: string;
+  progress_percentage: number;
+  notes: string | null;
+  stage: DBWorkflowStage;
+}
+
+interface Order {
+  id: string;
+  order_number: string;
   uiorn: string;
-  itemName: string;
-  quantity: number;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  stages: WorkflowStage[];
-  overallProgress: number;
+  item_name: string;
+  order_quantity: number;
+  status: string;
+  priority_level: number;
+  delivery_date: string | null;
+  workflow_progress: WorkflowProgress[];
 }
 
 export const ManufacturingWorkflow = () => {
-  const [workflowItems, setWorkflowItems] = useState<WorkflowItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { organization } = useDKEGLAuth();
   const [activeView, setActiveView] = useState('active');
+  const queryClient = useQueryClient();
 
-  const stageTemplates: WorkflowStage[] = [
-    {
-      id: 'order',
-      name: 'Order Punching',
-      icon: Package,
-      status: 'pending',
-      progress: 0
-    },
-    {
-      id: 'gravure',
-      name: 'Gravure Printing',
-      icon: Printer,
-      status: 'pending',
-      progress: 0
-    },
-    {
-      id: 'lamination',
-      name: 'Lamination',
-      icon: Layers,
-      status: 'pending',
-      progress: 0
-    },
-    {
-      id: 'coating',
-      name: 'Adhesive Coating',
-      icon: Droplets,
-      status: 'pending',
-      progress: 0
-    },
-    {
-      id: 'slitting',
-      name: 'Slitting',
-      icon: Scissors,
-      status: 'pending',
-      progress: 0
-    }
-  ];
+  // Enable real-time updates for workflow and orders
+  useRealtimeUpdates({
+    enableWorkflowProgress: true,
+    enableOrders: true,
+  });
 
-  useEffect(() => {
-    loadWorkflowData();
-  }, []);
-
-  const loadWorkflowData = async () => {
-    setLoading(true);
-    try {
-      // Simulate API call - in real implementation, fetch from Supabase
-      await new Promise(resolve => setTimeout(resolve, 1000));
+  const { data: orders, isLoading, refetch } = useQuery({
+    queryKey: ['workflow-orders', organization?.id],
+    queryFn: async () => {
+      if (!organization?.id) return [];
       
-      const mockData: WorkflowItem[] = [
-        {
-          uiorn: 'UIORN001',
-          itemName: 'Premium Tape Roll - 24mm',
-          quantity: 1000,
-          priority: 'high',
-          overallProgress: 60,
-          stages: [
-            { ...stageTemplates[0], status: 'completed', progress: 100, startTime: '2024-01-15T08:00:00Z', endTime: '2024-01-15T10:00:00Z', assignee: 'John Doe' },
-            { ...stageTemplates[1], status: 'completed', progress: 100, startTime: '2024-01-15T10:30:00Z', endTime: '2024-01-15T14:00:00Z', assignee: 'Jane Smith' },
-            { ...stageTemplates[2], status: 'in_progress', progress: 75, startTime: '2024-01-15T14:30:00Z', assignee: 'Bob Wilson' },
-            { ...stageTemplates[3], status: 'pending', progress: 0 },
-            { ...stageTemplates[4], status: 'pending', progress: 0 }
-          ]
-        },
-        {
-          uiorn: 'UIORN002',
-          itemName: 'Standard Label Set - 50x25mm',
-          quantity: 5000,
-          priority: 'medium',
-          overallProgress: 40,
-          stages: [
-            { ...stageTemplates[0], status: 'completed', progress: 100, startTime: '2024-01-15T09:00:00Z', endTime: '2024-01-15T11:00:00Z', assignee: 'Alice Johnson' },
-            { ...stageTemplates[1], status: 'in_progress', progress: 60, startTime: '2024-01-15T11:30:00Z', assignee: 'Charlie Brown' },
-            { ...stageTemplates[2], status: 'pending', progress: 0 },
-            { ...stageTemplates[3], status: 'pending', progress: 0 },
-            { ...stageTemplates[4], status: 'pending', progress: 0 }
-          ]
-        },
-        {
-          uiorn: 'UIORN003',
-          itemName: 'Custom Packaging Film - 200mic',
-          quantity: 2000,
-          priority: 'urgent',
-          overallProgress: 20,
-          stages: [
-            { ...stageTemplates[0], status: 'in_progress', progress: 80, startTime: '2024-01-15T13:00:00Z', assignee: 'David Lee' },
-            { ...stageTemplates[1], status: 'pending', progress: 0 },
-            { ...stageTemplates[2], status: 'pending', progress: 0 },
-            { ...stageTemplates[3], status: 'pending', progress: 0 },
-            { ...stageTemplates[4], status: 'pending', progress: 0 }
-          ]
+      const { data, error } = await supabase
+        .from('dkegl_orders')
+        .select(`
+          *,
+          workflow_progress:dkegl_workflow_progress(
+            *,
+            stage:dkegl_workflow_stages(*)
+          )
+        `)
+        .eq('organization_id', organization.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching workflow orders:', error);
+        throw error;
+      }
+      return data as Order[];
+    },
+    enabled: !!organization?.id,
+  });
+
+  const { data: stages } = useQuery({
+    queryKey: ['workflow-stages', organization?.id],
+    queryFn: async () => {
+      if (!organization?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('dkegl_workflow_stages')
+        .select('*')
+        .eq('organization_id', organization.id)
+        .eq('is_active', true)
+        .order('stage_order');
+
+      if (error) throw error;
+      return data as DBWorkflowStage[];
+    },
+    enabled: !!organization?.id,
+  });
+
+  // Mutation for progressing to next stage
+  const progressToNextStage = useMutation({
+    mutationFn: async ({ orderId }: { orderId: string }) => {
+      if (!organization?.id) throw new Error('No organization found');
+
+      const { data, error } = await supabase.functions.invoke('workflow-automation', {
+        body: {
+          action: 'auto_progress_workflow',
+          organizationId: organization.id,
+          data: { orderId }
         }
-      ];
-      
-      setWorkflowItems(mockData);
-    } catch (error) {
-      console.error('Error loading workflow data:', error);
-    } finally {
-      setLoading(false);
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success(`Progressed to ${data.nextStage || 'next stage'}`);
+      queryClient.invalidateQueries({ queryKey: ['workflow-orders'] });
+    },
+    onError: (error) => {
+      toast.error(`Failed to progress workflow: ${error.message}`);
     }
-  };
+  });
+
+  // Mutation for updating stage status
+  const updateStageStatus = useMutation({
+    mutationFn: async ({ progressId, status, notes }: { progressId: string; status: string; notes?: string }) => {
+      const { data, error } = await supabase
+        .from('dkegl_workflow_progress')
+        .update({
+          status,
+          notes,
+          updated_at: new Date().toISOString(),
+          ...(status === 'in_progress' && { started_at: new Date().toISOString() }),
+          ...(status === 'completed' && { 
+            completed_at: new Date().toISOString(),
+            progress_percentage: 100 
+          }),
+        })
+        .eq('id', progressId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Stage status updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['workflow-orders'] });
+    },
+    onError: (error) => {
+      toast.error(`Failed to update status: ${error.message}`);
+    }
+  });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -164,29 +192,59 @@ export const ManufacturingWorkflow = () => {
     }
   };
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return <Badge variant="destructive">Urgent</Badge>;
-      case 'high': return <Badge className="bg-orange-500 text-white">High</Badge>;
-      case 'medium': return <Badge variant="secondary">Medium</Badge>;
-      default: return <Badge variant="outline">Low</Badge>;
+  const getPriorityBadge = (priority: number) => {
+    const config = {
+      1: { label: 'Low', variant: 'secondary', className: '' },
+      2: { label: 'Medium', variant: 'default', className: '' },
+      3: { label: 'High', variant: 'outline', className: 'text-yellow-700 bg-yellow-100 border-yellow-300' },
+      4: { label: 'Critical', variant: 'destructive', className: '' },
+    } as const;
+
+    const { label, variant, className } = config[priority as keyof typeof config] || config[2];
+    return (
+      <Badge variant={variant} className={className || undefined}>
+        {label}
+      </Badge>
+    );
+  };
+
+  const calculateOverallProgress = (workflowProgress: WorkflowProgress[]) => {
+    if (!workflowProgress.length) return 0;
+    
+    const totalStages = stages?.length || 1;
+    const completedStages = workflowProgress.filter(p => p.status === 'completed').length;
+    const inProgressStages = workflowProgress.filter(p => p.status === 'in_progress');
+    
+    let progress = (completedStages / totalStages) * 100;
+    
+    // Add partial progress for in-progress stages
+    inProgressStages.forEach(stage => {
+      progress += (stage.progress_percentage / totalStages);
+    });
+    
+    return Math.min(progress, 100);
+  };
+
+  const getStageIcon = (stageName: string) => {
+    switch (stageName.toLowerCase()) {
+      case 'order punching': case 'order': return Package;
+      case 'gravure printing': case 'gravure': return Printer;
+      case 'lamination': return Layers;
+      case 'adhesive coating': case 'coating': return Droplets;
+      case 'slitting': return Scissors;
+      default: return Package;
     }
   };
 
-  const filteredItems = workflowItems.filter(item => {
-    if (activeView === 'active') {
-      return item.stages.some(stage => stage.status === 'in_progress' || stage.status === 'pending');
-    }
-    if (activeView === 'completed') {
-      return item.stages.every(stage => stage.status === 'completed');
-    }
-    if (activeView === 'blocked') {
-      return item.stages.some(stage => stage.status === 'blocked');
-    }
+  const filteredOrders = orders?.filter(order => {
+    if (activeView === 'all') return true;
+    if (activeView === 'active') return ['draft', 'in_production', 'quality_review'].includes(order.status);
+    if (activeView === 'completed') return order.status === 'completed';
+    if (activeView === 'blocked') return order.status === 'on_hold';
     return true;
-  });
+  }) || [];
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -206,7 +264,7 @@ export const ManufacturingWorkflow = () => {
             Track production progress across all manufacturing stages
           </p>
         </div>
-        <Button onClick={loadWorkflowData}>
+        <Button onClick={() => refetch()}>
           <RotateCcw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
@@ -221,97 +279,7 @@ export const ManufacturingWorkflow = () => {
         </TabsList>
 
         <TabsContent value={activeView} className="space-y-4">
-          {filteredItems.map((item) => (
-            <Card key={item.uiorn} className="card-enterprise">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="flex items-center gap-3">
-                      <span className="font-mono text-lg">{item.uiorn}</span>
-                      {getPriorityBadge(item.priority)}
-                    </CardTitle>
-                    <p className="text-muted-foreground">{item.itemName}</p>
-                    <p className="text-sm text-muted-foreground">Quantity: {item.quantity.toLocaleString()} units</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-primary">{item.overallProgress}%</div>
-                    <div className="text-sm text-muted-foreground">Overall Progress</div>
-                  </div>
-                </div>
-                <Progress value={item.overallProgress} className="w-full" />
-              </CardHeader>
-              
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Workflow Stages */}
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    {item.stages.map((stage, index) => (
-                      <div key={stage.id} className="relative">
-                        <Card className={cn(
-                          "p-4 transition-all duration-200 hover:shadow-md",
-                          stage.status === 'completed' && "border-success/50 bg-success/5",
-                          stage.status === 'in_progress' && "border-warning/50 bg-warning/5",
-                          stage.status === 'blocked' && "border-destructive/50 bg-destructive/5"
-                        )}>
-                          <div className="flex items-center gap-3 mb-3">
-                            <stage.icon className={cn(
-                              "h-5 w-5",
-                              stage.status === 'completed' && "text-success",
-                              stage.status === 'in_progress' && "text-warning",
-                              stage.status === 'blocked' && "text-destructive",
-                              stage.status === 'pending' && "text-muted-foreground"
-                            )} />
-                            <div className="flex-1">
-                              <div className="font-medium text-sm">{stage.name}</div>
-                              {getStatusBadge(stage.status)}
-                            </div>
-                          </div>
-                          
-                          {stage.status !== 'pending' && (
-                            <div className="space-y-2">
-                              <Progress value={stage.progress} className="h-2" />
-                              <div className="text-xs text-muted-foreground">
-                                {stage.progress}% Complete
-                              </div>
-                              {stage.assignee && (
-                                <div className="text-xs text-muted-foreground">
-                                  Assigned: {stage.assignee}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </Card>
-                        
-                        {/* Arrow connector */}
-                        {index < item.stages.length - 1 && (
-                          <div className="hidden md:flex absolute top-1/2 -right-2 transform -translate-y-1/2 z-10">
-                            <ArrowRight className="h-4 w-4 text-muted-foreground bg-background border rounded-full p-0.5" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 pt-4 border-t">
-                    <Button variant="outline" size="sm">
-                      <Play className="h-4 w-4 mr-2" />
-                      Start Next Stage
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Pause className="h-4 w-4 mr-2" />
-                      Hold Production
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      View Details
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-
-          {filteredItems.length === 0 && (
+          {filteredOrders.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
                 <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -321,6 +289,127 @@ export const ManufacturingWorkflow = () => {
                 </p>
               </CardContent>
             </Card>
+          ) : (
+            filteredOrders.map((order) => {
+              const overallProgress = calculateOverallProgress(order.workflow_progress);
+              
+              return (
+                <Card key={order.id} className="card-enterprise">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="flex items-center gap-3">
+                          <span className="font-mono text-lg">{order.uiorn}</span>
+                          {getPriorityBadge(order.priority_level)}
+                        </CardTitle>
+                        <p className="text-muted-foreground">{order.item_name}</p>
+                        <p className="text-sm text-muted-foreground">Quantity: {order.order_quantity.toLocaleString()} units</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-primary">{Math.round(overallProgress)}%</div>
+                        <div className="text-sm text-muted-foreground">Overall Progress</div>
+                        {getStatusBadge(order.status)}
+                      </div>
+                    </div>
+                    <Progress value={overallProgress} className="w-full" />
+                  </CardHeader>
+                  
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Workflow Stages */}
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        {stages?.map((stage, index) => {
+                          const StageIconComponent = getStageIcon(stage.stage_name);
+                          const stageProgress = order.workflow_progress.find(p => p.stage_id === stage.id);
+                          const status = stageProgress?.status || 'pending';
+                          
+                          return (
+                            <div key={stage.id} className="relative">
+                              <Card className={cn(
+                                "p-4 transition-all duration-200 hover:shadow-md",
+                                status === 'completed' && "border-success/50 bg-success/5",
+                                status === 'in_progress' && "border-warning/50 bg-warning/5",
+                                status === 'blocked' && "border-destructive/50 bg-destructive/5"
+                              )}>
+                                <div className="flex items-center gap-3 mb-3">
+                                  <StageIconComponent className={cn(
+                                    "h-5 w-5",
+                                    status === 'completed' && "text-success",
+                                    status === 'in_progress' && "text-warning",
+                                    status === 'blocked' && "text-destructive",
+                                    status === 'pending' && "text-muted-foreground"
+                                  )} />
+                                  <div className="flex-1">
+                                    <div className="font-medium text-sm">{stage.stage_name}</div>
+                                    {getStatusBadge(status)}
+                                  </div>
+                                </div>
+                                
+                                {status !== 'pending' && (
+                                  <div className="space-y-2">
+                                    <Progress value={stageProgress?.progress_percentage || 0} className="h-2" />
+                                    <div className="text-xs text-muted-foreground">
+                                      {stageProgress?.progress_percentage || 0}% Complete
+                                    </div>
+                                    {stageProgress?.assigned_to && (
+                                      <div className="text-xs text-muted-foreground">
+                                        Assigned: {stageProgress.assigned_to}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </Card>
+                              
+                              {/* Arrow connector */}
+                              {index < (stages?.length || 0) - 1 && (
+                                <div className="hidden md:flex absolute top-1/2 -right-2 transform -translate-y-1/2 z-10">
+                                  <ArrowRight className="h-4 w-4 text-muted-foreground bg-background border rounded-full p-0.5" />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 pt-4 border-t">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => progressToNextStage.mutate({ orderId: order.id })}
+                          disabled={progressToNextStage.isPending || order.status === 'completed'}
+                        >
+                          <Play className="h-4 w-4 mr-2" />
+                          Start Next Stage
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            const inProgressStage = order.workflow_progress.find(p => p.status === 'in_progress');
+                            if (inProgressStage) {
+                              updateStageStatus.mutate({
+                                progressId: inProgressStage.id,
+                                status: 'on_hold',
+                                notes: 'Production paused by user'
+                              });
+                            }
+                          }}
+                          disabled={updateStageStatus.isPending || !order.workflow_progress.some(p => p.status === 'in_progress')}
+                        >
+                          <PauseCircle className="h-4 w-4 mr-2" />
+                          Hold Production
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Details
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </TabsContent>
       </Tabs>
