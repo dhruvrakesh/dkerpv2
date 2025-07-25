@@ -37,7 +37,8 @@ const navigation = [
       { name: 'Gravure Printing', href: '/manufacturing/gravure' },
       { name: 'Lamination', href: '/manufacturing/lamination' },
       { name: 'Adhesive Coating', href: '/manufacturing/coating' },
-      { name: 'Slitting', href: '/manufacturing/slitting' }
+      { name: 'Slitting', href: '/manufacturing/slitting' },
+      { name: 'Cost Analysis', href: '/manufacturing/cost-analysis' }
     ]
   },
   {

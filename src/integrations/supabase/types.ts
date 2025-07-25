@@ -1668,6 +1668,89 @@ export type Database = {
         }
         Relationships: []
       }
+      dkegl_material_consumption: {
+        Row: {
+          actual_quantity: number
+          consumption_date: string | null
+          created_at: string | null
+          id: string
+          item_code: string
+          notes: string | null
+          order_id: string | null
+          organization_id: string | null
+          planned_quantity: number
+          stage_id: string | null
+          total_cost: number
+          unit_cost: number
+          updated_at: string | null
+          waste_quantity: number
+          workflow_progress_id: string | null
+        }
+        Insert: {
+          actual_quantity?: number
+          consumption_date?: string | null
+          created_at?: string | null
+          id?: string
+          item_code: string
+          notes?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          planned_quantity?: number
+          stage_id?: string | null
+          total_cost?: number
+          unit_cost?: number
+          updated_at?: string | null
+          waste_quantity?: number
+          workflow_progress_id?: string | null
+        }
+        Update: {
+          actual_quantity?: number
+          consumption_date?: string | null
+          created_at?: string | null
+          id?: string
+          item_code?: string
+          notes?: string | null
+          order_id?: string | null
+          organization_id?: string | null
+          planned_quantity?: number
+          stage_id?: string | null
+          total_cost?: number
+          unit_cost?: number
+          updated_at?: string | null
+          waste_quantity?: number
+          workflow_progress_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_material_consumption_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_material_consumption_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_material_consumption_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_workflow_stages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_material_consumption_workflow_progress_id_fkey"
+            columns: ["workflow_progress_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_workflow_progress"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_orders: {
         Row: {
           approved_by: string | null
@@ -3151,54 +3234,167 @@ export type Database = {
           },
         ]
       }
+      dkegl_waste_tracking: {
+        Row: {
+          actual_amount: number
+          corrective_action: string | null
+          cost_impact: number
+          created_at: string | null
+          id: string
+          order_id: string | null
+          organization_id: string | null
+          planned_amount: number
+          recorded_at: string | null
+          recorded_by: string | null
+          root_cause: string | null
+          stage_id: string | null
+          waste_amount: number
+          waste_category: string
+          waste_percentage: number
+          waste_type: string
+          workflow_progress_id: string | null
+        }
+        Insert: {
+          actual_amount?: number
+          corrective_action?: string | null
+          cost_impact?: number
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          organization_id?: string | null
+          planned_amount?: number
+          recorded_at?: string | null
+          recorded_by?: string | null
+          root_cause?: string | null
+          stage_id?: string | null
+          waste_amount?: number
+          waste_category: string
+          waste_percentage?: number
+          waste_type: string
+          workflow_progress_id?: string | null
+        }
+        Update: {
+          actual_amount?: number
+          corrective_action?: string | null
+          cost_impact?: number
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          organization_id?: string | null
+          planned_amount?: number
+          recorded_at?: string | null
+          recorded_by?: string | null
+          root_cause?: string | null
+          stage_id?: string | null
+          waste_amount?: number
+          waste_category?: string
+          waste_percentage?: number
+          waste_type?: string
+          workflow_progress_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_waste_tracking_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_waste_tracking_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_waste_tracking_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_workflow_stages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_waste_tracking_workflow_progress_id_fkey"
+            columns: ["workflow_progress_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_workflow_progress"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_workflow_progress: {
         Row: {
           assigned_to: string | null
           completed_at: string | null
           created_at: string
+          efficiency_percentage: number | null
           id: string
+          labor_cost: number | null
+          material_consumed: Json | null
+          material_cost: number | null
           notes: string | null
           order_id: string | null
           organization_id: string | null
+          overhead_cost: number | null
           progress_percentage: number | null
           quality_status: string | null
+          resource_utilization: Json | null
           stage_data: Json | null
           stage_id: string | null
           started_at: string | null
           status: string
+          total_stage_cost: number | null
           updated_at: string
+          waste_percentage: number | null
         }
         Insert: {
           assigned_to?: string | null
           completed_at?: string | null
           created_at?: string
+          efficiency_percentage?: number | null
           id?: string
+          labor_cost?: number | null
+          material_consumed?: Json | null
+          material_cost?: number | null
           notes?: string | null
           order_id?: string | null
           organization_id?: string | null
+          overhead_cost?: number | null
           progress_percentage?: number | null
           quality_status?: string | null
+          resource_utilization?: Json | null
           stage_data?: Json | null
           stage_id?: string | null
           started_at?: string | null
           status?: string
+          total_stage_cost?: number | null
           updated_at?: string
+          waste_percentage?: number | null
         }
         Update: {
           assigned_to?: string | null
           completed_at?: string | null
           created_at?: string
+          efficiency_percentage?: number | null
           id?: string
+          labor_cost?: number | null
+          material_consumed?: Json | null
+          material_cost?: number | null
           notes?: string | null
           order_id?: string | null
           organization_id?: string | null
+          overhead_cost?: number | null
           progress_percentage?: number | null
           quality_status?: string | null
+          resource_utilization?: Json | null
           stage_data?: Json | null
           stage_id?: string | null
           started_at?: string | null
           status?: string
+          total_stage_cost?: number | null
           updated_at?: string
+          waste_percentage?: number | null
         }
         Relationships: [
           {
@@ -4472,6 +4668,10 @@ export type Database = {
           is_primary: boolean
         }[]
       }
+      dkegl_calculate_stage_cost: {
+        Args: { _workflow_progress_id: string }
+        Returns: number
+      }
       dkegl_calculate_stock_valuation: {
         Args: { _org_id: string; _item_code: string; _quantity: number }
         Returns: number
@@ -4541,6 +4741,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      dkegl_get_order_cost_summary: {
+        Args: { _order_id: string }
+        Returns: {
+          stage_name: string
+          material_cost: number
+          labor_cost: number
+          overhead_cost: number
+          total_stage_cost: number
+          waste_percentage: number
+          efficiency_percentage: number
+        }[]
+      }
       dkegl_get_stock_aging: {
         Args: { _org_id: string }
         Returns: {
@@ -4594,6 +4806,16 @@ export type Database = {
       dkegl_refresh_stock_summary: {
         Args: { _org_id: string }
         Returns: undefined
+      }
+      dkegl_track_material_consumption: {
+        Args: {
+          _workflow_progress_id: string
+          _item_code: string
+          _planned_qty: number
+          _actual_qty: number
+          _unit_cost?: number
+        }
+        Returns: string
       }
       dkegl_validate_grn_staging_record: {
         Args: { _staging_id: string }

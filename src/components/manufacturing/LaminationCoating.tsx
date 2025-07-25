@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 import { useToast } from '@/hooks/use-toast';
+import { MaterialConsumptionCard } from './MaterialConsumptionCard';
 import { Layers, Settings, CheckCircle, AlertTriangle, Clock, Play, Pause, Thermometer } from 'lucide-react';
 
 interface LaminationJob {
@@ -249,8 +250,9 @@ export const LaminationCoating = () => {
 
             <CardContent>
               <Tabs defaultValue="process" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="process">Process Parameters</TabsTrigger>
+                  <TabsTrigger value="materials">Materials</TabsTrigger>
                   <TabsTrigger value="monitoring">Real-time Monitoring</TabsTrigger>
                   <TabsTrigger value="quality">Quality Control</TabsTrigger>
                 </TabsList>
@@ -370,6 +372,14 @@ export const LaminationCoating = () => {
                       rows={3}
                     />
                   </div>
+                </TabsContent>
+
+                <TabsContent value="materials" className="space-y-4 mt-4">
+                  <MaterialConsumptionCard
+                    workflowProgressId={job.id}
+                    stageName="Lamination & Coating"
+                    orderId={job.order_id}
+                  />
                 </TabsContent>
 
                 <TabsContent value="monitoring" className="space-y-4 mt-4">

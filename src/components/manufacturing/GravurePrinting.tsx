@@ -15,6 +15,7 @@ import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useQualityEnforcement } from '@/hooks/useQualityEnforcement';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import { MaterialConsumptionCard } from './MaterialConsumptionCard';
 import { Printer, Settings, CheckCircle, AlertTriangle, Clock, Play, Pause, Shield } from 'lucide-react';
 
 interface GravureJob {
@@ -285,8 +286,9 @@ export const GravurePrinting = () => {
 
             <CardContent>
               <Tabs defaultValue="setup" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="setup">Setup Parameters</TabsTrigger>
+                  <TabsTrigger value="materials">Materials</TabsTrigger>
                   <TabsTrigger value="progress">Progress Tracking</TabsTrigger>
                   <TabsTrigger value="quality">Quality Control</TabsTrigger>
                 </TabsList>
@@ -399,6 +401,14 @@ export const GravurePrinting = () => {
                       rows={3}
                     />
                   </div>
+                </TabsContent>
+
+                <TabsContent value="materials" className="space-y-4 mt-4">
+                  <MaterialConsumptionCard
+                    workflowProgressId={job.id}
+                    stageName="Gravure Printing"
+                    orderId={job.order_id}
+                  />
                 </TabsContent>
 
                 <TabsContent value="progress" className="space-y-4 mt-4">

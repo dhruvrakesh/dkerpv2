@@ -24,6 +24,7 @@ import { SlittingPackaging } from "./components/manufacturing/SlittingPackaging"
 import { ManufacturingWorkflow } from "./components/manufacturing/ManufacturingWorkflow";
 import { WorkflowDashboard } from "./components/manufacturing/WorkflowDashboard";
 import { OrderPunching } from "./components/manufacturing/OrderPunching";
+import { CostAnalysisDashboard } from "./components/manufacturing/CostAnalysisDashboard";
 
 const queryClient = new QueryClient();
 
@@ -210,6 +211,16 @@ const App = () => (
                 <ProtectedRoute>
                   <InventoryLayout>
                     <SlittingPackaging />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/manufacturing/cost-analysis" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <CostAnalysisDashboard />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 
