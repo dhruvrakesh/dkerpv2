@@ -1,0 +1,479 @@
+import React, { useState, useEffect } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Plus, Trash2, Save, X, Calculator } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { EnterpriseItemSelector, ItemOption } from '@/components/ui/enterprise-item-selector';
+import { useBOMManagement } from '@/hooks/useBOMManagement';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+
+const bomComponentSchema = z.object({
+  item_code: z.string().min(1, 'Item code is required'),
+  quantity_required: z.number().min(0.001, 'Quantity must be greater than 0'),
+  stage_name: z.string().min(1, 'Stage is required'),
+  unit_cost: z.number().min(0, 'Unit cost must be positive'),
+  scrap_percentage: z.number().min(0).max(100, 'Scrap % must be 0-100'),
+  notes: z.string().optional()
+});
+
+const bomSchema = z.object({
+  item_code: z.string().min(1, 'Item code is required'),
+  bom_name: z.string().min(1, 'BOM name is required'),
+  bom_type: z.enum(['standard', 'phantom', 'template']),
+  effective_from: z.string().min(1, 'Effective date is required'),
+  effective_until: z.string().optional(),
+  is_active: z.boolean(),
+  approval_status: z.enum(['draft', 'pending', 'approved']),
+  description: z.string().optional(),
+  components: z.array(bomComponentSchema).min(1, 'At least one component is required')
+});
+
+type BOMFormData = z.infer<typeof bomSchema>;
+
+interface BOMCreateFormProps {
+  initialData?: any;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+const WORKFLOW_STAGES = [
+  'Order Punching',
+  'Gravure Printing', 
+  'Lamination Coating',
+  'Adhesive Coating',
+  'Slitting Packaging'
+];
+
+export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFormProps) {
+  const [totalCost, setTotalCost] = useState(0);
+  const queryClient = useQueryClient();
+  const { createBOM, isCreatingBOM } = useBOMManagement();
+
+  // Fetch items for selectors
+  const { data: finishedGoods = [], isLoading: loadingFG } = useQuery({
+    queryKey: ['finished-goods'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('dkegl_item_master')
+        .select(`
+          id, item_code, item_name, uom,
+          dkegl_categories(category_name)
+        `)
+        .eq('item_type', 'finished_good')
+        .eq('status', 'active')
+        .order('item_code');
+      
+      if (error) throw error;
+      return data.map(item => ({
+        id: item.id,
+        item_code: item.item_code,
+        item_name: item.item_name,
+        uom: item.uom,
+        category_name: item.dkegl_categories?.category_name
+      })) as ItemOption[];
+    }
+  });
+
+  const { data: rawMaterials = [], isLoading: loadingRM } = useQuery({
+    queryKey: ['raw-materials'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('dkegl_item_master')
+        .select(`
+          id, item_code, item_name, uom,
+          dkegl_categories(category_name)
+        `)
+        .eq('item_type', 'raw_material')
+        .eq('status', 'active')
+        .order('item_code');
+      
+      if (error) throw error;
+      return data.map(item => ({
+        id: item.id,
+        item_code: item.item_code,
+        item_name: item.item_name,
+        uom: item.uom,
+        category_name: item.dkegl_categories?.category_name
+      })) as ItemOption[];
+    }
+  });
+
+  const form = useForm<BOMFormData>({
+    resolver: zodResolver(bomSchema),
+    defaultValues: {
+      item_code: '',
+      bom_name: '',
+      bom_type: 'standard',
+      effective_from: new Date().toISOString().split('T')[0],
+      effective_until: '',
+      is_active: true,
+      approval_status: 'draft',
+      description: '',
+      components: [
+        {
+          item_code: '',
+          quantity_required: 1,
+          stage_name: 'Order Punching',
+          unit_cost: 0,
+          scrap_percentage: 0,
+          notes: ''
+        }
+      ]
+    }
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'components'
+  });
+
+  // Load initial data if editing
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        item_code: initialData.item_code,
+        bom_name: initialData.bom_name || '',
+        bom_type: initialData.bom_type || 'standard',
+        effective_from: initialData.effective_from || new Date().toISOString().split('T')[0],
+        effective_until: initialData.effective_until || '',
+        is_active: initialData.is_active ?? true,
+        approval_status: initialData.approval_status || 'draft',
+        description: initialData.description || '',
+        components: initialData.components || [
+          {
+            item_code: '',
+            quantity_required: 1,
+            stage_name: 'Order Punching',
+            unit_cost: 0,
+            scrap_percentage: 0,
+            notes: ''
+          }
+        ]
+      });
+    }
+  }, [initialData, form]);
+
+  // Calculate total cost
+  useEffect(() => {
+    const components = form.watch('components');
+    const total = components.reduce((sum, comp) => {
+      const adjustedQty = comp.quantity_required * (1 + comp.scrap_percentage / 100);
+      return sum + (adjustedQty * comp.unit_cost);
+    }, 0);
+    setTotalCost(total);
+  }, [form.watch('components')]);
+
+  const onSubmit = async (data: BOMFormData) => {
+    try {
+      await createBOM({
+        itemCode: data.item_code,
+        bomVersion: '1.0',
+        bomData: {
+          bom_name: data.bom_name,
+          bom_type: data.bom_type,
+          effective_from: data.effective_from,
+          effective_until: data.effective_until || null,
+          is_active: data.is_active,
+          approval_status: data.approval_status,
+          description: data.description
+        },
+        components: data.components.map((comp, index) => ({
+          component_item_code: comp.item_code,
+          quantity_per_unit: comp.quantity_required,
+          stage_name: comp.stage_name,
+          unit_cost: comp.unit_cost,
+          scrap_percentage: comp.scrap_percentage,
+          waste_percentage: comp.scrap_percentage,
+          stage_sequence: index + 1,
+          component_notes: comp.notes || '',
+          uom: 'PCS',
+          consumption_type: 'direct' as const,
+          is_critical: false
+        }))
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ['boms'] });
+      
+      toast({
+        title: "Success",
+        description: `BOM ${initialData ? 'updated' : 'created'} successfully`
+      });
+      
+      onSuccess();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to ${initialData ? 'update' : 'create'} BOM`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const addComponent = () => {
+    append({
+      item_code: '',
+      quantity_required: 1,
+      stage_name: 'Order Punching',
+      unit_cost: 0,
+      scrap_percentage: 0,
+      notes: ''
+    });
+  };
+
+  if (loadingFG || loadingRM) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+      {/* BOM Header */}
+      <Card>
+        <CardHeader>
+          <CardTitle>BOM Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="item_code">Finished Good Item</Label>
+              <EnterpriseItemSelector
+                items={finishedGoods}
+                value={form.watch('item_code')}
+                onValueChange={(value) => form.setValue('item_code', value)}
+                placeholder="Select finished good..."
+                className="w-full"
+              />
+              {form.formState.errors.item_code && (
+                <p className="text-sm text-destructive">{form.formState.errors.item_code.message}</p>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="bom_name">BOM Name</Label>
+              <Input
+                {...form.register('bom_name')}
+                placeholder="Enter BOM name..."
+              />
+              {form.formState.errors.bom_name && (
+                <p className="text-sm text-destructive">{form.formState.errors.bom_name.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="bom_type">BOM Type</Label>
+              <Select value={form.watch('bom_type')} onValueChange={(value) => form.setValue('bom_type', value as any)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="phantom">Phantom</SelectItem>
+                  <SelectItem value="template">Template</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="effective_from">Effective From</Label>
+              <Input
+                type="date"
+                {...form.register('effective_from')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="effective_until">Effective Until</Label>
+              <Input
+                type="date"
+                {...form.register('effective_until')}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="approval_status">Status</Label>
+              <Select value={form.watch('approval_status')} onValueChange={(value) => form.setValue('approval_status', value as any)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="pending">Pending Approval</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center space-x-2 pt-6">
+              <Switch
+                checked={form.watch('is_active')}
+                onCheckedChange={(checked) => form.setValue('is_active', checked)}
+              />
+              <Label>Active BOM</Label>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              {...form.register('description')}
+              placeholder="Enter BOM description..."
+              rows={2}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Components */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Components</CardTitle>
+          <div className="flex items-center gap-4">
+            <Badge variant="outline" className="gap-2">
+              <Calculator className="h-4 w-4" />
+              Total Cost: ₹{totalCost.toFixed(2)}
+            </Badge>
+            <Button type="button" onClick={addComponent} size="sm" className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Component
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {fields.map((field, index) => (
+            <Card key={field.id} className="border-l-4 border-l-blue-500">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-medium">Component {index + 1}</h4>
+                  {fields.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => remove(index)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-2">
+                    <Label>Material Item</Label>
+                    <EnterpriseItemSelector
+                      items={rawMaterials}
+                      value={form.watch(`components.${index}.item_code`)}
+                      onValueChange={(value) => form.setValue(`components.${index}.item_code`, value)}
+                      placeholder="Select material..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Stage</Label>
+                    <Select 
+                      value={form.watch(`components.${index}.stage_name`)} 
+                      onValueChange={(value) => form.setValue(`components.${index}.stage_name`, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {WORKFLOW_STAGES.map(stage => (
+                          <SelectItem key={stage} value={stage}>{stage}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 gap-4 mb-4">
+                  <div className="space-y-2">
+                    <Label>Quantity</Label>
+                    <Input
+                      type="number"
+                      step="0.001"
+                      {...form.register(`components.${index}.quantity_required`, { valueAsNumber: true })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Unit Cost (₹)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      {...form.register(`components.${index}.unit_cost`, { valueAsNumber: true })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Scrap %</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      {...form.register(`components.${index}.scrap_percentage`, { valueAsNumber: true })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Total Cost</Label>
+                    <div className="h-10 px-3 py-2 border rounded-md bg-muted text-muted-foreground flex items-center">
+                      ₹{(
+                        form.watch(`components.${index}.quantity_required`) * 
+                        (1 + form.watch(`components.${index}.scrap_percentage`) / 100) * 
+                        form.watch(`components.${index}.unit_cost`)
+                      ).toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Notes</Label>
+                  <Input
+                    {...form.register(`components.${index}.notes`)}
+                    placeholder="Component notes..."
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Actions */}
+      <div className="flex items-center justify-end gap-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          <X className="h-4 w-4 mr-2" />
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isCreatingBOM} className="gap-2">
+          {isCreatingBOM ? (
+            <LoadingSpinner size="sm" />
+          ) : (
+            <Save className="h-4 w-4" />
+          )}
+          {initialData ? 'Update BOM' : 'Create BOM'}
+        </Button>
+      </div>
+    </form>
+  );
+}

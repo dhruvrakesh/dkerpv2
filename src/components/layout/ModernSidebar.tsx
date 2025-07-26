@@ -46,6 +46,7 @@ const navigation = [
     children: [
       { name: 'Workflow Dashboard', href: '/manufacturing' },
       { name: 'New Order', href: '/manufacturing/orders/new' },
+      { name: 'BOM Management', href: '/manufacturing/bom' },
       { name: 'UIORN Tracking', href: '/manufacturing/tracking' },
       { name: 'Tape Orders', href: '/manufacturing/orders' },
       { name: 'Gravure Printing', href: '/manufacturing/gravure' },

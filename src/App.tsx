@@ -27,6 +27,7 @@ import { WorkflowDashboard } from "./components/manufacturing/WorkflowDashboard"
 import { OrderPunching } from "./components/manufacturing/OrderPunching";
 import { CostAnalysisDashboard } from "./components/manufacturing/CostAnalysisDashboard";
 import { UiornTrackingDashboard } from "./components/manufacturing/UiornTrackingDashboard";
+import { BOMManagement } from "./pages/manufacturing/BOMManagement";
 import AIAssistant from "./pages/ai/AIAssistant";
 
 const queryClient = new QueryClient();
@@ -174,6 +175,16 @@ const App = () => (
                 <ProtectedRoute>
                   <InventoryLayout>
                     <OrderPunching />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/manufacturing/bom" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <BOMManagement />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 
