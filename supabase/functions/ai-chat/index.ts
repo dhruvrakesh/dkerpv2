@@ -455,6 +455,58 @@ function getERPFunctions() {
           }
         }
       }
+    },
+    {
+      name: 'get_workflow_bottlenecks',
+      description: 'Identify production bottlenecks and workflow inefficiencies',
+      parameters: {
+        type: 'object',
+        properties: {
+          stage_type: {
+            type: 'string',
+            description: 'Specific stage to analyze (optional)'
+          },
+          time_range: {
+            type: 'string',
+            description: 'Time range for analysis (e.g., "last_week", "current_month")'
+          }
+        }
+      }
+    },
+    {
+      name: 'analyze_stock_aging',
+      description: 'Analyze stock aging patterns and slow-moving inventory',
+      parameters: {
+        type: 'object',
+        properties: {
+          category: {
+            type: 'string',
+            description: 'Item category to analyze (optional)'
+          },
+          aging_threshold_days: {
+            type: 'number',
+            description: 'Threshold in days to consider items as aging (default: 90)'
+          }
+        }
+      }
+    },
+    {
+      name: 'get_consumption_forecast',
+      description: 'Generate consumption forecasts and reorder recommendations',
+      parameters: {
+        type: 'object',
+        properties: {
+          item_codes: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Specific items to forecast (optional)'
+          },
+          forecast_horizon_days: {
+            type: 'number',
+            description: 'Number of days to forecast (default: 30)'
+          }
+        }
+      }
     }
   ];
 }
@@ -482,6 +534,15 @@ async function handleFunctionCall(functionCall: any, userOrg: string | null, sup
       
       case 'analyze_cost_trends':
         return await analyzeCostTrends(parsedArgs, userOrg, supabase);
+      
+      case 'get_workflow_bottlenecks':
+        return await getWorkflowBottlenecks(parsedArgs, userOrg, supabase);
+      
+      case 'analyze_stock_aging':
+        return await analyzeStockAging(parsedArgs, userOrg, supabase);
+      
+      case 'get_consumption_forecast':
+        return await getConsumptionForecast(parsedArgs, userOrg, supabase);
       
       default:
         return { error: `Unknown function: ${name}` };
@@ -686,6 +747,164 @@ async function analyzeCostTrends(args: any, userOrg: string, supabase: any) {
       total_transactions: grnData?.length || 0,
       avg_price_change: trends.reduce((sum, t) => sum + t.price_trend_percentage, 0) / trends.length || 0
     }
+  };
+}
+
+async function getWorkflowBottlenecks(args: any, userOrg: string, supabase: any) {
+  let query = supabase
+    .from('dkegl_workflow_progress')
+    .select(`
+      id,
+      stage_id,
+      order_id,
+      started_at,
+      completed_at,
+      efficiency_percentage,
+      dkegl_workflow_stages!inner(stage_name, stage_type),
+      dkegl_orders!inner(order_number, item_name)
+    `)
+    .eq('dkegl_workflow_stages.organization_id', userOrg);
+
+  if (args.stage_type) {
+    query = query.eq('dkegl_workflow_stages.stage_type', args.stage_type);
+  }
+
+  if (args.time_range === 'last_week') {
+    query = query.gte('started_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+  } else if (args.time_range === 'current_month') {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    query = query.gte('started_at', startOfMonth.toISOString());
+  }
+
+  const { data, error } = await query.limit(50);
+
+  if (error) throw error;
+
+  // Analyze bottlenecks
+  const stageStats = data.reduce((acc: any, item: any) => {
+    const stageName = item.dkegl_workflow_stages.stage_name;
+    if (!acc[stageName]) {
+      acc[stageName] = {
+        stage_name: stageName,
+        total_orders: 0,
+        avg_efficiency: 0,
+        pending_orders: 0,
+        completed_orders: 0,
+        processing_times: []
+      };
+    }
+    
+    acc[stageName].total_orders++;
+    if (item.completed_at) {
+      acc[stageName].completed_orders++;
+      const processingTime = new Date(item.completed_at).getTime() - new Date(item.started_at).getTime();
+      acc[stageName].processing_times.push(processingTime / (1000 * 60 * 60)); // Convert to hours
+    } else {
+      acc[stageName].pending_orders++;
+    }
+    
+    if (item.efficiency_percentage) {
+      acc[stageName].avg_efficiency = (acc[stageName].avg_efficiency + item.efficiency_percentage) / 2;
+    }
+    
+    return acc;
+  }, {});
+
+  // Calculate bottleneck scores
+  const bottlenecks = Object.values(stageStats).map((stage: any) => ({
+    ...stage,
+    avg_processing_time: stage.processing_times.length > 0 
+      ? stage.processing_times.reduce((a: number, b: number) => a + b, 0) / stage.processing_times.length 
+      : 0,
+    bottleneck_score: (stage.pending_orders / Math.max(stage.total_orders, 1)) * 100 + (100 - stage.avg_efficiency)
+  })).sort((a: any, b: any) => b.bottleneck_score - a.bottleneck_score);
+
+  return {
+    summary: `Found ${bottlenecks.length} production stages. Top bottleneck: ${bottlenecks[0]?.stage_name || 'None'}`,
+    bottlenecks: bottlenecks.slice(0, 5),
+    total_stages_analyzed: bottlenecks.length,
+    critical_bottlenecks: bottlenecks.filter((b: any) => b.bottleneck_score > 50).length
+  };
+}
+
+async function analyzeStockAging(args: any, userOrg: string, supabase: any) {
+  const { data, error } = await supabase.rpc('dkegl_get_stock_aging', {
+    _org_id: userOrg
+  });
+
+  if (error) throw error;
+
+  let filteredData = data;
+  if (args.category) {
+    filteredData = data.filter((item: any) => 
+      item.category_name?.toLowerCase().includes(args.category.toLowerCase())
+    );
+  }
+
+  const agingThreshold = args.aging_threshold_days || 90;
+  const agingItems = filteredData.filter((item: any) => item.days_since_movement > agingThreshold);
+  
+  const agingCategories = agingItems.reduce((acc: any, item: any) => {
+    if (!acc[item.aging_category]) {
+      acc[item.aging_category] = { count: 0, total_value: 0 };
+    }
+    acc[item.aging_category].count++;
+    acc[item.aging_category].total_value += item.estimated_value || 0;
+    return acc;
+  }, {});
+
+  const totalAgingValue = agingItems.reduce((sum: number, item: any) => sum + (item.estimated_value || 0), 0);
+
+  return {
+    summary: `Found ${agingItems.length} aging items worth $${totalAgingValue.toFixed(2)}`,
+    aging_items: agingItems.slice(0, 10),
+    aging_summary: agingCategories,
+    total_aging_value: totalAgingValue,
+    recommendations: [
+      agingItems.length > 0 ? "Consider liquidating slow-moving inventory" : "Stock aging is under control",
+      totalAgingValue > 10000 ? "High value tied up in aging stock - review reorder policies" : "Aging stock value is manageable"
+    ]
+  };
+}
+
+async function getConsumptionForecast(args: any, userOrg: string, supabase: any) {
+  const { data, error } = await supabase.rpc('dkegl_analyze_consumption_patterns', {
+    _org_id: userOrg,
+    _item_code: args.item_codes?.length > 0 ? args.item_codes[0] : null
+  });
+
+  if (error) throw error;
+
+  const forecastHorizon = args.forecast_horizon_days || 30;
+  
+  const forecasts = data.map((item: any) => {
+    const dailyConsumption = item.avg_monthly_consumption / 30;
+    const forecastConsumption = dailyConsumption * forecastHorizon;
+    const currentStock = item.current_qty || 0;
+    const daysUntilStockout = currentStock / Math.max(dailyConsumption, 0.1);
+    
+    return {
+      item_code: item.item_code,
+      item_name: item.item_name,
+      current_stock: currentStock,
+      daily_consumption: dailyConsumption.toFixed(2),
+      forecast_consumption: forecastConsumption.toFixed(2),
+      days_until_stockout: Math.floor(daysUntilStockout),
+      reorder_recommended: daysUntilStockout < forecastHorizon,
+      recommended_order_qty: item.recommended_reorder_quantity,
+      trend: item.consumption_trend
+    };
+  });
+
+  const criticalItems = forecasts.filter((f: any) => f.reorder_recommended);
+
+  return {
+    summary: `Analyzed ${forecasts.length} items. ${criticalItems.length} need reordering within ${forecastHorizon} days.`,
+    forecasts: forecasts.slice(0, 15),
+    critical_reorders: criticalItems.slice(0, 10),
+    forecast_horizon_days: forecastHorizon,
+    total_items_analyzed: forecasts.length
   };
 }
 
