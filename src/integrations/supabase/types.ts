@@ -5209,6 +5209,18 @@ export type Database = {
         }
         Returns: string
       }
+      dkegl_get_ai_memory_insights: {
+        Args: { _org_id: string; _days_back?: number }
+        Returns: Json
+      }
+      dkegl_get_context_inventory_data: {
+        Args: { _org_id: string; _context_type?: string }
+        Returns: Json
+      }
+      dkegl_get_context_production_data: {
+        Args: { _org_id: string; _context_type?: string }
+        Returns: Json
+      }
       dkegl_get_current_item_pricing: {
         Args: { _org_id: string; _item_code: string }
         Returns: {

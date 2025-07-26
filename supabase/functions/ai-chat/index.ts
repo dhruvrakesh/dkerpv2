@@ -303,6 +303,7 @@ You have access to real-time ERP data through function calls. Use these function
 - get_production_summary: Get production status and manufacturing data  
 - get_quality_issues: Get quality control issues and metrics
 - analyze_cost_trends: Analyze cost trends and financial data
+- get_memory_insights: Access historical trends and patterns from daily snapshots
 
 Current context: ${contextType}
 Context data: ${JSON.stringify(contextData)}
@@ -312,7 +313,8 @@ Guidelines:
 - Be helpful, accurate, and concise
 - Focus on ERP-related tasks and manufacturing processes
 - Provide actionable insights and recommendations based on actual data
-- When discussing trends, always use recent data from function calls`;
+- When discussing trends, always use recent data from function calls
+- Access memory insights for historical comparisons and trend analysis`;
 
   // Inject recent context data based on type
   let contextualData = '';
@@ -320,27 +322,39 @@ Guidelines:
     try {
       switch (contextType) {
         case 'inventory':
-          const { data: stockSummary } = await supabase
-            .from('dkegl_stock_summary')
-            .select('item_code, current_qty, reorder_suggested')
-            .eq('organization_id', userOrg)
-            .limit(5);
+          const { data: stockData } = await supabase.rpc('dkegl_get_context_inventory_data', {
+            _org_id: userOrg,
+            _context_type: contextType
+          });
           
-          if (stockSummary?.length) {
-            contextualData = `\n\nRecent inventory status: ${JSON.stringify(stockSummary)}`;
+          if (stockData) {
+            contextualData = `\n\nCurrent inventory context: ${JSON.stringify(stockData)}`;
           }
           break;
 
         case 'manufacturing':
-          const { data: orders } = await supabase
-            .from('dkegl_orders')
-            .select('order_number, status, item_name')
-            .eq('organization_id', userOrg)
-            .order('created_at', { ascending: false })
-            .limit(5);
+          const { data: productionData } = await supabase.rpc('dkegl_get_context_production_data', {
+            _org_id: userOrg,
+            _context_type: contextType
+          });
           
-          if (orders?.length) {
-            contextualData = `\n\nRecent orders: ${JSON.stringify(orders)}`;
+          if (productionData) {
+            contextualData = `\n\nCurrent production context: ${JSON.stringify(productionData)}`;
+          }
+          break;
+          
+        case 'analytics':
+          const { data: analyticsData } = await supabase.rpc('dkegl_get_context_inventory_data', {
+            _org_id: userOrg,
+            _context_type: contextType
+          });
+          const { data: memoryInsights } = await supabase.rpc('dkegl_get_ai_memory_insights', {
+            _org_id: userOrg,
+            _days_back: 30
+          });
+          
+          if (analyticsData || memoryInsights) {
+            contextualData = `\n\nAnalytics context: ${JSON.stringify({analytics: analyticsData, memory: memoryInsights})}`;
           }
           break;
       }
@@ -353,20 +367,27 @@ Guidelines:
     case 'inventory':
       return `${basePrompt}
 
-You are currently in the Inventory context. Help with stock management, item masters, pricing, GRN logs, and inventory analysis.${contextualData}`;
+You are currently in the Inventory context. Help with stock management, item masters, pricing, GRN logs, and inventory analysis. You have access to real inventory data and can provide insights on stock levels, reorder recommendations, and consumption patterns.${contextualData}`;
 
     case 'manufacturing':
       return `${basePrompt}
 
-You are currently in the Manufacturing context. Help with production planning, workflow management, order tracking, and manufacturing processes.${contextualData}`;
+You are currently in the Manufacturing context. Help with production planning, workflow management, order tracking, and manufacturing processes. You can analyze production efficiency, identify bottlenecks, and provide workflow optimization recommendations.${contextualData}`;
 
     case 'analytics':
       return `${basePrompt}
 
-You are currently in the Analytics context. Help with data analysis, KPI interpretation, trend analysis, and business intelligence.${contextualData}`;
+You are currently in the Analytics context. Help with data analysis, KPI interpretation, trend analysis, and business intelligence. You have access to historical snapshots and can identify trends, patterns, and provide predictive insights based on memory data.${contextualData}`;
+
+    case 'quality':
+      return `${basePrompt}
+
+You are currently in the Quality context. Help with quality control metrics, inspection data, defect analysis, and compliance tracking. Focus on quality improvements and control processes.${contextualData}`;
 
     default:
-      return basePrompt;
+      return `${basePrompt}
+
+You are in General Assistant mode. Help with overall ERP questions, navigation, and basic system guidance.${contextualData}`;
   }
 }
 
@@ -508,6 +529,23 @@ function getERPFunctions() {
           }
         }
       }
+    },
+    {
+      name: 'get_memory_insights',
+      description: 'Access historical trends and patterns from daily snapshots and memory data',
+      parameters: {
+        type: 'object',
+        properties: {
+          days_back: {
+            type: 'number',
+            description: 'Number of days to look back for trends (default: 30)'
+          },
+          insight_type: {
+            type: 'string',
+            description: 'Type of insight to generate (trends, patterns, comparisons)'
+          }
+        }
+      }
     }
   ];
 }
@@ -545,6 +583,9 @@ async function handleFunctionCall(functionCall: any, userOrg: string | null, sup
       case 'get_consumption_forecast':
         return await getConsumptionForecast(parsedArgs, userOrg, supabase);
       
+      case 'get_memory_insights':
+        return await getMemoryInsights(parsedArgs, userOrg, supabase);
+      
       default:
         return { error: `Unknown function: ${name}` };
     }
@@ -556,8 +597,16 @@ async function handleFunctionCall(functionCall: any, userOrg: string | null, sup
 
 async function getInventoryStatus(args: any, userOrg: string, supabase: any) {
   let query = supabase
-    .from('dkegl_stock_summary')
-    .select('item_code, item_name, category_name, current_qty, reorder_level, reorder_suggested, days_of_cover, last_transaction_date')
+    .from('dkegl_stock')
+    .select(`
+      item_code, 
+      current_qty, 
+      unit_cost,
+      last_transaction_date,
+      location,
+      item_master:dkegl_item_master!inner(item_name, reorder_level),
+      category:dkegl_item_master!inner(category:dkegl_categories(category_name))
+    `)
     .eq('organization_id', userOrg);
 
   if (args.item_code) {
@@ -565,11 +614,12 @@ async function getInventoryStatus(args: any, userOrg: string, supabase: any) {
   }
 
   if (args.low_stock_only) {
-    query = query.eq('reorder_suggested', true);
+    // Filter for items below reorder level
+    query = query.lt('current_qty', 'item_master.reorder_level');
   }
 
   if (args.category) {
-    query = query.ilike('category_name', `%${args.category}%`);
+    query = query.ilike('category.category_name', `%${args.category}%`);
   }
 
   query = query.order('current_qty', { ascending: true }).limit(20);
@@ -580,12 +630,27 @@ async function getInventoryStatus(args: any, userOrg: string, supabase: any) {
     throw new Error(`Inventory query failed: ${error.message}`);
   }
 
+  // Transform data to match expected format
+  const transformedData = data?.map(item => ({
+    item_code: item.item_code,
+    item_name: item.item_master?.item_name,
+    category_name: item.category?.category_name,
+    current_qty: item.current_qty,
+    unit_cost: item.unit_cost,
+    total_value: item.current_qty * (item.unit_cost || 0),
+    reorder_level: item.item_master?.reorder_level,
+    low_stock: item.current_qty <= (item.item_master?.reorder_level || 0),
+    last_transaction_date: item.last_transaction_date,
+    location: item.location
+  }));
+
   return {
-    inventory_data: data,
+    inventory_data: transformedData,
     summary: {
-      total_items: data?.length || 0,
-      low_stock_items: data?.filter(item => item.reorder_suggested).length || 0,
-      zero_stock_items: data?.filter(item => item.current_qty <= 0).length || 0
+      total_items: transformedData?.length || 0,
+      low_stock_items: transformedData?.filter(item => item.low_stock).length || 0,
+      zero_stock_items: transformedData?.filter(item => item.current_qty <= 0).length || 0,
+      total_value: transformedData?.reduce((sum, item) => sum + item.total_value, 0) || 0
     }
   };
 }
@@ -906,6 +971,22 @@ async function getConsumptionForecast(args: any, userOrg: string, supabase: any)
     critical_reorders: criticalItems.slice(0, 10),
     forecast_horizon_days: forecastHorizon,
     total_items_analyzed: forecasts.length
+  };
+}
+
+async function getMemoryInsights(args: any, userOrg: string, supabase: any) {
+  const { data, error } = await supabase.rpc('dkegl_get_ai_memory_insights', {
+    _org_id: userOrg,
+    _days_back: args.days_back || 30
+  });
+
+  if (error) throw error;
+
+  return {
+    summary: `Generated insights from ${args.days_back || 30} days of historical data`,
+    memory_insights: data,
+    insight_type: args.insight_type || 'comprehensive',
+    analysis_period: args.days_back || 30
   };
 }
 
