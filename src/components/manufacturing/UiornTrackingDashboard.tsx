@@ -129,13 +129,19 @@ export const UiornTrackingDashboard = () => {
   // Auto-progress to next stage
   const autoProgressMutation = useMutation({
     mutationFn: async (orderId: string) => {
+      console.log('Auto Progress clicked for order:', orderId);
+      console.log('Organization ID:', organization?.id);
+      
       const { data, error } = await supabase.functions.invoke('workflow-automation', {
         body: {
           action: 'auto_progress_workflow',
-          order_id: orderId,
-          organization_id: organization?.id,
+          organizationId: organization?.id,
+          data: { orderId }
         },
       });
+
+      console.log('Edge function response:', data);
+      console.log('Edge function error:', error);
 
       if (error) throw error;
       return data;
@@ -273,7 +279,7 @@ export const UiornTrackingDashboard = () => {
                 <h4 className="font-medium">Workflow Progress</h4>
                 <div className="flex items-center gap-2 overflow-x-auto pb-2">
                   {order.stages.map((stage, index) => (
-                    <React.Fragment key={`${stage.stage_name}-${stage.sequence_order}-${index}`}>
+                    <div key={`${stage.stage_name}-${stage.sequence_order}-${index}`} className="flex items-center gap-2">
                       <div className="flex flex-col items-center min-w-32 text-center">
                         <div className="flex items-center gap-2 mb-2">
                           {getStageIcon(stage.status)}
@@ -305,7 +311,7 @@ export const UiornTrackingDashboard = () => {
                       {index < order.stages.length - 1 && (
                         <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       )}
-                    </React.Fragment>
+                    </div>
                   ))}
                 </div>
 
