@@ -400,6 +400,7 @@ export const AdhesiveCoating = () => {
                     workflowProgressId={job.id}
                     stageName="Adhesive Coating"
                     orderId={job.order_id}
+                    stageId={job.stage_id}
                   />
                 </TabsContent>
 

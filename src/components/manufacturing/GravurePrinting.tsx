@@ -408,6 +408,7 @@ export const GravurePrinting = () => {
                     workflowProgressId={job.id}
                     stageName="Gravure Printing"
                     orderId={job.order_id}
+                    stageId={job.stage_id}
                   />
                 </TabsContent>
 

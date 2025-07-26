@@ -378,6 +378,7 @@ export const SlittingPackaging = () => {
                     workflowProgressId={job.id}
                     stageName="Slitting & Packaging"
                     orderId={job.order_id}
+                    stageId={job.stage_id}
                   />
                 </TabsContent>
 

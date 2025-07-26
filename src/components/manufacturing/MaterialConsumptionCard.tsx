@@ -8,18 +8,21 @@ import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { useMaterialTracking } from '@/hooks/useMaterialTracking';
 import { useBOMManagement } from '@/hooks/useBOMManagement';
-import { Package, TrendingUp, AlertTriangle, Calculator, Layers } from 'lucide-react';
+import { useMaterialRequirementCalculator } from '@/hooks/useMaterialRequirementCalculator';
+import { Package, TrendingUp, AlertTriangle, Calculator, Layers, Zap, Clock } from 'lucide-react';
 
 interface MaterialConsumptionCardProps {
   workflowProgressId: string;
   stageName: string;
   orderId: string;
+  stageId?: string;
 }
 
 export const MaterialConsumptionCard: React.FC<MaterialConsumptionCardProps> = ({
   workflowProgressId,
   stageName,
-  orderId
+  orderId,
+  stageId
 }) => {
   const {
     loading,
@@ -29,6 +32,15 @@ export const MaterialConsumptionCard: React.FC<MaterialConsumptionCardProps> = (
     calculateStageCost,
     updateWasteTracking
   } = useMaterialTracking();
+
+  const {
+    selectedOrderId,
+    setSelectedOrderId,
+    selectedStageId,
+    setSelectedStageId,
+    stageRequirements,
+    isLoadingRequirements
+  } = useMaterialRequirementCalculator();
 
   const [materialData, setMaterialData] = useState({
     itemCode: '',
@@ -42,10 +54,16 @@ export const MaterialConsumptionCard: React.FC<MaterialConsumptionCardProps> = (
   const [wasteData, setWasteData] = useState<any[]>([]);
   const [stageCost, setStageCost] = useState(0);
   const [showAddMaterial, setShowAddMaterial] = useState(false);
+  const [showBOMSuggestions, setShowBOMSuggestions] = useState(false);
 
   useEffect(() => {
     loadData();
-  }, [workflowProgressId]);
+    // Set up BOM calculation context
+    if (orderId && stageId) {
+      setSelectedOrderId(orderId);
+      setSelectedStageId(stageId);
+    }
+  }, [workflowProgressId, orderId, stageId]);
 
   const loadData = async () => {
     try {
@@ -88,6 +106,18 @@ export const MaterialConsumptionCard: React.FC<MaterialConsumptionCardProps> = (
     } catch (error) {
       console.error('Error adding material:', error);
     }
+  };
+
+  const handleUseBOMSuggestion = (suggestion: any) => {
+    setMaterialData({
+      itemCode: suggestion.component_item_code,
+      plannedQty: suggestion.planned_quantity,
+      actualQty: suggestion.planned_quantity, // Default to planned
+      unitCost: suggestion.unit_cost,
+      notes: `BOM suggested: ${suggestion.consumption_type} material`
+    });
+    setShowBOMSuggestions(false);
+    setShowAddMaterial(true);
   };
 
   const calculateWastePercentage = () => {
@@ -141,17 +171,93 @@ export const MaterialConsumptionCard: React.FC<MaterialConsumptionCardProps> = (
           </div>
         </div>
 
+        {/* BOM Suggestions */}
+        {stageRequirements && stageRequirements.materials.length > 0 && (
+          <div className="bg-accent/10 p-4 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-accent-foreground" />
+                <span className="font-medium">BOM Suggestions for {stageName}</span>
+              </div>
+              <Button
+                onClick={() => setShowBOMSuggestions(!showBOMSuggestions)}
+                variant="outline"
+                size="sm"
+              >
+                <Zap className="h-4 w-4 mr-1" />
+                {showBOMSuggestions ? 'Hide' : 'Show'} BOM
+              </Button>
+            </div>
+            
+            {showBOMSuggestions && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {stageRequirements.materials.map((material) => (
+                  <div key={material.component_item_code} className="border rounded p-3 bg-background">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="font-medium text-sm">{material.component_item_name}</h4>
+                        <p className="text-xs text-muted-foreground">{material.component_item_code}</p>
+                      </div>
+                      <Badge variant={material.is_critical ? "destructive" : "secondary"} className="text-xs">
+                        {material.consumption_type}
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                      <div>
+                        <span className="text-muted-foreground">Planned:</span>
+                        <p className="font-medium">{material.planned_quantity.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Cost:</span>
+                        <p className="font-medium">${material.unit_cost.toFixed(2)}</p>
+                      </div>
+                    </div>
+                    
+                    {material.shortage_quantity > 0 && (
+                      <div className="text-xs text-destructive mb-2">
+                        ⚠️ Shortage: {material.shortage_quantity.toFixed(2)}
+                      </div>
+                    )}
+                    
+                    <Button
+                      onClick={() => handleUseBOMSuggestion(material)}
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-xs"
+                    >
+                      Use This Material
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Material List */}
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Materials Used</h3>
-            <Button
-              onClick={() => setShowAddMaterial(!showAddMaterial)}
-              variant="outline"
-              size="sm"
-            >
-              {showAddMaterial ? 'Cancel' : 'Add Material'}
-            </Button>
+            <div className="flex gap-2">
+              {stageRequirements && (
+                <Button
+                  onClick={() => setShowBOMSuggestions(!showBOMSuggestions)}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Layers className="h-4 w-4 mr-1" />
+                  BOM
+                </Button>
+              )}
+              <Button
+                onClick={() => setShowAddMaterial(!showAddMaterial)}
+                variant="outline"
+                size="sm"
+              >
+                {showAddMaterial ? 'Cancel' : 'Add Material'}
+              </Button>
+            </div>
           </div>
 
           {showAddMaterial && (
@@ -222,54 +328,102 @@ export const MaterialConsumptionCard: React.FC<MaterialConsumptionCardProps> = (
 
           {consumption.length > 0 ? (
             <div className="space-y-3">
-              {consumption.map((item) => (
-                <div key={item.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-medium">{item.item_code}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Unit Cost: ${item.unit_cost.toFixed(2)}
-                      </p>
+              {consumption.map((item) => {
+                // Find matching BOM suggestion for variance analysis
+                const bomSuggestion = stageRequirements?.materials.find(
+                  m => m.component_item_code === item.item_code
+                );
+                
+                return (
+                  <div key={item.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="font-medium">{item.item_code}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Unit Cost: ${item.unit_cost.toFixed(2)}
+                          {bomSuggestion && (
+                            <span className="ml-2 text-accent-foreground">
+                              (BOM: ${bomSuggestion.unit_cost.toFixed(2)})
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {bomSuggestion && (
+                          <Badge variant="outline" className="text-xs">
+                            <Layers className="h-3 w-3 mr-1" />
+                            BOM
+                          </Badge>
+                        )}
+                        <Badge variant={item.waste_quantity > 0 ? "destructive" : "secondary"}>
+                          ${item.total_cost.toFixed(2)}
+                        </Badge>
+                      </div>
                     </div>
-                    <Badge variant={item.waste_quantity > 0 ? "destructive" : "secondary"}>
-                      ${item.total_cost.toFixed(2)}
-                    </Badge>
+                    
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Planned:</span>
+                        <div className="font-medium">
+                          {item.planned_quantity}
+                          {bomSuggestion && (
+                            <div className="text-xs text-muted-foreground">
+                              BOM: {bomSuggestion.planned_quantity.toFixed(2)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Actual:</span>
+                        <p className="font-medium">{item.actual_quantity}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Waste:</span>
+                        <p className="font-medium text-destructive">{item.waste_quantity}</p>
+                      </div>
+                    </div>
+                    
+                    {/* Variance Analysis */}
+                    {bomSuggestion && (
+                      <div className="mt-2 p-2 bg-accent/5 rounded text-xs">
+                        <div className="flex justify-between">
+                          <span>BOM vs Actual Variance:</span>
+                          <span className={
+                            item.actual_quantity > bomSuggestion.planned_quantity 
+                              ? "text-destructive" 
+                              : "text-accent-foreground"
+                          }>
+                            {((item.actual_quantity - bomSuggestion.planned_quantity) / bomSuggestion.planned_quantity * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {item.waste_quantity > 0 && (
+                      <div className="mt-2">
+                        <Progress 
+                          value={(item.waste_quantity / item.planned_quantity) * 100} 
+                          className="h-2"
+                        />
+                        <p className="text-xs text-destructive mt-1">
+                          {((item.waste_quantity / item.planned_quantity) * 100).toFixed(1)}% waste
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Planned:</span>
-                      <p className="font-medium">{item.planned_quantity}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Actual:</span>
-                      <p className="font-medium">{item.actual_quantity}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Waste:</span>
-                      <p className="font-medium text-destructive">{item.waste_quantity}</p>
-                    </div>
-                  </div>
-                  
-                  {item.waste_quantity > 0 && (
-                    <div className="mt-2">
-                      <Progress 
-                        value={(item.waste_quantity / item.planned_quantity) * 100} 
-                        className="h-2"
-                      />
-                      <p className="text-xs text-destructive mt-1">
-                        {((item.waste_quantity / item.planned_quantity) * 100).toFixed(1)}% waste
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
               <p>No materials tracked yet</p>
-              <p className="text-sm">Add materials to track consumption and costs</p>
+              <p className="text-sm">
+                {stageRequirements?.materials.length ? 
+                  'Use BOM suggestions above to start tracking' : 
+                  'Add materials to track consumption and costs'
+                }
+              </p>
             </div>
           )}
         </div>
