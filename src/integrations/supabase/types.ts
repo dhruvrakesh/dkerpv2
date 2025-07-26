@@ -5210,7 +5210,7 @@ export type Database = {
         Returns: string
       }
       dkegl_get_ai_memory_insights: {
-        Args: { _org_id: string; _days_back?: number }
+        Args: { _org_id: string } | { _org_id: string; _days_back?: number }
         Returns: Json
       }
       dkegl_get_context_inventory_data: {
