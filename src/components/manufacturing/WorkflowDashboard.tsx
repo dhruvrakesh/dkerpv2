@@ -23,6 +23,7 @@ import {
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import { OrderDetailsModal } from './OrderDetailsModal';
+import { WorkflowTestPanel } from './WorkflowTestPanel';
 
 interface WorkflowStage {
   id: string;
@@ -313,6 +314,9 @@ export const WorkflowDashboard = () => {
         </Button>
       </div>
 
+      {/* System Health Check Panel */}
+      <WorkflowTestPanel />
+
       <Tabs value={activeView} onValueChange={setActiveView} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="all">All Orders</TabsTrigger>
@@ -409,35 +413,41 @@ export const WorkflowDashboard = () => {
                       </div>
 
                       <div className="flex justify-between items-center pt-4 border-t">
-                      <div className="flex gap-2">
+                        <div className="flex gap-2">
                           <Button 
                             size="sm" 
                             variant="default"
-                            onClick={() => progressToNextStage.mutate({ orderId: order.id })}
+                            onClick={() => {
+                              console.log('Next Stage clicked for order:', order.id);
+                              progressToNextStage.mutate({ orderId: order.id });
+                            }}
                             disabled={progressToNextStage.isPending || order.status === 'completed'}
                           >
                             <ArrowRight className="mr-2 h-4 w-4" />
-                            Next Stage
+                            {progressToNextStage.isPending ? 'Processing...' : 'Next Stage'}
                           </Button>
                           
                           <Button 
                             size="sm" 
                             variant="outline"
                             onClick={() => {
-                              // Find in-progress stage and pause it
+                              // Find current in-progress stage and pause it
                               const inProgressStage = order.workflow_progress.find(p => p.status === 'in_progress');
                               if (inProgressStage) {
+                                console.log('Hold clicked for stage:', inProgressStage.id);
                                 updateStageStatus.mutate({
                                   progressId: inProgressStage.id,
                                   status: 'on_hold',
                                   notes: 'Production paused by user'
                                 });
+                              } else {
+                                toast.error('No active stage to hold');
                               }
                             }}
                             disabled={updateStageStatus.isPending || !order.workflow_progress.some(p => p.status === 'in_progress')}
                           >
                             <PauseCircle className="mr-2 h-4 w-4" />
-                            Hold
+                            {updateStageStatus.isPending ? 'Updating...' : 'Hold'}
                           </Button>
 
                           <Button 
