@@ -199,10 +199,6 @@ export function AIChatInterface({ contextType = 'general', contextData = {}, cla
 
             {messages.map((message, index) => (
               <div key={index} className="space-y-2">
-                {message.functionCalls && message.functionCalls.length > 0 && (
-                  <FunctionCallIndicator functionCalls={message.functionCalls} />
-                )}
-                
                 <div className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {message.role === 'assistant' && (
                     <div className="flex-shrink-0">
@@ -235,6 +231,11 @@ export function AIChatInterface({ contextType = 'general', contextData = {}, cla
                     </div>
                   )}
                 </div>
+                
+                {/* Function Call Indicators */}
+                {message.functionCalls && message.functionCalls.length > 0 && (
+                  <FunctionCallIndicator functionCalls={message.functionCalls} />
+                )}
               </div>
             ))}
 
