@@ -12,7 +12,8 @@ import {
   FileText,
   Calendar,
   Bell,
-  ChevronRight
+  ChevronRight,
+  Brain
 } from 'lucide-react';
 import {
   Sidebar,
@@ -89,6 +90,11 @@ const navigation = [
     name: 'Planning',
     href: '/planning',
     icon: Calendar
+  },
+  {
+    name: 'AI Assistant',
+    href: '/ai',
+    icon: Brain
   }
 ];
 

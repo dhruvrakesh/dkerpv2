@@ -85,6 +85,151 @@ export type Database = {
           },
         ]
       }
+      ai_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          role: string
+          session_id: string
+          token_count: number | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role: string
+          session_id: string
+          token_count?: number | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role?: string
+          session_id?: string
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ai_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_chat_sessions: {
+        Row: {
+          bpmn_file_id: string | null
+          created_at: string
+          id: string
+          last_activity_at: string
+          session_context: Json | null
+          session_summary: string | null
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bpmn_file_id?: string | null
+          created_at?: string
+          id?: string
+          last_activity_at?: string
+          session_context?: Json | null
+          session_summary?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bpmn_file_id?: string | null
+          created_at?: string
+          id?: string
+          last_activity_at?: string
+          session_context?: Json | null
+          session_summary?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_sessions_bpmn_file_id_fkey"
+            columns: ["bpmn_file_id"]
+            isOneToOne: false
+            referencedRelation: "bpmn_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_usage_logs: {
+        Row: {
+          bpmn_file_id: string | null
+          completion_tokens: number
+          cost_usd: number | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          model_used: string
+          operation_type: string
+          prompt_tokens: number
+          session_id: string | null
+          total_tokens: number
+          user_id: string
+        }
+        Insert: {
+          bpmn_file_id?: string | null
+          completion_tokens?: number
+          cost_usd?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          model_used: string
+          operation_type: string
+          prompt_tokens?: number
+          session_id?: string | null
+          total_tokens?: number
+          user_id: string
+        }
+        Update: {
+          bpmn_file_id?: string | null
+          completion_tokens?: number
+          cost_usd?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          model_used?: string
+          operation_type?: string
+          prompt_tokens?: number
+          session_id?: string | null
+          total_tokens?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_logs_bpmn_file_id_fkey"
+            columns: ["bpmn_file_id"]
+            isOneToOne: false
+            referencedRelation: "bpmn_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ai_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artwork_upload: {
         Row: {
           ai_prompt: string | null
@@ -112,6 +257,39 @@ export type Database = {
           created_at?: string | null
           dieline_spec?: string | null
           id?: string
+        }
+        Relationships: []
+      }
+      bpmn_files: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          updated_at: string | null
+          uploaded_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          updated_at?: string | null
+          uploaded_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          updated_at?: string | null
+          uploaded_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -4270,6 +4448,53 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      process_knowledge_base: {
+        Row: {
+          bpmn_context: Json
+          confidence_score: number | null
+          created_at: string
+          effectiveness_score: number | null
+          extracted_insights: Json
+          id: string
+          knowledge_type: string
+          source_session_id: string | null
+          updated_at: string
+          usage_count: number | null
+        }
+        Insert: {
+          bpmn_context: Json
+          confidence_score?: number | null
+          created_at?: string
+          effectiveness_score?: number | null
+          extracted_insights: Json
+          id?: string
+          knowledge_type: string
+          source_session_id?: string | null
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Update: {
+          bpmn_context?: Json
+          confidence_score?: number | null
+          created_at?: string
+          effectiveness_score?: number | null
+          extracted_insights?: Json
+          id?: string
+          knowledge_type?: string
+          source_session_id?: string | null
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_knowledge_base_source_session_id_fkey"
+            columns: ["source_session_id"]
+            isOneToOne: false
+            referencedRelation: "ai_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

@@ -27,6 +27,7 @@ import { WorkflowDashboard } from "./components/manufacturing/WorkflowDashboard"
 import { OrderPunching } from "./components/manufacturing/OrderPunching";
 import { CostAnalysisDashboard } from "./components/manufacturing/CostAnalysisDashboard";
 import { UiornTrackingDashboard } from "./components/manufacturing/UiornTrackingDashboard";
+import AIAssistant from "./pages/ai/AIAssistant";
 
 const queryClient = new QueryClient();
 
@@ -284,6 +285,14 @@ const App = () => (
                   <InventoryLayout>
                     <ProductionAnalyticsDashboard />
                   </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/ai" 
+              element={
+                <ProtectedRoute>
+                  <AIAssistant />
                 </ProtectedRoute>
               } 
             />
