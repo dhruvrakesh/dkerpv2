@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 import { EnterpriseItemSelector } from '@/components/ui/enterprise-item-selector';
-import { Plus, Calendar, Package, FileText } from 'lucide-react';
+import { useBOMManagement } from '@/hooks/useBOMManagement';
+import { Plus, Calendar, Package, FileText, Layers, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 
 interface OrderFormData {
@@ -45,6 +47,14 @@ export const OrderPunching = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // BOM Management
+  const {
+    explodeBOM,
+    bomExplosionResults,
+    isExplodingBOM,
+    setSelectedItemCode
+  } = useBOMManagement();
   
   const [formData, setFormData] = useState<OrderFormData>({
     uiorn: '',
@@ -304,7 +314,13 @@ export const OrderPunching = () => {
                     const selectedItem = finishedGoods?.find(item => item.item_code === itemCode);
                     if (selectedItem) {
                       updateFormData('item_code', selectedItem.item_code);
-                      updateFormData('item_name', selectedItem.item_name);
+                       updateFormData('item_name', selectedItem.item_name);
+                      setSelectedItemCode(selectedItem.item_code);
+                      
+                      // Auto-explode BOM if quantity is set
+                      if (formData.order_quantity > 0) {
+                        explodeBOM({ itemCode: selectedItem.item_code, quantity: formData.order_quantity });
+                      }
                     }
                   }}
                   placeholder="Search for finished goods..."
@@ -325,7 +341,15 @@ export const OrderPunching = () => {
                     id="quantity"
                     type="number"
                     value={formData.order_quantity}
-                    onChange={(e) => updateFormData('order_quantity', parseInt(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const quantity = parseInt(e.target.value) || 0;
+                      updateFormData('order_quantity', quantity);
+                      
+                      // Auto-explode BOM when quantity changes and item is selected
+                      if (quantity > 0 && formData.item_code) {
+                        explodeBOM({ itemCode: formData.item_code, quantity });
+                      }
+                    }}
                     placeholder="1000"
                     required
                     min="1"
@@ -524,6 +548,90 @@ export const OrderPunching = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Material Requirements Preview */}
+        {(bomExplosionResults && bomExplosionResults.length > 0) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="h-5 w-5" />
+                Material Requirements Preview
+                {isExplodingBOM && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                )}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                BOM explosion for {formData.order_quantity} units of {formData.item_name}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {bomExplosionResults.map((requirement, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium">{requirement.component_item_code}</h4>
+                        <Badge variant="outline" className="text-xs">
+                          {requirement.stage_name}
+                        </Badge>
+                        {requirement.is_critical && (
+                          <Badge variant="destructive" className="text-xs">
+                            Critical
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {requirement.component_item_name}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Type: {requirement.consumption_type}
+                        {requirement.waste_percentage > 0 && ` • Waste: ${requirement.waste_percentage}%`}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 text-right">
+                      <div>
+                        <p className="font-medium">{requirement.net_requirement.toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">Required</p>
+                      </div>
+                      
+                      <div>
+                        <p className="font-medium">{requirement.available_stock.toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">Available</p>
+                      </div>
+                      
+                      <div className="min-w-[80px]">
+                        {requirement.shortage_quantity > 0 ? (
+                          <div className="flex items-center gap-1 text-destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <span className="font-medium">{requirement.shortage_quantity.toFixed(2)}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-green-600">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span className="text-xs">OK</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {bomExplosionResults.some(r => r.shortage_quantity > 0) && (
+                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                      <h4 className="font-medium text-yellow-800">Material Shortages Detected</h4>
+                    </div>
+                    <p className="text-sm text-yellow-700">
+                      Some materials have insufficient stock. Consider adjusting quantities or procuring materials before production.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="flex justify-end">
           <Button

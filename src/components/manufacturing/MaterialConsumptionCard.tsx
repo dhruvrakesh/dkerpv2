@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { useMaterialTracking } from '@/hooks/useMaterialTracking';
-import { Package, TrendingUp, AlertTriangle, Calculator } from 'lucide-react';
+import { useBOMManagement } from '@/hooks/useBOMManagement';
+import { Package, TrendingUp, AlertTriangle, Calculator, Layers } from 'lucide-react';
 
 interface MaterialConsumptionCardProps {
   workflowProgressId: string;

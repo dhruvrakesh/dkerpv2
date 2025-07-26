@@ -260,6 +260,51 @@ export type Database = {
         }
         Relationships: []
       }
+      bills: {
+        Row: {
+          admin_version_data: Json | null
+          bill_data: Json
+          bill_date: string
+          bill_number: string
+          client_version_data: Json | null
+          created_at: string
+          file_path: string | null
+          generated_by: string | null
+          id: string
+          order_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_version_data?: Json | null
+          bill_data?: Json
+          bill_date?: string
+          bill_number: string
+          client_version_data?: Json | null
+          created_at?: string
+          file_path?: string | null
+          generated_by?: string | null
+          id?: string
+          order_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_version_data?: Json | null
+          bill_data?: Json
+          bill_date?: string
+          bill_number?: string
+          client_version_data?: Json | null
+          created_at?: string
+          file_path?: string | null
+          generated_by?: string | null
+          id?: string
+          order_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bpmn_files: {
         Row: {
           created_at: string | null
@@ -777,6 +822,141 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dkegl_bom_components: {
+        Row: {
+          bom_master_id: string
+          component_item_code: string
+          component_notes: string | null
+          consumption_type: string | null
+          created_at: string
+          id: string
+          is_critical: boolean | null
+          organization_id: string
+          quantity_per_unit: number
+          stage_id: string | null
+          stage_sequence: number | null
+          substitute_items: Json | null
+          uom: string | null
+          updated_at: string
+          waste_percentage: number | null
+        }
+        Insert: {
+          bom_master_id: string
+          component_item_code: string
+          component_notes?: string | null
+          consumption_type?: string | null
+          created_at?: string
+          id?: string
+          is_critical?: boolean | null
+          organization_id: string
+          quantity_per_unit?: number
+          stage_id?: string | null
+          stage_sequence?: number | null
+          substitute_items?: Json | null
+          uom?: string | null
+          updated_at?: string
+          waste_percentage?: number | null
+        }
+        Update: {
+          bom_master_id?: string
+          component_item_code?: string
+          component_notes?: string | null
+          consumption_type?: string | null
+          created_at?: string
+          id?: string
+          is_critical?: boolean | null
+          organization_id?: string
+          quantity_per_unit?: number
+          stage_id?: string | null
+          stage_sequence?: number | null
+          substitute_items?: Json | null
+          uom?: string | null
+          updated_at?: string
+          waste_percentage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_bom_components_bom_master_id_fkey"
+            columns: ["bom_master_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_bom_master"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_bom_components_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_workflow_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_bom_master: {
+        Row: {
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
+          bom_notes: string | null
+          bom_version: string
+          created_at: string
+          created_by: string | null
+          effective_from: string
+          effective_until: string | null
+          id: string
+          is_active: boolean | null
+          item_code: string
+          organization_id: string
+          scrap_percentage: number | null
+          total_labor_cost: number | null
+          total_material_cost: number | null
+          total_overhead_cost: number | null
+          updated_at: string
+          yield_percentage: number | null
+        }
+        Insert: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          bom_notes?: string | null
+          bom_version?: string
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_until?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_code: string
+          organization_id: string
+          scrap_percentage?: number | null
+          total_labor_cost?: number | null
+          total_material_cost?: number | null
+          total_overhead_cost?: number | null
+          updated_at?: string
+          yield_percentage?: number | null
+        }
+        Update: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          bom_notes?: string | null
+          bom_version?: string
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_until?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_code?: string
+          organization_id?: string
+          scrap_percentage?: number | null
+          total_labor_cost?: number | null
+          total_material_cost?: number | null
+          total_overhead_cost?: number | null
+          updated_at?: string
+          yield_percentage?: number | null
+        }
+        Relationships: []
       }
       dkegl_categories: {
         Row: {
@@ -2179,6 +2359,71 @@ export type Database = {
             columns: ["workflow_progress_id"]
             isOneToOne: false
             referencedRelation: "dkegl_workflow_progress"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_material_reservations: {
+        Row: {
+          allocated_at: string | null
+          allocated_quantity: number | null
+          consumed_at: string | null
+          consumed_quantity: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          item_code: string
+          order_id: string
+          organization_id: string
+          released_at: string | null
+          reservation_notes: string | null
+          reservation_status: string | null
+          reserved_at: string | null
+          reserved_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          allocated_at?: string | null
+          allocated_quantity?: number | null
+          consumed_at?: string | null
+          consumed_quantity?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_code: string
+          order_id: string
+          organization_id: string
+          released_at?: string | null
+          reservation_notes?: string | null
+          reservation_status?: string | null
+          reserved_at?: string | null
+          reserved_quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          allocated_at?: string | null
+          allocated_quantity?: number | null
+          consumed_at?: string | null
+          consumed_quantity?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_code?: string
+          order_id?: string
+          organization_id?: string
+          released_at?: string | null
+          reservation_notes?: string | null
+          reservation_status?: string | null
+          reserved_at?: string | null
+          reserved_quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_material_reservations_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -4360,6 +4605,56 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          amount: number
+          boxes: number
+          created_at: string
+          id: string
+          length: number
+          mic: string
+          order_id: string
+          particulars: string
+          per_roll: number
+          rolls: number
+          width: number
+        }
+        Insert: {
+          amount: number
+          boxes: number
+          created_at?: string
+          id?: string
+          length: number
+          mic: string
+          order_id: string
+          particulars: string
+          per_roll: number
+          rolls: number
+          width: number
+        }
+        Update: {
+          amount?: number
+          boxes?: number
+          created_at?: string
+          id?: string
+          length?: number
+          mic?: string
+          order_id?: string
+          particulars?: string
+          per_roll?: number
+          rolls?: number
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_punching: {
         Row: {
           created_at: string | null
@@ -4408,6 +4703,57 @@ export type Database = {
           substrate_name?: string
           uiorn?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          client_company: string | null
+          client_email: string
+          client_name: string
+          created_at: string
+          gst_type: string
+          id: string
+          net_value: number
+          notes: string | null
+          order_date: string
+          order_number: string
+          status: string
+          tax_value: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          client_company?: string | null
+          client_email: string
+          client_name: string
+          created_at?: string
+          gst_type: string
+          id?: string
+          net_value?: number
+          notes?: string | null
+          order_date: string
+          order_number: string
+          status: string
+          tax_value?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          client_company?: string | null
+          client_email?: string
+          client_name?: string
+          created_at?: string
+          gst_type?: string
+          id?: string
+          net_value?: number
+          notes?: string | null
+          order_date?: string
+          order_number?: string
+          status?: string
+          tax_value?: number
+          total_amount?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -5199,6 +5545,22 @@ export type Database = {
         }
         Returns: undefined
       }
+      dkegl_explode_bom: {
+        Args: { _org_id: string; _item_code: string; _quantity: number }
+        Returns: {
+          component_item_code: string
+          component_item_name: string
+          total_quantity_required: number
+          stage_id: string
+          stage_name: string
+          consumption_type: string
+          is_critical: boolean
+          waste_percentage: number
+          net_requirement: number
+          available_stock: number
+          shortage_quantity: number
+        }[]
+      }
       dkegl_generate_item_code: {
         Args: {
           _org_id: string
@@ -5207,6 +5569,10 @@ export type Database = {
           size_mm?: string
           gsm?: number
         }
+        Returns: string
+      }
+      dkegl_get_active_bom: {
+        Args: { _org_id: string; _item_code: string }
         Returns: string
       }
       dkegl_get_ai_memory_insights: {
@@ -5344,6 +5710,10 @@ export type Database = {
       dkegl_refresh_stock_summary: {
         Args: { _org_id: string }
         Returns: undefined
+      }
+      dkegl_reserve_order_materials: {
+        Args: { _order_id: string }
+        Returns: Json
       }
       dkegl_track_material_consumption: {
         Args: {

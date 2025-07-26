@@ -5,11 +5,12 @@
 1. [System Overview](#system-overview)
 2. [Phase 1: System Setup & User Management](#phase-1-system-setup--user-management)
 3. [Phase 2: Master Data Setup](#phase-2-master-data-setup)
-4. [Phase 3: Inventory Management](#phase-3-inventory-management)
-5. [Phase 4: Manufacturing Order Flow](#phase-4-manufacturing-order-flow)
-6. [Phase 5: Quality & Monitoring](#phase-5-quality--monitoring)
-7. [Best Practices & Do's and Don'ts](#best-practices--dos-and-donts)
-8. [Troubleshooting Guide](#troubleshooting-guide)
+4. [Phase 3: BOM (Bill of Materials) Management](#phase-3-bom-bill-of-materials-management)
+5. [Phase 4: Inventory Management](#phase-4-inventory-management)
+6. [Phase 5: Manufacturing Order Flow](#phase-5-manufacturing-order-flow)
+7. [Phase 6: Quality & Monitoring](#phase-6-quality--monitoring)
+8. [Best Practices & Do's and Don'ts](#best-practices--dos-and-donts)
+9. [Troubleshooting Guide](#troubleshooting-guide)
 
 ---
 
@@ -161,7 +162,212 @@ Finished Goods
 
 ---
 
-## Phase 3: Inventory Management
+## Phase 3: BOM (Bill of Materials) Management
+
+### 3.1 BOM Overview
+
+The BOM (Bill of Materials) system is the **heart of the manufacturing ERP**, defining exactly which raw materials, chemicals, and quantities are required to produce each finished good. Without proper BOM setup, material planning, cost calculation, and automated stock reservations cannot function.
+
+**Key BOM Components:**
+- **BOM Master**: Links finished goods to their component requirements
+- **BOM Components**: Detailed material requirements per production stage
+- **BOM Explosion**: Automatic calculation of total material requirements
+- **Material Reservations**: Automatic stock allocation for orders
+
+### 3.2 BOM Creation and Setup
+
+**Prerequisites:**
+1. ✅ All raw materials and chemicals must be in Item Master
+2. ✅ Finished goods must be defined with correct specifications
+3. ✅ Workflow stages must be configured and active
+4. ✅ Pricing master must be setup for accurate costing
+
+**Creating a New BOM:**
+1. Navigate to Manufacturing → BOM Management
+2. Click "Create New BOM"
+3. Select Finished Good item code
+4. Enter BOM details:
+   - BOM Version (e.g., "1.0", "1.1")
+   - Yield Percentage (typically 95-98%)
+   - Overall Scrap Percentage (2-5%)
+   - Effective From/Until dates
+5. Add component requirements per stage:
+   - Component item code (RM/CHEM)
+   - Quantity per unit of finished good
+   - Stage where consumed (Printing, Lamination, etc.)
+   - Consumption type (Direct/Indirect/Byproduct)
+   - Critical material flag
+   - Waste percentage for this component
+   - Alternative materials (if any)
+
+**BOM Component Example:**
+```
+Finished Good: PKG_POUCH_STANDUP_500ML
+├── Gravure Printing Stage
+│   ├── SUB_BOPP_350MM_20GSM: 0.85 SQM (Direct, Critical)
+│   ├── INK_CYAN_PROCESS: 0.02 KG (Direct, Waste: 5%)
+│   └── INK_MAGENTA_PROCESS: 0.015 KG (Direct, Waste: 5%)
+├── Lamination Stage
+│   ├── SUB_PE_350MM_40GSM: 0.85 SQM (Direct, Critical)
+│   └── ADH_SOLVENT_BASED: 0.05 KG (Direct, Waste: 8%)
+└── Slitting & Packaging Stage
+    └── PKG_TAPE_SEALING: 0.1 MTR (Indirect, Waste: 2%)
+```
+
+### 3.3 BOM Explosion Process
+
+**Automatic BOM Explosion** happens when:
+1. **Order Creation**: When FG item and quantity are selected
+2. **Production Planning**: Before material reservation
+3. **Manual Trigger**: Via "Explode BOM" button
+
+**BOM Explosion Results Show:**
+- Total material requirements per component
+- Stage-wise consumption breakdown
+- Available stock vs required quantities
+- **Shortage alerts** for insufficient stock
+- Waste-adjusted net requirements
+- Estimated total material cost
+
+**Reading BOM Explosion Results:**
+```
+Material: SUB_BOPP_350MM_20GSM
+├── Required: 850 SQM
+├── Available: 1200 SQM  
+├── Shortage: 0 SQM ✅
+└── Status: OK
+
+Material: INK_CYAN_PROCESS  
+├── Required: 25 KG
+├── Available: 15 KG
+├── Shortage: 10 KG ⚠️
+└── Status: SHORTAGE - Procurement needed
+```
+
+### 3.4 Material Reservation System
+
+**Automatic Material Reservation:**
+- Triggered when order status changes to "Approved"
+- Reserves exact quantities calculated by BOM explosion
+- Updates available stock quantities
+- Creates reservation records for tracking
+
+**Material Reservation Status:**
+- **Reserved**: Materials allocated but not yet consumed
+- **Allocated**: Materials physically prepared for production
+- **Consumed**: Materials actually used in production
+- **Released**: Unused reservations freed back to stock
+
+**Manual Material Reservation:**
+1. Navigate to Manufacturing → Material Reservations
+2. Select order ID
+3. Click "Reserve Materials" 
+4. Review shortage warnings
+5. Confirm reservation
+
+### 3.5 BOM Integration with Order Processing
+
+**Enhanced Order Punching with BOM:**
+1. Select Finished Good item from dropdown
+2. Enter order quantity
+3. **System automatically explodes BOM**
+4. Shows material requirements preview
+5. Highlights any material shortages
+6. Allows order creation with shortage warnings
+
+**Material Requirements Preview Shows:**
+- Component item codes and names
+- Stage-wise consumption
+- Total quantity required
+- Available stock
+- Shortage quantities (red alerts)
+- Critical material indicators
+
+### 3.6 BOM Versioning and Approval
+
+**BOM Approval Workflow:**
+1. **Draft**: New BOM created, can be edited
+2. **Pending**: Submitted for approval
+3. **Approved**: Active BOM, used for explosion
+4. **Rejected**: Needs revision
+
+**BOM Version Control:**
+- Multiple versions per finished good
+- Only one version active at a time
+- Historical versions maintained
+- Effective date controls
+
+**BOM Approval Process:**
+1. BOM creator submits for approval
+2. Manager/Admin reviews components and quantities
+3. Validates against actual production data
+4. Approves or rejects with comments
+5. Active BOM becomes effective immediately
+
+### 3.7 BOM Best Practices
+
+**DO's:**
+✅ **Always create BOMs for ALL finished goods**
+✅ Validate BOM quantities against actual production
+✅ Include realistic waste percentages (3-8%)
+✅ Mark critical materials that can stop production  
+✅ Use stage-specific consumption mapping
+✅ Keep BOMs updated with engineering changes
+✅ Test BOM explosion before production
+✅ Monitor actual vs planned consumption
+
+**DON'Ts:**
+❌ Don't produce without approved BOMs
+❌ Don't ignore material shortage warnings
+❌ Don't use generic waste percentages for all materials
+❌ Don't skip BOM version control
+❌ Don't create BOMs without proper material validation
+❌ Don't bypass material reservation system
+
+### 3.8 BOM Troubleshooting
+
+**Common BOM Issues:**
+
+**Issue: "No active BOM found for item"**
+- Check if BOM exists and is approved
+- Verify effective dates
+- Ensure BOM version is active
+
+**Issue: "Material shortage detected"**
+- Review current stock levels
+- Check pending GRNs
+- Consider alternative materials
+- Adjust order timing
+
+**Issue: "BOM explosion not working"**
+- Verify all component items exist in master
+- Check stage assignments
+- Validate BOM approval status
+
+**Issue: "Incorrect material quantities"**
+- Review BOM component quantities
+- Check yield percentage settings
+- Validate waste percentage calculations
+- Compare with actual consumption data
+
+### 3.9 BOM Reports and Analytics
+
+**Key BOM Reports:**
+1. **BOM Summary**: All active BOMs by finished good
+2. **Material Requirements**: Projected needs by period
+3. **BOM Cost Analysis**: Standard vs actual costs
+4. **Shortage Analysis**: Materials needing procurement
+5. **BOM Accuracy**: Planned vs actual consumption variance
+
+**BOM KPIs to Monitor:**
+- BOM Accuracy %: (Actual consumption / Planned consumption) × 100
+- Material Shortage Frequency
+- BOM Update Frequency
+- Cost Variance %: (Actual cost - Standard cost) / Standard cost × 100
+
+---
+
+## Phase 4: Inventory Management
 
 ### 3.1 Initial Stock Setup
 
