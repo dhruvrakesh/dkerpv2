@@ -16,6 +16,12 @@ interface MaterialRequirement {
   available_stock: number;
   shortage_quantity: number;
   stage_sequence: number;
+  // Extended properties for material flow
+  item_code: string;
+  item_name: string;
+  material_category: string;
+  current_stock: number;
+  uom: string;
 }
 
 interface StageRequirement {
@@ -25,6 +31,10 @@ interface StageRequirement {
   materials: MaterialRequirement[];
   total_cost: number;
   total_shortage: number;
+  // Extended properties for enhanced tracking
+  total_materials: number;
+  total_shortage_quantity: number;
+  total_shortage_items: number;
 }
 
 export const useMaterialRequirementCalculator = () => {
@@ -131,6 +141,12 @@ export const useMaterialRequirementCalculator = () => {
           available_stock: availableStock,
           shortage_quantity: shortageQuantity,
           stage_sequence: comp.stage_sequence,
+          // Extended properties
+          item_code: comp.component_item_code,
+          item_name: itemInfo?.item_name || comp.component_item_code,
+          material_category: comp.material_category || 'raw_material',
+          current_stock: availableStock,
+          uom: 'PCS', // Should be fetched from item master
         };
       });
 
@@ -141,6 +157,9 @@ export const useMaterialRequirementCalculator = () => {
         materials: requirements,
         total_cost: requirements.reduce((sum, req) => sum + req.total_cost, 0),
         total_shortage: requirements.reduce((sum, req) => sum + req.shortage_quantity, 0),
+        total_materials: requirements.length,
+        total_shortage_quantity: requirements.reduce((sum, req) => sum + req.shortage_quantity, 0),
+        total_shortage_items: requirements.filter(req => req.shortage_quantity > 0).length,
       } as StageRequirement;
     },
     enabled: !!organization?.id && !!selectedOrderId && !!selectedStageId,
@@ -253,6 +272,12 @@ export const useMaterialRequirementCalculator = () => {
               available_stock: availableStock,
               shortage_quantity: shortageQuantity,
               stage_sequence: comp.stage_sequence,
+              // Extended properties
+              item_code: comp.component_item_code,
+              item_name: itemInfo?.item_name || comp.component_item_code,
+              material_category: comp.material_category || 'raw_material',
+              current_stock: availableStock,
+              uom: 'PCS',
             };
           });
 
@@ -263,6 +288,9 @@ export const useMaterialRequirementCalculator = () => {
             materials: requirements,
             total_cost: requirements.reduce((sum, req) => sum + req.total_cost, 0),
             total_shortage: requirements.reduce((sum, req) => sum + req.shortage_quantity, 0),
+            total_materials: requirements.length,
+            total_shortage_quantity: requirements.reduce((sum, req) => sum + req.shortage_quantity, 0),
+            total_shortage_items: requirements.filter(req => req.shortage_quantity > 0).length,
           });
         }
       }
@@ -274,22 +302,22 @@ export const useMaterialRequirementCalculator = () => {
 
   // Calculate cross-stage material flow
   const calculateMaterialFlow = (requirements: StageRequirement[]) => {
-    const materialFlow: Record<string, {
+    const materialFlowMap: Record<string, {
       totalRequired: number;
       stages: Array<{ stageId: string; stageName: string; quantity: number; sequence: number }>;
     }> = {};
 
     requirements.forEach(stage => {
       stage.materials.forEach(material => {
-        if (!materialFlow[material.component_item_code]) {
-          materialFlow[material.component_item_code] = {
+        if (!materialFlowMap[material.component_item_code]) {
+          materialFlowMap[material.component_item_code] = {
             totalRequired: 0,
             stages: []
           };
         }
         
-        materialFlow[material.component_item_code].totalRequired += material.adjusted_quantity;
-        materialFlow[material.component_item_code].stages.push({
+        materialFlowMap[material.component_item_code].totalRequired += material.adjusted_quantity;
+        materialFlowMap[material.component_item_code].stages.push({
           stageId: stage.stage_id,
           stageName: stage.stage_name,
           quantity: material.adjusted_quantity,
@@ -298,7 +326,20 @@ export const useMaterialRequirementCalculator = () => {
       });
     });
 
-    return materialFlow;
+    // Calculate summary metrics
+    const allMaterials = requirements.flatMap(stage => stage.materials);
+    const uniqueMaterials = new Set(allMaterials.map(m => m.component_item_code));
+    const totalCost = allMaterials.reduce((sum, m) => sum + m.total_cost, 0);
+    const shortageItems = allMaterials.filter(m => m.shortage_quantity > 0);
+    const criticalPath = shortageItems.filter(m => m.is_critical);
+
+    return {
+      material_flow: materialFlowMap,
+      total_unique_materials: uniqueMaterials.size,
+      total_cost: totalCost,
+      total_shortage_items: new Set(shortageItems.map(m => m.component_item_code)).size,
+      critical_path: criticalPath,
+    };
   };
 
   return {

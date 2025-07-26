@@ -832,6 +832,7 @@ export type Database = {
           created_at: string
           id: string
           is_critical: boolean | null
+          material_category: string | null
           organization_id: string
           quantity_per_unit: number
           stage_id: string | null
@@ -849,6 +850,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_critical?: boolean | null
+          material_category?: string | null
           organization_id: string
           quantity_per_unit?: number
           stage_id?: string | null
@@ -866,6 +868,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_critical?: boolean | null
+          material_category?: string | null
           organization_id?: string
           quantity_per_unit?: number
           stage_id?: string | null
@@ -2399,6 +2402,66 @@ export type Database = {
           },
         ]
       }
+      dkegl_material_flow_log: {
+        Row: {
+          cost_impact: number | null
+          created_at: string
+          id: string
+          item_code: string
+          lot_number: string | null
+          order_id: string
+          organization_id: string
+          quantity_change: number
+          reference_id: string | null
+          reference_type: string | null
+          running_balance: number
+          stage_id: string
+          transaction_reason: string | null
+          transaction_type: string
+          unit_cost: number
+          user_id: string | null
+          workflow_progress_id: string
+        }
+        Insert: {
+          cost_impact?: number | null
+          created_at?: string
+          id?: string
+          item_code: string
+          lot_number?: string | null
+          order_id: string
+          organization_id: string
+          quantity_change: number
+          reference_id?: string | null
+          reference_type?: string | null
+          running_balance: number
+          stage_id: string
+          transaction_reason?: string | null
+          transaction_type: string
+          unit_cost?: number
+          user_id?: string | null
+          workflow_progress_id: string
+        }
+        Update: {
+          cost_impact?: number | null
+          created_at?: string
+          id?: string
+          item_code?: string
+          lot_number?: string | null
+          order_id?: string
+          organization_id?: string
+          quantity_change?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          running_balance?: number
+          stage_id?: string
+          transaction_reason?: string | null
+          transaction_type?: string
+          unit_cost?: number
+          user_id?: string | null
+          workflow_progress_id?: string
+        }
+        Relationships: []
+      }
       dkegl_material_reservations: {
         Row: {
           allocated_at: string | null
@@ -2460,6 +2523,72 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "dkegl_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_material_transformations: {
+        Row: {
+          created_at: string
+          id: string
+          input_material_id: string
+          order_id: string
+          organization_id: string
+          output_material_id: string
+          processing_conditions: Json | null
+          quality_impact: Json | null
+          stage_id: string
+          transformation_parameters: Json | null
+          transformation_type: string
+          waste_percentage: number
+          workflow_progress_id: string
+          yield_rate: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          input_material_id: string
+          order_id: string
+          organization_id: string
+          output_material_id: string
+          processing_conditions?: Json | null
+          quality_impact?: Json | null
+          stage_id: string
+          transformation_parameters?: Json | null
+          transformation_type: string
+          waste_percentage?: number
+          workflow_progress_id: string
+          yield_rate?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          input_material_id?: string
+          order_id?: string
+          organization_id?: string
+          output_material_id?: string
+          processing_conditions?: Json | null
+          quality_impact?: Json | null
+          stage_id?: string
+          transformation_parameters?: Json | null
+          transformation_type?: string
+          waste_percentage?: number
+          workflow_progress_id?: string
+          yield_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_material_transformations_input_material_id_fkey"
+            columns: ["input_material_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_stage_material_inputs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_material_transformations_output_material_id_fkey"
+            columns: ["output_material_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_stage_material_outputs"
             referencedColumns: ["id"]
           },
         ]
@@ -3399,6 +3528,252 @@ export type Database = {
           substrate_name?: string
           uiorn?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      dkegl_stage_cost_breakdown: {
+        Row: {
+          accounting_period: string | null
+          actual_cost: number
+          allocation_basis: string | null
+          cost_category: string
+          cost_center: string | null
+          cost_driver: string | null
+          cost_subcategory: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          order_id: string
+          organization_id: string
+          planned_cost: number
+          stage_id: string
+          updated_at: string
+          variance_amount: number | null
+          variance_percentage: number | null
+          workflow_progress_id: string
+        }
+        Insert: {
+          accounting_period?: string | null
+          actual_cost?: number
+          allocation_basis?: string | null
+          cost_category: string
+          cost_center?: string | null
+          cost_driver?: string | null
+          cost_subcategory?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id: string
+          organization_id: string
+          planned_cost?: number
+          stage_id: string
+          updated_at?: string
+          variance_amount?: number | null
+          variance_percentage?: number | null
+          workflow_progress_id: string
+        }
+        Update: {
+          accounting_period?: string | null
+          actual_cost?: number
+          allocation_basis?: string | null
+          cost_category?: string
+          cost_center?: string | null
+          cost_driver?: string | null
+          cost_subcategory?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string
+          organization_id?: string
+          planned_cost?: number
+          stage_id?: string
+          updated_at?: string
+          variance_amount?: number | null
+          variance_percentage?: number | null
+          workflow_progress_id?: string
+        }
+        Relationships: []
+      }
+      dkegl_stage_material_categories: {
+        Row: {
+          category_name: string
+          category_type: string
+          cost_allocation_method: string | null
+          created_at: string
+          id: string
+          is_required: boolean | null
+          organization_id: string
+          quality_requirements: Json | null
+          stage_id: string
+          storage_requirements: Json | null
+          typical_consumption_rate: number | null
+          updated_at: string
+          waste_allowance_percentage: number | null
+        }
+        Insert: {
+          category_name: string
+          category_type: string
+          cost_allocation_method?: string | null
+          created_at?: string
+          id?: string
+          is_required?: boolean | null
+          organization_id: string
+          quality_requirements?: Json | null
+          stage_id: string
+          storage_requirements?: Json | null
+          typical_consumption_rate?: number | null
+          updated_at?: string
+          waste_allowance_percentage?: number | null
+        }
+        Update: {
+          category_name?: string
+          category_type?: string
+          cost_allocation_method?: string | null
+          created_at?: string
+          id?: string
+          is_required?: boolean | null
+          organization_id?: string
+          quality_requirements?: Json | null
+          stage_id?: string
+          storage_requirements?: Json | null
+          typical_consumption_rate?: number | null
+          updated_at?: string
+          waste_allowance_percentage?: number | null
+        }
+        Relationships: []
+      }
+      dkegl_stage_material_inputs: {
+        Row: {
+          actual_quantity: number
+          created_at: string
+          expiry_date: string | null
+          id: string
+          input_type: string
+          item_code: string
+          lot_number: string | null
+          material_properties: Json | null
+          order_id: string
+          organization_id: string
+          planned_quantity: number
+          quality_status: string | null
+          received_date: string | null
+          source_stage_id: string | null
+          stage_id: string
+          supplier_batch: string | null
+          total_cost: number | null
+          unit_cost: number
+          updated_at: string
+          workflow_progress_id: string
+        }
+        Insert: {
+          actual_quantity?: number
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          input_type: string
+          item_code: string
+          lot_number?: string | null
+          material_properties?: Json | null
+          order_id: string
+          organization_id: string
+          planned_quantity?: number
+          quality_status?: string | null
+          received_date?: string | null
+          source_stage_id?: string | null
+          stage_id: string
+          supplier_batch?: string | null
+          total_cost?: number | null
+          unit_cost?: number
+          updated_at?: string
+          workflow_progress_id: string
+        }
+        Update: {
+          actual_quantity?: number
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          input_type?: string
+          item_code?: string
+          lot_number?: string | null
+          material_properties?: Json | null
+          order_id?: string
+          organization_id?: string
+          planned_quantity?: number
+          quality_status?: string | null
+          received_date?: string | null
+          source_stage_id?: string | null
+          stage_id?: string
+          supplier_batch?: string | null
+          total_cost?: number | null
+          unit_cost?: number
+          updated_at?: string
+          workflow_progress_id?: string
+        }
+        Relationships: []
+      }
+      dkegl_stage_material_outputs: {
+        Row: {
+          actual_quantity: number
+          created_at: string
+          destination_stage_id: string | null
+          id: string
+          item_code: string
+          material_properties: Json | null
+          order_id: string
+          organization_id: string
+          output_type: string
+          planned_quantity: number
+          quality_grade: string | null
+          stage_id: string
+          total_cost: number | null
+          unit_cost: number
+          updated_at: string
+          waste_category: string | null
+          waste_reason: string | null
+          workflow_progress_id: string
+          yield_percentage: number | null
+        }
+        Insert: {
+          actual_quantity?: number
+          created_at?: string
+          destination_stage_id?: string | null
+          id?: string
+          item_code: string
+          material_properties?: Json | null
+          order_id: string
+          organization_id: string
+          output_type: string
+          planned_quantity?: number
+          quality_grade?: string | null
+          stage_id: string
+          total_cost?: number | null
+          unit_cost?: number
+          updated_at?: string
+          waste_category?: string | null
+          waste_reason?: string | null
+          workflow_progress_id: string
+          yield_percentage?: number | null
+        }
+        Update: {
+          actual_quantity?: number
+          created_at?: string
+          destination_stage_id?: string | null
+          id?: string
+          item_code?: string
+          material_properties?: Json | null
+          order_id?: string
+          organization_id?: string
+          output_type?: string
+          planned_quantity?: number
+          quality_grade?: string | null
+          stage_id?: string
+          total_cost?: number | null
+          unit_cost?: number
+          updated_at?: string
+          waste_category?: string | null
+          waste_reason?: string | null
+          workflow_progress_id?: string
+          yield_percentage?: number | null
         }
         Relationships: []
       }
@@ -5535,6 +5910,19 @@ export type Database = {
       dkegl_calculate_stage_cost: {
         Args: { _workflow_progress_id: string }
         Returns: number
+      }
+      dkegl_calculate_stage_material_requirements: {
+        Args: { _order_id: string; _stage_id: string }
+        Returns: {
+          item_code: string
+          item_name: string
+          material_category: string
+          planned_quantity: number
+          unit_cost: number
+          total_planned_cost: number
+          waste_allowance: number
+          total_with_waste: number
+        }[]
       }
       dkegl_calculate_stock_valuation: {
         Args: { _org_id: string; _item_code: string; _quantity: number }
