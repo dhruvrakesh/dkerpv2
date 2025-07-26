@@ -5235,6 +5235,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      dkegl_get_inventory_analytics: {
+        Args: { _org_id: string }
+        Returns: Json
+      }
       dkegl_get_order_cost_summary: {
         Args: { _order_id: string }
         Returns: {
@@ -5246,6 +5250,14 @@ export type Database = {
           waste_percentage: number
           efficiency_percentage: number
         }[]
+      }
+      dkegl_get_predictive_insights: {
+        Args: { _org_id: string }
+        Returns: Json
+      }
+      dkegl_get_pricing_intelligence: {
+        Args: { _org_id: string }
+        Returns: Json
       }
       dkegl_get_stock_aging: {
         Args: { _org_id: string }
