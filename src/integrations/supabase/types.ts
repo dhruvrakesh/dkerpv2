@@ -473,6 +473,148 @@ export type Database = {
         }
         Relationships: []
       }
+      dkegl_ai_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          role: string
+          session_id: string
+          token_count: number | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role: string
+          session_id: string
+          token_count?: number | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role?: string
+          session_id?: string
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_ai_chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_ai_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_ai_chat_sessions: {
+        Row: {
+          context_data: Json | null
+          context_type: string
+          created_at: string
+          id: string
+          last_activity_at: string | null
+          organization_id: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context_data?: Json | null
+          context_type?: string
+          created_at?: string
+          id?: string
+          last_activity_at?: string | null
+          organization_id?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context_data?: Json | null
+          context_type?: string
+          created_at?: string
+          id?: string
+          last_activity_at?: string | null
+          organization_id?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_ai_chat_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_ai_usage_logs: {
+        Row: {
+          completion_tokens: number
+          cost_usd: number | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          model_used: string
+          operation_type: string
+          organization_id: string | null
+          prompt_tokens: number
+          session_id: string | null
+          total_tokens: number
+          user_id: string
+        }
+        Insert: {
+          completion_tokens?: number
+          cost_usd?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          model_used: string
+          operation_type: string
+          organization_id?: string | null
+          prompt_tokens?: number
+          session_id?: string | null
+          total_tokens?: number
+          user_id: string
+        }
+        Update: {
+          completion_tokens?: number
+          cost_usd?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          model_used?: string
+          operation_type?: string
+          organization_id?: string | null
+          prompt_tokens?: number
+          session_id?: string | null
+          total_tokens?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_ai_usage_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_ai_usage_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_ai_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_artwork: {
         Row: {
           approved_at: string | null

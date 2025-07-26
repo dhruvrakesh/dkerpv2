@@ -67,10 +67,11 @@ serve(async (req) => {
     let session;
     if (sessionId) {
       const { data, error } = await supabase
-        .from('ai_chat_sessions')
+        .from('dkegl_ai_chat_sessions')
         .select('*')
         .eq('id', sessionId)
         .eq('user_id', user.id)
+        .eq('organization_id', userOrg)
         .single();
       
       if (error) {
@@ -80,13 +81,13 @@ serve(async (req) => {
     } else {
       // Create new session
       const { data, error } = await supabase
-        .from('ai_chat_sessions')
+        .from('dkegl_ai_chat_sessions')
         .insert({
+          organization_id: userOrg,
           user_id: user.id,
           title: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
           context_type: contextType,
-          context_data: contextData,
-          model_settings: { model }
+          context_data: contextData
         })
         .select()
         .single();
@@ -99,7 +100,7 @@ serve(async (req) => {
 
     // Get conversation history
     const { data: messages, error: messagesError } = await supabase
-      .from('ai_chat_messages')
+      .from('dkegl_ai_chat_messages')
       .select('role, content')
       .eq('session_id', session.id)
       .order('created_at', { ascending: true });
@@ -118,7 +119,7 @@ serve(async (req) => {
 
     // Save user message
     await supabase
-      .from('ai_chat_messages')
+      .from('dkegl_ai_chat_messages')
       .insert({
         session_id: session.id,
         role: 'user',
@@ -174,7 +175,7 @@ serve(async (req) => {
                   if (data === '[DONE]') {
                     // Save assistant message
                     await supabase
-                      .from('ai_chat_messages')
+                      .from('dkegl_ai_chat_messages')
                       .insert({
                         session_id: session.id,
                         role: 'assistant',
@@ -185,7 +186,7 @@ serve(async (req) => {
                     // Log usage
                     await logUsage(user.id, session.id, model, 'chat_completion', 
                       Math.ceil(conversationMessages.join(' ').length / 4),
-                      Math.ceil(assistantMessage.length / 4));
+                      Math.ceil(assistantMessage.length / 4), userOrg);
 
                     controller.close();
                     return;
@@ -260,7 +261,7 @@ serve(async (req) => {
 
       // Save assistant message
       await supabase
-        .from('ai_chat_messages')
+        .from('dkegl_ai_chat_messages')
         .insert({
           session_id: session.id,
           role: 'assistant',
@@ -271,7 +272,7 @@ serve(async (req) => {
       // Log usage
       await logUsage(user.id, session.id, model, 'chat_completion',
         data.usage?.prompt_tokens || 0,
-        data.usage?.completion_tokens || 0);
+        data.usage?.completion_tokens || 0, userOrg);
 
       return new Response(JSON.stringify({
         message: assistantMessage,
@@ -908,7 +909,7 @@ async function getConsumptionForecast(args: any, userOrg: string, supabase: any)
   };
 }
 
-async function logUsage(userId: string, sessionId: string, model: string, operationType: string, promptTokens: number, completionTokens: number) {
+async function logUsage(userId: string, sessionId: string, model: string, operationType: string, promptTokens: number, completionTokens: number, orgId?: string) {
   try {
     // Calculate cost (rough estimates for GPT-4o-mini)
     const promptCost = promptTokens * 0.00015 / 1000; // $0.15 per 1K tokens
@@ -916,8 +917,9 @@ async function logUsage(userId: string, sessionId: string, model: string, operat
     const totalCost = promptCost + completionCost;
 
     await supabase
-      .from('ai_usage_logs')
+      .from('dkegl_ai_usage_logs')
       .insert({
+        organization_id: orgId,
         user_id: userId,
         session_id: sessionId,
         model_used: model,
