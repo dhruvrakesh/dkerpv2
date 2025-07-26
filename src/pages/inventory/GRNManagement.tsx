@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EnterpriseItemSelector, type ItemOption } from '@/components/ui/enterprise-item-selector';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -72,7 +73,7 @@ export default function GRNManagement() {
   const [filterDateRange, setFilterDateRange] = useState('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedGrn, setSelectedGrn] = useState<GRNRecord | null>(null);
-  const [availableItems, setAvailableItems] = useState<any[]>([]);
+  const [availableItems, setAvailableItems] = useState<ItemOption[]>([]);
 
   const [grnForm, setGrnForm] = useState<GRNForm>({
     grn_number: '',
@@ -115,15 +116,36 @@ export default function GRNManagement() {
       
       setGrnRecords(formattedGrn);
 
-      // Load available items
+      // Load available items with enhanced data for enterprise selector
       const { data: itemsData, error: itemsError } = await supabase
         .from('dkegl_item_master')
-        .select('id, item_code, item_name, uom')
+        .select(`
+          id, 
+          item_code, 
+          item_name, 
+          uom,
+          status,
+          created_at
+        `)
         .eq('status', 'active')
         .order('item_name');
 
       if (itemsError) throw itemsError;
-      setAvailableItems(itemsData || []);
+      
+      // Transform items data to match ItemOption interface
+      const transformedItems: ItemOption[] = (itemsData || []).map(item => ({
+        id: item.id,
+        item_code: item.item_code,
+        item_name: item.item_name,
+        uom: item.uom || 'PCS',
+        category_name: 'General', // Default category since column doesn't exist yet
+        status: item.status,
+        // Mock usage data - in production, this would come from actual usage analytics
+        usage_frequency: Math.floor(Math.random() * 50),
+        last_used: Math.random() > 0.5 ? new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000) : undefined
+      }));
+      
+      setAvailableItems(transformedItems);
 
     } catch (error: any) {
       toast({
@@ -446,18 +468,17 @@ export default function GRNManagement() {
                   </div>
                   <div>
                     <Label htmlFor="item_code">Item *</Label>
-                    <Select value={grnForm.item_code} onValueChange={handleItemSelect}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select item" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableItems.map(item => (
-                          <SelectItem key={item.id} value={item.item_code}>
-                            {item.item_code} - {item.item_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <EnterpriseItemSelector
+                      items={availableItems}
+                      value={grnForm.item_code}
+                      onValueChange={handleItemSelect}
+                      placeholder="Select item..."
+                      searchPlaceholder="Search items by code, name, or category..."
+                      showCategories={true}
+                      showRecentItems={true}
+                      maxResults={50}
+                      className="w-full"
+                    />
                   </div>
                   <div>
                     <Label htmlFor="supplier_name">Supplier Name *</Label>
