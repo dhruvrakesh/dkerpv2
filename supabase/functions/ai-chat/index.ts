@@ -1122,3 +1122,15 @@ async function logUsage(userId: string, sessionId: string, model: string, operat
     console.error('Failed to log usage:', error);
   }
 }
+
+  } catch (error) {
+    console.error('Error in ai-chat function:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
+  }
+});
