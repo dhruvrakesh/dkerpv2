@@ -415,6 +415,30 @@ function getERPFunctions() {
       }
     },
     {
+      name: 'get_inventory_analytics',
+      description: 'Get comprehensive inventory analytics including dead stock analysis, fast/slow movers, ABC analysis, and reorder alerts',
+      parameters: {
+        type: 'object',
+        properties: {}
+      }
+    },
+    {
+      name: 'get_pricing_intelligence',
+      description: 'Get pricing intelligence including variance alerts, cost trends, and supplier performance analysis',
+      parameters: {
+        type: 'object',
+        properties: {}
+      }
+    },
+    {
+      name: 'get_predictive_insights',
+      description: 'Get predictive analytics including demand forecasting and seasonal pattern detection',
+      parameters: {
+        type: 'object',
+        properties: {}
+      }
+    },
+    {
       name: 'get_production_summary',
       description: 'Get production status, workflow progress, and manufacturing metrics',
       parameters: {
@@ -565,6 +589,15 @@ async function handleFunctionCall(functionCall: any, userOrg: string | null, sup
       case 'get_inventory_status':
         return await getInventoryStatus(parsedArgs, userOrg, supabase);
       
+      case 'get_inventory_analytics':
+        return await getInventoryAnalytics(parsedArgs, userOrg, supabase);
+      
+      case 'get_pricing_intelligence':
+        return await getPricingIntelligence(parsedArgs, userOrg, supabase);
+      
+      case 'get_predictive_insights':
+        return await getPredictiveInsights(parsedArgs, userOrg, supabase);
+      
       case 'get_production_summary':
         return await getProductionSummary(parsedArgs, userOrg, supabase);
       
@@ -595,9 +628,83 @@ async function handleFunctionCall(functionCall: any, userOrg: string | null, sup
   }
 }
 
+async function getInventoryAnalytics(args: any, userOrg: string, supabase: any) {
+  try {
+    const { data, error } = await supabase.rpc('dkegl_get_inventory_analytics', {
+      _org_id: userOrg
+    });
+
+    if (error) {
+      throw new Error(`Inventory analytics failed: ${error.message}`);
+    }
+
+    return data || {};
+  } catch (error) {
+    console.error('Error in getInventoryAnalytics:', error);
+    return { error: error.message };
+  }
+}
+
+async function getPricingIntelligence(args: any, userOrg: string, supabase: any) {
+  try {
+    const { data, error } = await supabase.rpc('dkegl_get_pricing_intelligence', {
+      _org_id: userOrg
+    });
+
+    if (error) {
+      throw new Error(`Pricing intelligence failed: ${error.message}`);
+    }
+
+    return data || {};
+  } catch (error) {
+    console.error('Error in getPricingIntelligence:', error);
+    return { error: error.message };
+  }
+}
+
+async function getPredictiveInsights(args: any, userOrg: string, supabase: any) {
+  try {
+    const { data, error } = await supabase.rpc('dkegl_get_predictive_insights', {
+      _org_id: userOrg
+    });
+
+    if (error) {
+      throw new Error(`Predictive insights failed: ${error.message}`);
+    }
+
+    return data || {};
+  } catch (error) {
+    console.error('Error in getPredictiveInsights:', error);
+    return { error: error.message };
+  }
+}
+
 async function getInventoryStatus(args: any, userOrg: string, supabase: any) {
-  let query = supabase
-    .from('dkegl_stock')
+  // First try to get from stock summary, fallback to stock table
+  let summaryQuery = supabase
+    .from('dkegl_stock_summary')
+    .select('*');
+
+  if (args.item_code) {
+    summaryQuery = summaryQuery.eq('item_code', args.item_code);
+  }
+
+  if (args.category) {
+    summaryQuery = summaryQuery.eq('category_name', args.category);
+  }
+
+  if (args.low_stock_only) {
+    summaryQuery = summaryQuery.or('reorder_suggested.eq.true,current_qty.lte.reorder_level');
+  }
+
+  summaryQuery = summaryQuery.limit(50).order('current_qty', { ascending: false });
+
+  const { data: summaryData } = await summaryQuery;
+
+  // If no summary data, get from stock table
+  if (!summaryData || summaryData.length === 0) {
+    let query = supabase
+      .from('dkegl_stock')
     .select(`
       item_code, 
       current_qty, 
