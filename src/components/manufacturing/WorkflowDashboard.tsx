@@ -17,10 +17,12 @@ import {
   Pause,
   Eye,
   ArrowRight,
-  PauseCircle
+  PauseCircle,
+  RefreshCw
 } from 'lucide-react';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import { OrderDetailsModal } from './OrderDetailsModal';
 
 interface WorkflowStage {
   id: string;
@@ -61,6 +63,8 @@ interface Order {
 export const WorkflowDashboard = () => {
   const { organization } = useDKEGLAuth();
   const [activeView, setActiveView] = useState('all');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
   const queryClient = useQueryClient();
 
   // Enable real-time updates for workflow and orders
@@ -90,7 +94,24 @@ export const WorkflowDashboard = () => {
         console.error('Error fetching workflow orders:', error);
         throw error;
       }
-      return data as Order[];
+
+      // Clean up duplicate workflow progress entries for each order
+      const cleanedOrders = data?.map(order => ({
+        ...order,
+        workflow_progress: order.workflow_progress
+          ?.filter((progress: any) => progress.stage) // Only keep progress with valid stages
+          ?.reduce((unique: any[], current: any) => {
+            // Remove duplicates based on stage_id
+            const isDuplicate = unique.some(item => item.stage_id === current.stage_id && item.status === current.status);
+            if (!isDuplicate) {
+              unique.push(current);
+            }
+            return unique;
+          }, [])
+          ?.sort((a: any, b: any) => (a.stage?.sequence_order || 0) - (b.stage?.sequence_order || 0))
+      })) || [];
+
+      return cleanedOrders as Order[];
     },
     enabled: !!organization?.id,
   });
@@ -105,7 +126,7 @@ export const WorkflowDashboard = () => {
         .select('*')
         .eq('organization_id', organization.id)
         .eq('is_active', true)
-        .order('stage_order');
+        .order('sequence_order');
 
       if (error) throw error;
       return data as WorkflowStage[];
@@ -118,6 +139,8 @@ export const WorkflowDashboard = () => {
     mutationFn: async ({ orderId, currentStageId }: { orderId: string; currentStageId?: string }) => {
       if (!organization?.id) throw new Error('No organization found');
 
+      console.log('Calling workflow automation for order:', orderId);
+
       // Call workflow automation edge function
       const { data, error } = await supabase.functions.invoke('workflow-automation', {
         body: {
@@ -127,14 +150,24 @@ export const WorkflowDashboard = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      console.log('Edge function response:', data);
       return data;
     },
     onSuccess: (data) => {
-      toast.success(`Progressed to ${data.nextStage || 'next stage'}`);
+      if (data?.success) {
+        toast.success(data.message || `Progressed to ${data.nextStage || 'next stage'}`);
+      } else {
+        toast.error(data?.message || 'Failed to progress workflow');
+      }
       queryClient.invalidateQueries({ queryKey: ['workflow-orders'] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Mutation error:', error);
       toast.error(`Failed to progress workflow: ${error.message}`);
     }
   });
@@ -270,8 +303,12 @@ export const WorkflowDashboard = () => {
             Track and manage manufacturing orders through production stages
           </p>
         </div>
-        <Button onClick={() => refetch()} variant="outline">
-          <ClipboardList className="mr-2 h-4 w-4" />
+        <Button 
+          onClick={() => refetch()} 
+          variant="outline"
+          disabled={isLoading}
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
@@ -403,7 +440,14 @@ export const WorkflowDashboard = () => {
                             Hold
                           </Button>
 
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setShowOrderDetails(true);
+                            }}
+                          >
                             <Eye className="mr-2 h-4 w-4" />
                             Details
                           </Button>
@@ -421,6 +465,16 @@ export const WorkflowDashboard = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Order Details Modal */}
+      <OrderDetailsModal
+        order={selectedOrder}
+        isOpen={showOrderDetails}
+        onClose={() => {
+          setShowOrderDetails(false);
+          setSelectedOrder(null);
+        }}
+      />
     </div>
   );
 };
