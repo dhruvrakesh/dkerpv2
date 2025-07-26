@@ -956,7 +956,43 @@ export type Database = {
           updated_at?: string
           yield_percentage?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_bom_master_item_code"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_consumable_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_bom_master_item_code"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_fg_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_bom_master_item_code"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_item_master"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_bom_master_item_code"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_rm_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_bom_master_item_code"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_wip_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+        ]
       }
       dkegl_categories: {
         Row: {
