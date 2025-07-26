@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { OrderDetailsModal } from './OrderDetailsModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -48,6 +49,8 @@ export const UiornTrackingDashboard = () => {
   const queryClient = useQueryClient();
   const [searchUiorn, setSearchUiorn] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
 
   // Fetch all orders with their workflow progress
   const { data: orders = [], isLoading, refetch } = useQuery({
@@ -312,8 +315,8 @@ export const UiornTrackingDashboard = () => {
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      // Navigate to detailed view
-                      window.open(`/manufacturing/orders/${order.id}`, '_blank');
+                      setSelectedOrder(order);
+                      setShowOrderDetails(true);
                     }}
                   >
                     <Eye className="h-4 w-4 mr-2" />
@@ -351,6 +354,16 @@ export const UiornTrackingDashboard = () => {
           </Card>
         )}
       </div>
+
+      {/* Order Details Modal */}
+      <OrderDetailsModal
+        order={selectedOrder}
+        isOpen={showOrderDetails}
+        onClose={() => {
+          setShowOrderDetails(false);
+          setSelectedOrder(null);
+        }}
+      />
     </div>
   );
 };
