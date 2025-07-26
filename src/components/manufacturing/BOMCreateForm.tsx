@@ -47,18 +47,29 @@ interface BOMCreateFormProps {
   onCancel: () => void;
 }
 
-const WORKFLOW_STAGES = [
-  'Order Punching',
-  'Gravure Printing', 
-  'Lamination Coating',
-  'Adhesive Coating',
-  'Slitting Packaging'
-];
 
 export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFormProps) {
   const [totalCost, setTotalCost] = useState(0);
   const queryClient = useQueryClient();
   const { createBOM, isCreatingBOM } = useBOMManagement();
+
+  // Fetch workflow stages dynamically
+  const { data: workflowStages = [], isLoading: loadingStages } = useQuery({
+    queryKey: ['workflow-stages'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('dkegl_workflow_stages')
+        .select('id, stage_name, sequence_order, stage_type, stage_config')
+        .eq('is_active', true)
+        .order('sequence_order');
+      
+      if (error) {
+        console.error('Error fetching workflow stages:', error);
+        throw error;
+      }
+      return data || [];
+    }
+  });
 
   // Fetch items for selectors
   const { data: finishedGoods = [], isLoading: loadingFG } = useQuery({
@@ -124,7 +135,7 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
         {
           item_code: '',
           quantity_required: 1,
-          stage_name: 'Order Punching',
+          stage_name: '',
           unit_cost: 0,
           scrap_percentage: 0,
           notes: ''
@@ -154,7 +165,7 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
           {
             item_code: '',
             quantity_required: 1,
-            stage_name: 'Order Punching',
+            stage_name: '',
             unit_cost: 0,
             scrap_percentage: 0,
             notes: ''
@@ -221,17 +232,18 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
   };
 
   const addComponent = () => {
+    const firstStage = workflowStages[0]?.stage_name || '';
     append({
       item_code: '',
       quantity_required: 1,
-      stage_name: 'Order Punching',
+      stage_name: firstStage,
       unit_cost: 0,
       scrap_percentage: 0,
       notes: ''
     });
   };
 
-  if (loadingFG || loadingRM) {
+  if (loadingFG || loadingRM || loadingStages) {
     return (
       <div className="flex items-center justify-center h-64">
         <LoadingSpinner size="lg" />
@@ -396,9 +408,15 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {WORKFLOW_STAGES.map(stage => (
-                          <SelectItem key={stage} value={stage}>{stage}</SelectItem>
-                        ))}
+                        {loadingStages ? (
+                          <SelectItem value="">Loading stages...</SelectItem>
+                        ) : (
+                          workflowStages.map(stage => (
+                            <SelectItem key={stage.id} value={stage.stage_name}>
+                              {stage.stage_name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
