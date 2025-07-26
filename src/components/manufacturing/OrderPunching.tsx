@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
+import { EnterpriseItemSelector } from '@/components/ui/enterprise-item-selector';
 import { Plus, Calendar, Package, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -102,6 +103,39 @@ export const OrderPunching = () => {
 
       if (error) throw error;
       return data;
+    },
+    enabled: !!organization?.id,
+  });
+
+  // Fetch finished goods items for the dropdown
+  const { data: finishedGoods, isLoading: isLoadingItems } = useQuery({
+    queryKey: ['finished-goods', organization?.id],
+    queryFn: async () => {
+      if (!organization?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('dkegl_item_master')
+        .select(`
+          item_code,
+          item_name,
+          uom,
+          dkegl_categories!inner(category_name)
+        `)
+        .eq('organization_id', organization.id)
+        .eq('item_type', 'finished_good')
+        .eq('status', 'active')
+        .order('item_name');
+
+      if (error) throw error;
+      
+      // Transform to ItemOption format
+      return data.map(item => ({
+        id: item.item_code,
+        item_code: item.item_code,
+        item_name: item.item_name,
+        uom: item.uom,
+        category_name: item.dkegl_categories?.category_name || 'Finished Goods'
+      }));
     },
     enabled: !!organization?.id,
   });
@@ -261,27 +295,27 @@ export const OrderPunching = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="item_code">Item Code</Label>
-                  <Input
-                    id="item_code"
-                    value={formData.item_code}
-                    onChange={(e) => updateFormData('item_code', e.target.value)}
-                    placeholder="PKG_LAB_001"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="item_name">Item Name</Label>
-                  <Input
-                    id="item_name"
-                    value={formData.item_name}
-                    onChange={(e) => updateFormData('item_name', e.target.value)}
-                    placeholder="Product packaging label"
-                    required
-                  />
-                </div>
+              <div>
+                <Label>Finished Goods Item</Label>
+                <EnterpriseItemSelector
+                  items={finishedGoods || []}
+                  value={formData.item_code}
+                  onValueChange={(itemCode) => {
+                    const selectedItem = finishedGoods?.find(item => item.item_code === itemCode);
+                    if (selectedItem) {
+                      updateFormData('item_code', selectedItem.item_code);
+                      updateFormData('item_name', selectedItem.item_name);
+                    }
+                  }}
+                  placeholder="Search for finished goods..."
+                  showCategories={true}
+                  showRecentItems={true}
+                />
+                {formData.item_name && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Selected: {formData.item_name}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-3 gap-4">
