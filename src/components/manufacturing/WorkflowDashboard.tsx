@@ -24,6 +24,7 @@ import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import { OrderDetailsModal } from './OrderDetailsModal';
 import { WorkflowTestPanel } from './WorkflowTestPanel';
+import { ComprehensiveWorkflowTester } from './ComprehensiveWorkflowTester';
 
 interface WorkflowStage {
   id: string;
@@ -316,6 +317,9 @@ export const WorkflowDashboard = () => {
 
       {/* System Health Check Panel */}
       <WorkflowTestPanel />
+      
+      {/* Comprehensive System Tester */}
+      <ComprehensiveWorkflowTester />
 
       <Tabs value={activeView} onValueChange={setActiveView} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
