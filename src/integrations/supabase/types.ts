@@ -5237,7 +5237,17 @@ export type Database = {
       }
       dkegl_get_inventory_analytics: {
         Args: { _org_id: string }
-        Returns: Json
+        Returns: {
+          item_code: string
+          item_name: string
+          category_name: string
+          current_stock: number
+          stock_value: number
+          turnover_ratio: number
+          stock_status: string
+          reorder_recommendation: string
+          last_movement_date: string
+        }[]
       }
       dkegl_get_order_cost_summary: {
         Args: { _order_id: string }
@@ -5253,11 +5263,29 @@ export type Database = {
       }
       dkegl_get_predictive_insights: {
         Args: { _org_id: string }
-        Returns: Json
+        Returns: {
+          item_code: string
+          item_name: string
+          predicted_demand_next_month: number
+          confidence_level: string
+          recommended_stock_level: number
+          stockout_risk: string
+          optimal_order_quantity: number
+          lead_time_buffer: number
+        }[]
       }
       dkegl_get_pricing_intelligence: {
         Args: { _org_id: string }
-        Returns: Json
+        Returns: {
+          item_code: string
+          item_name: string
+          standard_cost: number
+          current_market_price: number
+          variance_percentage: number
+          price_trend: string
+          last_grn_price: number
+          recommendation: string
+        }[]
       }
       dkegl_get_stock_aging: {
         Args: { _org_id: string }
@@ -5308,6 +5336,10 @@ export type Database = {
       dkegl_log_security_event: {
         Args: { _event_type: string; _event_data?: Json; _risk_level?: string }
         Returns: undefined
+      }
+      dkegl_populate_stock_summary: {
+        Args: { _org_id: string }
+        Returns: Json
       }
       dkegl_refresh_stock_summary: {
         Args: { _org_id: string }
