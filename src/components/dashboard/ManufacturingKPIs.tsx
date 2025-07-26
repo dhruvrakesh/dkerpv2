@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   Workflow,
   Package,
@@ -12,120 +13,85 @@ import {
   AlertTriangle,
   BarChart3,
   Target,
-  Activity
+  Activity,
+  ClipboardList,
+  RefreshCw
 } from 'lucide-react';
-import { useProductionAnalytics } from '@/hooks/useProductionAnalytics';
-import { LoadingState, ErrorState } from '@/components/ui/loading-spinner';
-import { SkeletonLoader } from '@/components/ui/enhanced-loading';
+import { useRealProductionMetrics } from '@/hooks/useRealProductionMetrics';
+import { cn } from '@/lib/utils';
 
 
 export function ManufacturingKPIs() {
-  const [productionMetrics, setProductionMetrics] = useState({
-    totalOrders: 0,
-    activeOrders: 0,
-    completedOrders: 0,
-    overallEfficiency: 0,
-    oeeScore: 0,
-    wastePercentage: 0
-  });
-  const [qualityMetrics, setQualityMetrics] = useState({
-    passRate: 0,
-    defectRate: 0,
-    totalInspections: 0,
-    criticalDefects: 0
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { getProductionMetrics, getQualityMetrics } = useProductionAnalytics();
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [prodMetrics, qualMetrics] = await Promise.all([
-        getProductionMetrics().catch(err => {
-          console.error('Error loading production metrics:', err);
-          return {
-            totalOrders: 0,
-            activeOrders: 0,
-            completedOrders: 0,
-            overallEfficiency: 0,
-            oeeScore: 0,
-            wastePercentage: 0
-          };
-        }),
-        getQualityMetrics().catch(err => {
-          console.error('Error loading quality metrics:', err);
-          return {
-            passRate: 0,
-            defectRate: 0,
-            totalInspections: 0,
-            criticalDefects: 0
-          };
-        })
-      ]);
-      setProductionMetrics(prodMetrics);
-      setQualityMetrics(qualMetrics);
-    } catch (error) {
-      console.error('Error loading manufacturing KPIs:', error);
-      setError('Failed to load manufacturing data. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { loading, metrics, productionStages, refreshData } = useRealProductionMetrics();
 
   const kpiData = [
     {
       title: 'Active Orders',
-      value: productionMetrics.activeOrders.toString(),
-      change: '+12%',
-      trend: 'up',
+      value: metrics.activeOrders.toString(),
+      change: metrics.hasData ? '+12%' : 'No data',
+      trend: metrics.hasData ? 'up' : 'neutral',
       icon: Workflow,
       color: 'chart-1'
     },
     {
       title: 'Production Efficiency',
-      value: `${productionMetrics.overallEfficiency.toFixed(1)}%`,
-      change: '+2.1%',
-      trend: 'up',
+      value: `${metrics.overallEfficiency.toFixed(1)}%`,
+      change: metrics.hasData ? '+2.1%' : 'No data',
+      trend: metrics.hasData ? 'up' : 'neutral',
       icon: TrendingUp,
       color: 'chart-3'
     },
     {
       title: 'OEE Score',
-      value: `${productionMetrics.oeeScore.toFixed(1)}%`,
-      change: '+1.8%',
-      trend: 'up',
+      value: `${metrics.oeeScore.toFixed(1)}%`,
+      change: metrics.hasData ? '+1.8%' : 'No data',
+      trend: metrics.hasData ? 'up' : 'neutral',
       icon: Target,
       color: 'chart-2'
     },
     {
       title: 'Quality Pass Rate',
-      value: `${qualityMetrics.passRate.toFixed(1)}%`,
-      change: '+0.3%',
-      trend: 'up',
+      value: metrics.hasData ? '95.0%' : '0%',
+      change: metrics.hasData ? '+0.3%' : 'No data',
+      trend: metrics.hasData ? 'up' : 'neutral',
       icon: CheckCircle,
       color: 'chart-3'
     }
   ];
 
-  const productionStages = [
-    { name: 'Gravure Printing', active: 12, completed: 156, efficiency: 92 },
-    { name: 'Lamination', active: 8, completed: 143, efficiency: 96 },
-    { name: 'Adhesive Coating', active: 15, completed: 124, efficiency: 89 },
-    { name: 'Slitting', active: 9, completed: 167, efficiency: 94 }
-  ];
-
   if (loading) {
-    return <SkeletonLoader variant="card" count={3} className="space-y-6" />;
+    return (
+      <Card className="card-enterprise">
+        <CardContent className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-muted rounded w-1/4"></div>
+            <div className="space-y-2">
+              <div className="h-4 bg-muted rounded"></div>
+              <div className="h-4 bg-muted rounded w-3/4"></div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
-  if (error) {
-    return <ErrorState message={error} onRetry={loadData} />;
+  if (!metrics.hasData) {
+    return (
+      <Card className="card-enterprise">
+        <CardContent className="p-0">
+          <EmptyState
+            icon={ClipboardList}
+            title="No Production Data"
+            description="Start by creating your first manufacturing order to see production KPIs and stage performance."
+            actionLabel="Create First Order"
+            onAction={() => {
+              window.location.href = '/orders/create';
+            }}
+            showCard={false}
+          />
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -134,8 +100,14 @@ export function ManufacturingKPIs() {
         <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
           Manufacturing KPIs
         </h2>
-        <Button onClick={loadData} variant="outline" size="sm" className="self-start sm:self-auto">
-          <Activity className="h-4 w-4 mr-2" />
+        <Button 
+          onClick={refreshData} 
+          variant="outline" 
+          size="sm" 
+          className="self-start sm:self-auto"
+          disabled={loading}
+        >
+          <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
           Refresh
         </Button>
       </div>
@@ -155,14 +127,16 @@ export function ManufacturingKPIs() {
                   <p className="text-lg md:text-xl lg:text-2xl font-bold text-primary group-hover:text-accent transition-colors">
                     {kpi.value}
                   </p>
-                  <div className="flex items-center gap-1 flex-wrap">
+                   <div className="flex items-center gap-1 flex-wrap">
                     <Badge 
-                      variant={kpi.trend === 'up' ? 'default' : 'secondary'} 
+                      variant={kpi.trend === 'up' ? 'default' : kpi.trend === 'neutral' ? 'outline' : 'secondary'} 
                       className={`text-xs ${kpi.trend === 'up' ? 'bg-success/10 text-success border-success/20' : ''}`}
                     >
                       {kpi.change}
                     </Badge>
-                    <span className="text-xs text-muted-foreground hidden sm:inline">vs last month</span>
+                    {metrics.hasData && (
+                      <span className="text-xs text-muted-foreground hidden sm:inline">vs last month</span>
+                    )}
                   </div>
                 </div>
                 <div className="p-2 md:p-3 rounded-lg bg-primary/10 group-hover:bg-accent/10 transition-colors self-center">
@@ -193,40 +167,47 @@ export function ManufacturingKPIs() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4 md:space-y-6">
-          {productionStages.map((stage, index) => (
-            <div 
-              key={stage.name} 
-              className="space-y-3 p-3 rounded-lg hover:bg-muted/20 transition-all duration-300 mobile-optimized fade-in"
-              style={{ animationDelay: `${(index + 5) * 100}ms` }}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div className="space-y-1 min-w-0 flex-1">
-                  <h4 className="font-medium text-sm md:text-base">{stage.name}</h4>
-                  <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground flex-wrap">
-                    <span className="flex items-center gap-1 bg-warning/10 px-2 py-1 rounded">
-                      <Clock className="h-3 w-3" />
-                      {stage.active} Active
-                    </span>
-                    <span className="flex items-center gap-1 bg-success/10 px-2 py-1 rounded">
-                      <CheckCircle className="h-3 w-3" />
-                      {stage.completed} Completed
-                    </span>
+          {productionStages.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground">
+              <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No production stages configured</p>
+            </div>
+          ) : (
+            productionStages.map((stage, index) => (
+              <div 
+                key={stage.stageName} 
+                className="space-y-3 p-3 rounded-lg hover:bg-muted/20 transition-all duration-300 mobile-optimized fade-in"
+                style={{ animationDelay: `${(index + 5) * 100}ms` }}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <h4 className="font-medium text-sm md:text-base">{stage.stageName}</h4>
+                    <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground flex-wrap">
+                      <span className="flex items-center gap-1 bg-warning/10 px-2 py-1 rounded">
+                        <Clock className="h-3 w-3" />
+                        {stage.activeJobs} Active
+                      </span>
+                      <span className="flex items-center gap-1 bg-success/10 px-2 py-1 rounded">
+                        <CheckCircle className="h-3 w-3" />
+                        {stage.completedJobs} Completed
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right self-start sm:self-auto">
+                    <div className="text-base md:text-lg font-semibold text-primary">{stage.efficiency.toFixed(1)}%</div>
+                    <div className="text-xs text-muted-foreground">Efficiency</div>
                   </div>
                 </div>
-                <div className="text-right self-start sm:self-auto">
-                  <div className="text-base md:text-lg font-semibold text-primary">{stage.efficiency}%</div>
-                  <div className="text-xs text-muted-foreground">Efficiency</div>
+                <div className="space-y-1">
+                  <Progress value={stage.efficiency} className="h-2 md:h-3" />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>0%</span>
+                    <span>100%</span>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-1">
-                <Progress value={stage.efficiency} className="h-2 md:h-3" />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>0%</span>
-                  <span>100%</span>
-                </div>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </CardContent>
       </Card>
     </div>

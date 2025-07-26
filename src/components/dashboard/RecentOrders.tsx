@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   Table,
   TableBody,
@@ -15,61 +16,11 @@ import {
   MoreHorizontal, 
   Package,
   Calendar,
-  User
+  User,
+  ClipboardList
 } from 'lucide-react';
+import { useRealOrderData } from '@/hooks/useRealOrderData';
 
-const recentOrders = [
-  {
-    id: 'DKEGL-2024-001',
-    itemName: 'Premium Tape 50mm',
-    customer: 'Hindustan Unilever',
-    status: 'In Production',
-    stage: 'Gravure Printing',
-    progress: 45,
-    dueDate: '2024-01-28',
-    priority: 'High'
-  },
-  {
-    id: 'DKEGL-2024-002',
-    itemName: 'Industrial Adhesive Tape',
-    customer: 'ITC Limited',
-    status: 'Quality Check',
-    stage: 'Slitting',
-    progress: 85,
-    dueDate: '2024-01-30',
-    priority: 'Medium'
-  },
-  {
-    id: 'DKEGL-2024-003',
-    itemName: 'Packaging Tape 25mm',
-    customer: 'Nestle India',
-    status: 'Pending',
-    stage: 'Order Review',
-    progress: 10,
-    dueDate: '2024-02-05',
-    priority: 'Low'
-  },
-  {
-    id: 'DKEGL-2024-004',
-    itemName: 'Security Tape Custom',
-    customer: 'Amazon India',
-    status: 'Completed',
-    stage: 'Dispatched',
-    progress: 100,
-    dueDate: '2024-01-25',
-    priority: 'High'
-  },
-  {
-    id: 'DKEGL-2024-005',
-    itemName: 'Double Sided Tape',
-    customer: 'Flipkart',
-    status: 'In Production',
-    stage: 'Lamination',
-    progress: 60,
-    dueDate: '2024-02-01',
-    priority: 'Medium'
-  }
-];
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -100,6 +51,42 @@ const getPriorityBadge = (priority: string) => {
 };
 
 export function RecentOrders() {
+  const { loading, orders, hasData, getStatusDisplay, getPriorityDisplay, getCustomerName } = useRealOrderData();
+
+  if (loading) {
+    return (
+      <Card className="card-enterprise">
+        <CardContent className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-muted rounded w-1/4"></div>
+            <div className="space-y-2">
+              <div className="h-4 bg-muted rounded"></div>
+              <div className="h-4 bg-muted rounded w-3/4"></div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!hasData) {
+    return (
+      <Card className="card-enterprise">
+        <CardContent className="p-0">
+          <EmptyState
+            icon={ClipboardList}
+            title="No Orders Yet"
+            description="Create your first manufacturing order to start tracking order progress and status."
+            actionLabel="Create First Order"
+            onAction={() => {
+              window.location.href = '/orders/create';
+            }}
+            showCard={false}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
   return (
     <Card className="card-enterprise">
       <CardHeader>
@@ -133,55 +120,63 @@ export function RecentOrders() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentOrders.map((order) => (
-                <TableRow key={order.id} className="hover:bg-muted/50">
-                  <TableCell className="font-mono text-sm font-medium">
-                    {order.id}
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="font-medium">{order.itemName}</div>
-                      <div className="text-sm text-muted-foreground flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        {order.customer}
+              {orders.map((order) => {
+                const progress = order.status === 'completed' ? 100 : 
+                               order.status === 'in_production' ? 50 : 
+                               order.status === 'quality_check' ? 85 : 10;
+                
+                return (
+                  <TableRow key={order.id} className="hover:bg-muted/50">
+                    <TableCell className="font-mono text-sm font-medium">
+                      {order.order_number}
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="font-medium">{order.item_name}</div>
+                        <div className="text-sm text-muted-foreground flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          {getCustomerName(order.customer_info)}
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      {getStatusBadge(order.status)}
-                      <div className="text-xs text-muted-foreground">{order.stage}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>{order.progress}%</span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {getStatusBadge(getStatusDisplay(order.status))}
+                        <div className="text-xs text-muted-foreground">
+                          {order.status === 'in_production' ? 'Processing' : 'Stage Complete'}
+                        </div>
                       </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full transition-all"
-                          style={{ width: `${order.progress}%` }}
-                        />
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>{progress}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full transition-all"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 text-sm">
-                      <Calendar className="h-3 w-3 text-muted-foreground" />
-                      {order.dueDate}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {getPriorityBadge(order.priority)}
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        {order.delivery_date ? new Date(order.delivery_date).toLocaleDateString() : 'TBD'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {getPriorityBadge(getPriorityDisplay(order.priority_level))}
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>

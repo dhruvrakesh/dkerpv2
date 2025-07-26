@@ -11,62 +11,38 @@ import {
   Users,
   Calendar
 } from 'lucide-react';
+import { useRealSystemStats } from '@/hooks/useRealSystemStats';
 
-const quickStats = [
-  {
-    title: 'System Status',
-    value: 'Operational',
-    icon: Activity,
-    status: 'success'
-  },
-  {
-    title: 'Active Users',
-    value: '23',
-    icon: Users,
-    status: 'info'
-  },
-  {
-    title: 'Pending Approvals',
-    value: '7',
-    icon: AlertCircle,
-    status: 'warning'
-  },
-  {
-    title: 'Today\'s Production',
-    value: '127 units',
-    icon: TrendingUp,
-    status: 'success'
-  }
-];
-
-const notifications = [
-  {
-    id: 1,
-    type: 'alert',
-    title: 'Low Stock Alert',
-    message: 'Premium adhesive stock below minimum threshold',
-    time: '2 minutes ago',
-    urgent: true
-  },
-  {
-    id: 2,
-    type: 'info',
-    title: 'Order Completed',
-    message: 'DKEGL-2024-001 has been successfully completed',
-    time: '15 minutes ago',
-    urgent: false
-  },
-  {
-    id: 3,
-    type: 'success',
-    title: 'Quality Check Passed',
-    message: 'Batch QC-240124-03 approved for dispatch',
-    time: '1 hour ago',
-    urgent: false
-  }
-];
 
 export function ERPDashboard() {
+  const { loading, stats, notifications } = useRealSystemStats();
+
+  const quickStats = [
+    {
+      title: 'System Status',
+      value: stats.systemStatus,
+      icon: Activity,
+      status: 'success'
+    },
+    {
+      title: 'Active Users',
+      value: stats.activeUsers.toString(),
+      icon: Users,
+      status: 'info'
+    },
+    {
+      title: 'Pending Approvals',
+      value: stats.pendingApprovals.toString(),
+      icon: AlertCircle,
+      status: stats.pendingApprovals > 5 ? 'warning' : 'info'
+    },
+    {
+      title: 'Today\'s Production',
+      value: stats.todaysProduction > 0 ? `${stats.todaysProduction} units` : 'No production',
+      icon: TrendingUp,
+      status: stats.todaysProduction > 0 ? 'success' : 'neutral'
+    }
+  ];
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Enhanced Header with Gradient */}
@@ -86,25 +62,39 @@ export function ERPDashboard() {
 
       {/* Enhanced Quick Stats with Animations */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        {quickStats.map((stat, index) => (
-          <Card 
-            key={stat.title} 
-            className="kpi-card border-l-4 border-l-primary hover:border-l-accent group mobile-optimized"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            <CardContent className="p-3 md:p-4">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs md:text-sm text-muted-foreground truncate">{stat.title}</p>
-                  <p className="text-sm md:text-lg font-semibold metric-primary group-hover:metric-accent transition-colors">
-                    {stat.value}
-                  </p>
+        {loading ? (
+          // Loading skeleton
+          Array.from({ length: 4 }).map((_, index) => (
+            <Card key={index} className="kpi-card mobile-optimized">
+              <CardContent className="p-3 md:p-4">
+                <div className="animate-pulse space-y-2">
+                  <div className="h-3 bg-muted rounded w-3/4"></div>
+                  <div className="h-4 bg-muted rounded w-1/2"></div>
                 </div>
-                <stat.icon className="h-4 w-4 md:h-5 md:w-5 text-primary group-hover:text-accent transition-colors pulse-subtle" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          quickStats.map((stat, index) => (
+            <Card 
+              key={stat.title} 
+              className="kpi-card border-l-4 border-l-primary hover:border-l-accent group mobile-optimized"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs md:text-sm text-muted-foreground truncate">{stat.title}</p>
+                    <p className="text-sm md:text-lg font-semibold metric-primary group-hover:metric-accent transition-colors">
+                      {stat.value}
+                    </p>
+                  </div>
+                  <stat.icon className="h-4 w-4 md:h-5 md:w-5 text-primary group-hover:text-accent transition-colors pulse-subtle" />
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Enhanced Main Content Grid with Mobile Optimization */}
@@ -131,7 +121,24 @@ export function ERPDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {notifications.map((notification, index) => (
+                {loading ? (
+                  // Loading skeleton for notifications
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="p-3 rounded-lg border">
+                      <div className="animate-pulse space-y-2">
+                        <div className="h-3 bg-muted rounded w-3/4"></div>
+                        <div className="h-2 bg-muted rounded w-full"></div>
+                        <div className="h-2 bg-muted rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  ))
+                ) : notifications.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No recent notifications</p>
+                  </div>
+                ) : (
+                  notifications.map((notification, index) => (
                   <div 
                     key={notification.id} 
                     className={`p-3 rounded-lg border transition-all duration-300 hover:shadow-md mobile-optimized ${
@@ -158,7 +165,8 @@ export function ERPDashboard() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  ))
+                )}
               </CardContent>
             </Card>
           </div>
