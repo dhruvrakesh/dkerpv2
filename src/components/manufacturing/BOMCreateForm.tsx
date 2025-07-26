@@ -22,6 +22,7 @@ const bomComponentSchema = z.object({
   item_code: z.string().min(1, 'Item code is required'),
   quantity_required: z.number().min(0.001, 'Quantity must be greater than 0'),
   stage_name: z.string().min(1, 'Stage is required'),
+  stage_id: z.string().optional(),
   unit_cost: z.number().min(0, 'Unit cost must be positive'),
   scrap_percentage: z.number().min(0).max(100, 'Scrap % must be 0-100'),
   notes: z.string().optional()
@@ -136,6 +137,7 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
           item_code: '',
           quantity_required: 1,
           stage_name: '',
+          stage_id: '',
           unit_cost: 0,
           scrap_percentage: 0,
           notes: ''
@@ -166,6 +168,7 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
             item_code: '',
             quantity_required: 1,
             stage_name: '',
+            stage_id: '',
             unit_cost: 0,
             scrap_percentage: 0,
             notes: ''
@@ -202,7 +205,7 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
         components: data.components.map((comp, index) => ({
           component_item_code: comp.item_code,
           quantity_per_unit: comp.quantity_required,
-          stage_name: comp.stage_name,
+          stage_id: comp.stage_id,
           unit_cost: comp.unit_cost,
           scrap_percentage: comp.scrap_percentage,
           waste_percentage: comp.scrap_percentage,
@@ -232,11 +235,12 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
   };
 
   const addComponent = () => {
-    const firstStage = workflowStages[0]?.stage_name || '';
+    const firstStage = workflowStages[0];
     append({
       item_code: '',
       quantity_required: 1,
-      stage_name: firstStage,
+      stage_name: firstStage?.stage_name || '',
+      stage_id: firstStage?.id || '',
       unit_cost: 0,
       scrap_percentage: 0,
       notes: ''
@@ -402,20 +406,35 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
                     <Label>Stage</Label>
                     <Select 
                       value={form.watch(`components.${index}.stage_name`)} 
-                      onValueChange={(value) => form.setValue(`components.${index}.stage_name`, value)}
+                      onValueChange={(value) => {
+                        form.setValue(`components.${index}.stage_name`, value);
+                        // Also update the stage_id
+                        const selectedStage = workflowStages.find(s => s.stage_name === value);
+                        if (selectedStage) {
+                          form.setValue(`components.${index}.stage_id`, selectedStage.id);
+                        }
+                      }}
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select stage" />
                       </SelectTrigger>
                       <SelectContent>
                         {loadingStages ? (
                           <SelectItem value="">Loading stages...</SelectItem>
                         ) : (
-                          workflowStages.map(stage => (
-                            <SelectItem key={stage.id} value={stage.stage_name}>
-                              {stage.stage_name}
-                            </SelectItem>
-                          ))
+                          workflowStages.map(stage => {
+                            const stageConfig = stage.stage_config as any;
+                            return (
+                              <SelectItem key={stage.id} value={stage.stage_name}>
+                                {stage.stage_name}
+                                {stageConfig?.material_categories && Array.isArray(stageConfig.material_categories) && (
+                                  <span className="text-xs text-muted-foreground ml-2">
+                                    ({stageConfig.material_categories.join(', ')})
+                                  </span>
+                                )}
+                              </SelectItem>
+                            );
+                          })
                         )}
                       </SelectContent>
                     </Select>
