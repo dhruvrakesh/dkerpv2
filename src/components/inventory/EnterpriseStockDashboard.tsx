@@ -37,9 +37,9 @@ interface StockSummaryItem {
 interface StockMetrics {
   total_items: number;
   total_value: number;
-  low_stock_items: number;
-  zero_stock_items: number;
-  avg_stock_age_days: number;
+  low_stock_count: number;
+  zero_stock_count: number;
+  avg_stock_age: number;
 }
 
 export const EnterpriseStockDashboard = () => {
@@ -183,9 +183,9 @@ export const EnterpriseStockDashboard = () => {
       const summaryData = [
         { Metric: 'Total Items', Value: stockMetrics?.total_items || 0 },
         { Metric: 'Total Value', Value: stockMetrics?.total_value || 0 },
-        { Metric: 'Low Stock Items', Value: stockMetrics?.low_stock_items || 0 },
-        { Metric: 'Zero Stock Items', Value: stockMetrics?.zero_stock_items || 0 },
-        { Metric: 'Avg Stock Age (Days)', Value: stockMetrics?.avg_stock_age_days || 0 },
+        { Metric: 'Low Stock Items', Value: stockMetrics?.low_stock_count || 0 },
+        { Metric: 'Zero Stock Items', Value: stockMetrics?.zero_stock_count || 0 },
+        { Metric: 'Avg Stock Age (Days)', Value: stockMetrics?.avg_stock_age || 0 },
         { Metric: 'Export Date', Value: format(new Date(), 'yyyy-MM-dd HH:mm:ss') }
       ];
 
@@ -278,7 +278,7 @@ export const EnterpriseStockDashboard = () => {
               <AlertTriangle className="h-4 w-4 text-orange-600" />
               <span className="text-sm text-muted-foreground">Low Stock</span>
             </div>
-            <div className="text-2xl font-bold text-orange-600">{stockMetrics?.low_stock_items || 0}</div>
+            <div className="text-2xl font-bold text-orange-600">{stockMetrics?.low_stock_count || 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -287,7 +287,7 @@ export const EnterpriseStockDashboard = () => {
               <TrendingUp className="h-4 w-4 text-red-600" />
               <span className="text-sm text-muted-foreground">Zero Stock</span>
             </div>
-            <div className="text-2xl font-bold text-red-600">{stockMetrics?.zero_stock_items || 0}</div>
+            <div className="text-2xl font-bold text-red-600">{stockMetrics?.zero_stock_count || 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -296,7 +296,7 @@ export const EnterpriseStockDashboard = () => {
               <BarChart3 className="h-4 w-4 text-blue-600" />
               <span className="text-sm text-muted-foreground">Avg Age</span>
             </div>
-            <div className="text-2xl font-bold text-blue-600">{Math.round(stockMetrics?.avg_stock_age_days || 0)}d</div>
+            <div className="text-2xl font-bold text-blue-600">{Math.round(stockMetrics?.avg_stock_age || 0)}d</div>
           </CardContent>
         </Card>
       </div>

@@ -11,13 +11,18 @@ interface StockBreakdown {
   item_code: string;
   item_name: string;
   category_name: string;
-  opening_qty: number;
-  total_grn_qty: number;
-  total_issued_qty: number;
   current_qty: number;
-  calculated_qty: number;
-  variance_qty: number;
+  unit_cost: number;
+  total_value: number;
   last_transaction_date: string;
+  location: string;
+  reorder_level: number;
+  is_low_stock: boolean;
+  opening_qty?: number;
+  total_grn_qty?: number;
+  total_issued_qty?: number;
+  calculated_qty?: number;
+  variance_qty?: number;
 }
 
 interface SummaryTotals {
@@ -55,11 +60,10 @@ export const EnhancedStockSummary = () => {
 
       console.log('Loading stock summary for org:', orgId);
 
-      const { data, error } = await supabase
-        .from('dkegl_stock_summary')
-        .select('*')
-        .eq('organization_id', orgId)
-        .order('item_code');
+      // Use the new RPC function to get real stock data
+      const { data, error } = await supabase.rpc('dkegl_get_real_stock_summary', {
+        _org_id: orgId
+      });
 
       if (error) {
         console.error('Supabase error:', error);
@@ -70,14 +74,14 @@ export const EnhancedStockSummary = () => {
       const stockBreakdown = data || [];
       setBreakdown(stockBreakdown);
 
-      // Calculate summary totals
+      // Calculate simplified totals from current stock data
       const totals = stockBreakdown.reduce((acc, item) => ({
-        total_opening: acc.total_opening + (item.opening_qty || 0),
-        total_grn: acc.total_grn + (item.total_grn_qty || 0),
-        total_issued: acc.total_issued + (item.total_issued_qty || 0),
+        total_opening: 0, // Not available from dkegl_stock
+        total_grn: 0, // Not available from dkegl_stock
+        total_issued: 0, // Not available from dkegl_stock
         total_current: acc.total_current + (item.current_qty || 0),
-        total_calculated: acc.total_calculated + (item.calculated_qty || 0),
-        total_variance: acc.total_variance + Math.abs(item.variance_qty || 0)
+        total_calculated: 0, // Not available from dkegl_stock
+        total_variance: 0 // Not available from dkegl_stock
       }), {
         total_opening: 0,
         total_grn: 0,
@@ -93,7 +97,7 @@ export const EnhancedStockSummary = () => {
       if (stockBreakdown.length === 0) {
         toast({
           title: "No Stock Data",
-          description: "No stock summary data found. Click refresh to generate it.",
+          description: "No stock data found. Please check inventory records.",
           variant: "default"
         });
       }

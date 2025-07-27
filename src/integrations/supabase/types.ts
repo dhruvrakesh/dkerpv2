@@ -6121,9 +6121,9 @@ export type Database = {
         Returns: {
           total_items: number
           total_value: number
-          low_stock_items: number
-          zero_stock_items: number
-          avg_stock_age_days: number
+          low_stock_count: number
+          zero_stock_count: number
+          avg_stock_age: number
         }[]
       }
       dkegl_get_stock_movements: {
