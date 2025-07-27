@@ -5960,6 +5960,17 @@ export type Database = {
           count: number
         }[]
       }
+      dkegl_detect_material_shortages: {
+        Args: { _org_id: string; _stage_id: string; _order_id: string }
+        Returns: {
+          item_code: string
+          required_quantity: number
+          available_quantity: number
+          shortage_quantity: number
+          shortage_severity: string
+          suggested_action: string
+        }[]
+      }
       dkegl_detect_pricing_variance: {
         Args: {
           _org_id: string
@@ -6155,6 +6166,10 @@ export type Database = {
       }
       dkegl_validate_grn_staging_record_enhanced: {
         Args: { _staging_id: string }
+        Returns: Json
+      }
+      dkegl_validate_material_balance: {
+        Args: { _workflow_progress_id: string }
         Returns: Json
       }
       generate_item_code: {
