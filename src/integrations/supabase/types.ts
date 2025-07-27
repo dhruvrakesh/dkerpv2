@@ -6088,6 +6088,21 @@ export type Database = {
           recommendation: string
         }[]
       }
+      dkegl_get_real_stock_summary: {
+        Args: { _org_id: string }
+        Returns: {
+          item_code: string
+          item_name: string
+          category_name: string
+          current_qty: number
+          unit_cost: number
+          total_value: number
+          last_transaction_date: string
+          location: string
+          reorder_level: number
+          is_low_stock: boolean
+        }[]
+      }
       dkegl_get_stock_aging: {
         Args: { _org_id: string }
         Returns: {
@@ -6099,6 +6114,16 @@ export type Database = {
           days_since_movement: number
           aging_category: string
           estimated_value: number
+        }[]
+      }
+      dkegl_get_stock_metrics: {
+        Args: { _org_id: string }
+        Returns: {
+          total_items: number
+          total_value: number
+          low_stock_items: number
+          zero_stock_items: number
+          avg_stock_age_days: number
         }[]
       }
       dkegl_get_stock_movements: {
@@ -6148,6 +6173,10 @@ export type Database = {
       }
       dkegl_reserve_order_materials: {
         Args: { _order_id: string }
+        Returns: Json
+      }
+      dkegl_safe_populate_stock_summary: {
+        Args: { _org_id: string; _opening_date?: string }
         Returns: Json
       }
       dkegl_track_material_consumption: {
