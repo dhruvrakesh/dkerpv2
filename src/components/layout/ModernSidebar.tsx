@@ -61,6 +61,7 @@ const navigation = [
     icon: Package,
     children: [
       { name: 'Stock Management', href: '/inventory/stock' },
+      { name: 'Enterprise Stock Analytics', href: '/inventory/enterprise-stock' },
       { name: 'GRN Logs', href: '/inventory/grn' },
       { name: 'Issue Logs', href: '/inventory/issues' },
       { name: 'Item Master', href: '/inventory/items' },

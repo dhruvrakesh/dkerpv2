@@ -29,6 +29,7 @@ import { CostAnalysisDashboard } from "./components/manufacturing/CostAnalysisDa
 import { UiornTrackingDashboard } from "./components/manufacturing/UiornTrackingDashboard";
 import { BOMManagement } from "./pages/manufacturing/BOMManagement";
 import AIAssistant from "./pages/ai/AIAssistant";
+import EnterpriseStockManagement from "./pages/inventory/EnterpriseStockManagement";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +107,14 @@ const App = () => (
                   <InventoryLayout>
                     <PricingMasterPage />
                   </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/inventory/enterprise-stock" 
+              element={
+                <ProtectedRoute>
+                  <EnterpriseStockManagement />
                 </ProtectedRoute>
               } 
             />
