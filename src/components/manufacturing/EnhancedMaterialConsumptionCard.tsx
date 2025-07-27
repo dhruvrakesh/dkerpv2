@@ -125,19 +125,6 @@ export const EnhancedMaterialConsumptionCard: React.FC<EnhancedMaterialConsumpti
   // Action handlers
   const handleAddMaterial = async () => {
     try {
-      if (materialInput.inputType === 'fresh_material') {
-        // Add as stage material input first
-        await addMaterialInput.mutateAsync({
-          workflow_progress_id: workflowProgressId,
-          item_code: materialInput.itemCode,
-          planned_quantity: materialInput.plannedQty,
-          actual_quantity: materialInput.actualQty,
-          unit_cost: materialInput.unitCost,
-          input_type: 'fresh_material',
-          material_category: materialInput.materialCategory
-        });
-      }
-      
       // Track consumption
       await trackMaterialConsumption(
         workflowProgressId,
@@ -153,7 +140,7 @@ export const EnhancedMaterialConsumptionCard: React.FC<EnhancedMaterialConsumpti
         actualQty: 0,
         unitCost: 0,
         materialCategory: '',
-        inputType: 'fresh'
+        inputType: 'fresh_material'
       });
       
       setShowAddMaterial(false);
@@ -170,7 +157,7 @@ export const EnhancedMaterialConsumptionCard: React.FC<EnhancedMaterialConsumpti
       actualQty: suggestion.adjusted_quantity,
       unitCost: suggestion.unit_cost || 0,
       materialCategory: suggestion.material_category || '',
-      inputType: 'bom'
+      inputType: 'bom_component'
     });
     setShowAddMaterial(true);
     setActiveTab('overview');
@@ -377,7 +364,7 @@ export const EnhancedMaterialConsumptionCard: React.FC<EnhancedMaterialConsumpti
                         actualQty: template.qty,
                         unitCost: 0,
                         materialCategory: template.category,
-                        inputType: 'fresh'
+                        inputType: 'fresh_material'
                       });
                       setShowAddMaterial(true);
                       setActiveTab('overview');
@@ -448,9 +435,9 @@ export const EnhancedMaterialConsumptionCard: React.FC<EnhancedMaterialConsumpti
                     <SelectValue placeholder="Select input type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fresh">Fresh Material</SelectItem>
-                    <SelectItem value="bom">BOM Component</SelectItem>
-                    <SelectItem value="carried_forward">Carried Forward</SelectItem>
+                    <SelectItem value="fresh_material">Fresh Material</SelectItem>
+                    <SelectItem value="bom_component">BOM Component</SelectItem>
+                    <SelectItem value="substrate_carryforward">Carried Forward</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
