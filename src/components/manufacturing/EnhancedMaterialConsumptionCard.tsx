@@ -430,7 +430,7 @@ export const EnhancedMaterialConsumptionCard: React.FC<EnhancedMaterialConsumpti
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="inputType">Input Type</Label>
-                <Select value={materialInput.inputType} onValueChange={(value) => setMaterialInput({...materialInput, inputType: value})}>
+                <Select value={materialInput.inputType} onValueChange={(value: 'fresh_material' | 'bom_component' | 'substrate_carryforward') => setMaterialInput({...materialInput, inputType: value})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select input type" />
                   </SelectTrigger>
