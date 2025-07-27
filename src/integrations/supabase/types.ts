@@ -6139,7 +6139,7 @@ export type Database = {
         Returns: undefined
       }
       dkegl_populate_stock_summary: {
-        Args: { _org_id: string }
+        Args: { _org_id: string } | { _org_id: string; _opening_date?: string }
         Returns: Json
       }
       dkegl_refresh_stock_summary: {

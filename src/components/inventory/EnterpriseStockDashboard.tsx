@@ -125,17 +125,29 @@ export const EnterpriseStockDashboard = () => {
       const { data: orgId } = await supabase.rpc('dkegl_get_current_user_org');
       if (!orgId) throw new Error('Organization not found');
 
-      // Call the refresh function with the opening date
-      const { data, error } = await supabase.rpc('dkegl_refresh_stock_summary', {
-        _org_id: orgId
+      // First clear any existing data to avoid duplicates
+      await supabase
+        .from('dkegl_stock_summary')
+        .delete()
+        .eq('organization_id', orgId);
+
+      // Call the populate function with the opening date
+      const { data, error } = await supabase.rpc('dkegl_populate_stock_summary', {
+        _org_id: orgId,
+        _opening_date: openingDate
       });
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: `Stock summary refreshed: ${(data as any)?.records_processed || 0} items processed`,
-      });
+      const result = data as any;
+      if (result?.success) {
+        toast({
+          title: "Success",
+          description: `Stock summary refreshed: ${result?.records_processed || 0} items processed`,
+        });
+      } else {
+        throw new Error(result?.error || 'Failed to populate stock summary');
+      }
 
       // Reload the data
       await loadStockData();
@@ -143,7 +155,7 @@ export const EnterpriseStockDashboard = () => {
       console.error('Error refreshing stock summary:', error);
       toast({
         title: "Error",
-        description: "Failed to refresh stock summary",
+        description: "Failed to refresh stock summary: " + error.message,
         variant: "destructive"
       });
     } finally {
