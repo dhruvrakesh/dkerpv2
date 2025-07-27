@@ -6143,7 +6143,7 @@ export type Database = {
         Returns: Json
       }
       dkegl_refresh_stock_summary: {
-        Args: { _org_id: string }
+        Args: { _org_id: string } | { _org_id: string; _opening_date?: string }
         Returns: undefined
       }
       dkegl_reserve_order_materials: {
