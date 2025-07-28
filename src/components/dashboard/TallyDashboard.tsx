@@ -22,12 +22,11 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface DashboardMetrics {
   total_batches: number;
-  pending_batches: number;
   completed_batches: number;
-  failed_batches: number;
+  completion_rate: number;
   total_records: number;
   posted_records: number;
-  error_records: number;
+  posting_rate: number;
   recent_activity: any[];
 }
 
@@ -76,6 +75,17 @@ const TallyDashboard: React.FC = () => {
     try {
       setIsPosting(true);
       
+      // Get user org ID first
+      const { data: userProfile } = await supabase
+        .from('dkegl_user_profiles')
+        .select('organization_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!userProfile?.organization_id) {
+        throw new Error('Organization not found');
+      }
+      
       let functionName = '';
       switch (importType) {
         case 'SALES':
@@ -89,16 +99,17 @@ const TallyDashboard: React.FC = () => {
       }
 
       const { data, error } = await supabase.rpc(functionName as any, {
-        _batch_id: batchId
+        _batch_id: batchId,
+        _org_id: userProfile.organization_id
       });
 
       if (error) throw error;
 
-      const result = data as { posted_count: number; failed_count: number };
+      const result = data as { posted_count: number; error_count: number; message: string };
       
       toast({
         title: "Posted to ERP",
-        description: `Successfully posted ${result.posted_count} records. ${result.failed_count} failed.`
+        description: result.message || `Successfully posted ${result.posted_count} records.`
       });
 
       // Refresh metrics
@@ -155,13 +166,12 @@ const TallyDashboard: React.FC = () => {
     );
   };
 
-  const completionRate = metrics.total_batches > 0 
-    ? (metrics.completed_batches / metrics.total_batches) * 100 
-    : 0;
-
-  const postingRate = metrics.total_records > 0 
-    ? (metrics.posted_records / metrics.total_records) * 100 
-    : 0;
+  // Use the completion and posting rates from the metrics
+  const completionRate = metrics.completion_rate || 0;
+  const postingRate = metrics.posting_rate || 0;
+  
+  // Calculate pending batches from total and completed
+  const pendingBatches = metrics.total_batches - metrics.completed_batches;
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
@@ -197,7 +207,7 @@ const TallyDashboard: React.FC = () => {
           <CardContent>
             <div className="text-2xl font-bold">{metrics.total_batches}</div>
             <p className="text-xs text-muted-foreground">
-              {metrics.pending_batches} pending
+              {pendingBatches} pending
             </p>
           </CardContent>
         </Card>
@@ -263,24 +273,11 @@ const TallyDashboard: React.FC = () => {
               <div className="flex justify-between items-center">
                 <span className="text-sm">Pending</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{metrics.pending_batches}</span>
+                  <span className="text-sm font-medium">{pendingBatches}</span>
                   <div className="w-20 bg-muted rounded-full h-2">
                     <div 
                       className="bg-yellow-500 h-2 rounded-full" 
-                      style={{ width: `${metrics.total_batches > 0 ? (metrics.pending_batches / metrics.total_batches) * 100 : 0}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Failed</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{metrics.failed_batches}</span>
-                  <div className="w-20 bg-muted rounded-full h-2">
-                    <div 
-                      className="bg-red-500 h-2 rounded-full" 
-                      style={{ width: `${metrics.total_batches > 0 ? (metrics.failed_batches / metrics.total_batches) * 100 : 0}%` }}
+                      style={{ width: `${metrics.total_batches > 0 ? (pendingBatches / metrics.total_batches) * 100 : 0}%` }}
                     />
                   </div>
                 </div>
@@ -291,35 +288,35 @@ const TallyDashboard: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Data Quality Status</CardTitle>
-            <CardDescription>Overview of data validation and errors</CardDescription>
+            <CardTitle>ERP Integration Status</CardTitle>
+            <CardDescription>Data posting and reconciliation status</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-200">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-700">Valid Records</span>
+                  <span className="text-sm font-medium text-green-700">Posted Records</span>
                 </div>
                 <span className="text-sm font-bold text-green-700">
-                  {(metrics.total_records - metrics.error_records).toLocaleString()}
+                  {metrics.posted_records.toLocaleString()}
                 </span>
               </div>
               
-              <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg border border-red-200">
+              <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
-                  <span className="text-sm font-medium text-red-700">Error Records</span>
+                  <Database className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-700">Pending Records</span>
                 </div>
-                <span className="text-sm font-bold text-red-700">
-                  {metrics.error_records.toLocaleString()}
+                <span className="text-sm font-bold text-blue-700">
+                  {(metrics.total_records - metrics.posted_records).toLocaleString()}
                 </span>
               </div>
               
               <div className="mt-4">
-                <div className="text-xs text-muted-foreground mb-2">Data Quality Score</div>
+                <div className="text-xs text-muted-foreground mb-2">ERP Integration Progress</div>
                 <Progress 
-                  value={metrics.total_records > 0 ? ((metrics.total_records - metrics.error_records) / metrics.total_records) * 100 : 100} 
+                  value={postingRate} 
                   className="h-2"
                 />
               </div>

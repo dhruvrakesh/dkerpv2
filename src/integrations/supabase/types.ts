@@ -5260,6 +5260,9 @@ export type Database = {
           id: string
           organization_id: string
           parsed_status: string | null
+          posted_at: string | null
+          posted_by: string | null
+          posted_to_erp: boolean | null
           row_data: Json
           row_number: number
           validation_errors: Json | null
@@ -5271,6 +5274,9 @@ export type Database = {
           id?: string
           organization_id?: string
           parsed_status?: string | null
+          posted_at?: string | null
+          posted_by?: string | null
+          posted_to_erp?: boolean | null
           row_data: Json
           row_number: number
           validation_errors?: Json | null
@@ -5282,6 +5288,9 @@ export type Database = {
           id?: string
           organization_id?: string
           parsed_status?: string | null
+          posted_at?: string | null
+          posted_by?: string | null
+          posted_to_erp?: boolean | null
           row_data?: Json
           row_number?: number
           validation_errors?: Json | null
@@ -7228,11 +7237,11 @@ export type Database = {
         Returns: Json
       }
       dkpkl_post_purchase_to_issue: {
-        Args: { _batch_id: string }
+        Args: { _batch_id: string } | { _batch_id: string; _org_id: string }
         Returns: Json
       }
       dkpkl_post_sales_to_grn: {
-        Args: { _batch_id: string }
+        Args: { _batch_id: string } | { _batch_id: string; _org_id: string }
         Returns: Json
       }
       dkpkl_process_excel_batch: {
