@@ -77,7 +77,8 @@ const navigation = [
       { name: 'GRN Logs', href: '/inventory/grn' },
       { name: 'Issue Logs', href: '/inventory/issues' },
       { name: 'Item Master', href: '/inventory/items' },
-      { name: 'Pricing Master', href: '/inventory/pricing' }
+      { name: 'Pricing Master', href: '/inventory/pricing' },
+      { name: 'Tally Import', href: '/imports/tally' }
     ]
   },
   {

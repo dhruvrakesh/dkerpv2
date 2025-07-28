@@ -33,6 +33,7 @@ import { UiornTrackingDashboard } from "./components/manufacturing/UiornTracking
 import { BOMManagement } from "./pages/manufacturing/BOMManagement";
 import AIAssistant from "./pages/ai/AIAssistant";
 import EnterpriseStockManagement from "./pages/inventory/EnterpriseStockManagement";
+import DKPKLTallyImport from "./components/imports/DKPKLTallyImport";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,16 @@ const App = () => (
                 <ProtectedRoute>
                   <InventoryLayout>
                     <PricingMasterPage />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/imports/tally" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <DKPKLTallyImport />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 
