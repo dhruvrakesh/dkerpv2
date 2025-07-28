@@ -13,7 +13,8 @@ import {
   Calendar,
   Bell,
   ChevronRight,
-  Brain
+  Brain,
+  ShoppingCart
 } from 'lucide-react';
 import {
   Sidebar,
@@ -53,6 +54,18 @@ const navigation = [
       { name: 'Lamination & Coating', href: '/manufacturing/lamination' },
       { name: 'Adhesive Coating', href: '/manufacturing/coating' },
       { name: 'Slitting & Packaging', href: '/manufacturing/slitting' }
+    ]
+  },
+  {
+    name: 'Procurement',
+    href: '/procurement',
+    icon: ShoppingCart,
+    children: [
+      { name: 'Dashboard', href: '/procurement/dashboard' },
+      { name: 'Vendor Management', href: '/procurement/vendors' },
+      { name: 'Purchase Orders', href: '/procurement/purchase-orders' },
+      { name: 'RFQ Management', href: '/procurement/rfq' },
+      { name: 'Analytics', href: '/procurement/analytics' },
     ]
   },
   {

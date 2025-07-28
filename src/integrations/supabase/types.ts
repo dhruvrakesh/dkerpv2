@@ -3453,6 +3453,176 @@ export type Database = {
           },
         ]
       }
+      dkegl_quote_items: {
+        Row: {
+          created_at: string | null
+          delivery_leadtime_days: number | null
+          id: string
+          item_notes: string | null
+          organization_id: string
+          quote_id: string
+          quoted_quantity: number
+          quoted_unit_price: number
+          rfq_item_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_leadtime_days?: number | null
+          id?: string
+          item_notes?: string | null
+          organization_id: string
+          quote_id: string
+          quoted_quantity?: number
+          quoted_unit_price?: number
+          rfq_item_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_leadtime_days?: number | null
+          id?: string
+          item_notes?: string | null
+          organization_id?: string
+          quote_id?: string
+          quoted_quantity?: number
+          quoted_unit_price?: number
+          rfq_item_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_vendor_quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_quote_items_rfq_item_id_fkey"
+            columns: ["rfq_item_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_rfq_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_rfq: {
+        Row: {
+          awarded_at: string | null
+          awarded_vendor_id: string | null
+          created_at: string | null
+          created_by: string | null
+          currency_code: string | null
+          description: string | null
+          evaluation_criteria: Json | null
+          id: string
+          metadata: Json | null
+          organization_id: string
+          priority_level: string | null
+          rfq_number: string
+          status: string | null
+          submission_deadline: string | null
+          terms_conditions: string | null
+          title: string
+          total_estimated_value: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          awarded_at?: string | null
+          awarded_vendor_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency_code?: string | null
+          description?: string | null
+          evaluation_criteria?: Json | null
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          priority_level?: string | null
+          rfq_number: string
+          status?: string | null
+          submission_deadline?: string | null
+          terms_conditions?: string | null
+          title: string
+          total_estimated_value?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          awarded_at?: string | null
+          awarded_vendor_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency_code?: string | null
+          description?: string | null
+          evaluation_criteria?: Json | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          priority_level?: string | null
+          rfq_number?: string
+          status?: string | null
+          submission_deadline?: string | null
+          terms_conditions?: string | null
+          title?: string
+          total_estimated_value?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      dkegl_rfq_items: {
+        Row: {
+          created_at: string | null
+          delivery_requirements: string | null
+          estimated_unit_price: number | null
+          id: string
+          item_code: string
+          item_description: string | null
+          organization_id: string
+          quantity: number
+          rfq_id: string
+          specifications: string | null
+          uom: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_requirements?: string | null
+          estimated_unit_price?: number | null
+          id?: string
+          item_code: string
+          item_description?: string | null
+          organization_id: string
+          quantity?: number
+          rfq_id: string
+          specifications?: string | null
+          uom?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_requirements?: string | null
+          estimated_unit_price?: number | null
+          id?: string
+          item_code?: string
+          item_description?: string | null
+          organization_id?: string
+          quantity?: number
+          rfq_id?: string
+          specifications?: string | null
+          uom?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_rfq_items_rfq_id_fkey"
+            columns: ["rfq_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_rfq"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_security_audit_log: {
         Row: {
           created_at: string | null
@@ -4296,18 +4466,189 @@ export type Database = {
         }
         Relationships: []
       }
+      dkegl_vendor_performance: {
+        Row: {
+          average_delivery_days: number | null
+          communication_score: number | null
+          created_at: string | null
+          defect_rate: number | null
+          delivery_score: number | null
+          evaluated_at: string | null
+          evaluated_by: string | null
+          evaluation_period_end: string
+          evaluation_period_start: string
+          evaluator_notes: string | null
+          id: string
+          on_time_deliveries: number | null
+          organization_id: string
+          overall_score: number | null
+          price_variance_percentage: number | null
+          pricing_score: number | null
+          quality_issues: number | null
+          quality_score: number | null
+          total_order_value: number | null
+          total_orders: number | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          average_delivery_days?: number | null
+          communication_score?: number | null
+          created_at?: string | null
+          defect_rate?: number | null
+          delivery_score?: number | null
+          evaluated_at?: string | null
+          evaluated_by?: string | null
+          evaluation_period_end: string
+          evaluation_period_start: string
+          evaluator_notes?: string | null
+          id?: string
+          on_time_deliveries?: number | null
+          organization_id: string
+          overall_score?: number | null
+          price_variance_percentage?: number | null
+          pricing_score?: number | null
+          quality_issues?: number | null
+          quality_score?: number | null
+          total_order_value?: number | null
+          total_orders?: number | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          average_delivery_days?: number | null
+          communication_score?: number | null
+          created_at?: string | null
+          defect_rate?: number | null
+          delivery_score?: number | null
+          evaluated_at?: string | null
+          evaluated_by?: string | null
+          evaluation_period_end?: string
+          evaluation_period_start?: string
+          evaluator_notes?: string | null
+          id?: string
+          on_time_deliveries?: number | null
+          organization_id?: string
+          overall_score?: number | null
+          price_variance_percentage?: number | null
+          pricing_score?: number | null
+          quality_issues?: number | null
+          quality_score?: number | null
+          total_order_value?: number | null
+          total_orders?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_vendor_performance_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_vendor_quotes: {
+        Row: {
+          attachments: Json | null
+          created_at: string | null
+          currency_code: string | null
+          delivery_terms: string | null
+          evaluation_notes: string | null
+          evaluation_score: number | null
+          id: string
+          organization_id: string
+          payment_terms: string | null
+          quote_number: string | null
+          rfq_id: string
+          status: string | null
+          submission_date: string | null
+          total_quote_value: number | null
+          updated_at: string | null
+          validity_period: number | null
+          vendor_id: string
+        }
+        Insert: {
+          attachments?: Json | null
+          created_at?: string | null
+          currency_code?: string | null
+          delivery_terms?: string | null
+          evaluation_notes?: string | null
+          evaluation_score?: number | null
+          id?: string
+          organization_id: string
+          payment_terms?: string | null
+          quote_number?: string | null
+          rfq_id: string
+          status?: string | null
+          submission_date?: string | null
+          total_quote_value?: number | null
+          updated_at?: string | null
+          validity_period?: number | null
+          vendor_id: string
+        }
+        Update: {
+          attachments?: Json | null
+          created_at?: string | null
+          currency_code?: string | null
+          delivery_terms?: string | null
+          evaluation_notes?: string | null
+          evaluation_score?: number | null
+          id?: string
+          organization_id?: string
+          payment_terms?: string | null
+          quote_number?: string | null
+          rfq_id?: string
+          status?: string | null
+          submission_date?: string | null
+          total_quote_value?: number | null
+          updated_at?: string | null
+          validity_period?: number | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_vendor_quotes_rfq_id_fkey"
+            columns: ["rfq_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_rfq"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkegl_vendor_quotes_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_vendors: {
         Row: {
           address: string | null
+          address_details: Json | null
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
+          bank_details: Json | null
+          category_id: string | null
           contact_person: string | null
           created_at: string
           credit_limit: number | null
+          delivery_rating: number | null
           email: string | null
           id: string
           is_active: boolean | null
+          last_performance_update: string | null
           organization_id: string | null
           payment_terms: string | null
+          performance_rating: number | null
           phone: string | null
+          pricing_rating: number | null
+          quality_rating: number | null
+          supplier_type: string | null
+          tax_details: Json | null
           tax_id: string | null
           updated_at: string
           vendor_code: string
@@ -4315,15 +4656,28 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          address_details?: Json | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_details?: Json | null
+          category_id?: string | null
           contact_person?: string | null
           created_at?: string
           credit_limit?: number | null
+          delivery_rating?: number | null
           email?: string | null
           id?: string
           is_active?: boolean | null
+          last_performance_update?: string | null
           organization_id?: string | null
           payment_terms?: string | null
+          performance_rating?: number | null
           phone?: string | null
+          pricing_rating?: number | null
+          quality_rating?: number | null
+          supplier_type?: string | null
+          tax_details?: Json | null
           tax_id?: string | null
           updated_at?: string
           vendor_code: string
@@ -4331,21 +4685,41 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          address_details?: Json | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_details?: Json | null
+          category_id?: string | null
           contact_person?: string | null
           created_at?: string
           credit_limit?: number | null
+          delivery_rating?: number | null
           email?: string | null
           id?: string
           is_active?: boolean | null
+          last_performance_update?: string | null
           organization_id?: string | null
           payment_terms?: string | null
+          performance_rating?: number | null
           phone?: string | null
+          pricing_rating?: number | null
+          quality_rating?: number | null
+          supplier_type?: string | null
+          tax_details?: Json | null
           tax_id?: string | null
           updated_at?: string
           vendor_code?: string
           vendor_name?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "dkegl_vendors_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_vendor_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "dkegl_vendors_organization_id_fkey"
             columns: ["organization_id"]
@@ -5961,6 +6335,10 @@ export type Database = {
         Args: { _org_id: string; _item_code: string; _quantity: number }
         Returns: number
       }
+      dkegl_calculate_vendor_performance: {
+        Args: { _vendor_id: string; _start_date: string; _end_date: string }
+        Returns: number
+      }
       dkegl_capture_daily_stock_snapshot: {
         Args: { _org_id: string }
         Returns: Json
@@ -6037,6 +6415,10 @@ export type Database = {
           size_mm?: string
           gsm?: number
         }
+        Returns: string
+      }
+      dkegl_generate_vendor_code: {
+        Args: { _org_id: string }
         Returns: string
       }
       dkegl_get_active_bom: {
@@ -6119,6 +6501,19 @@ export type Database = {
           price_trend: string
           last_grn_price: number
           recommendation: string
+        }[]
+      }
+      dkegl_get_procurement_analytics: {
+        Args: { _org_id: string; _days_back?: number }
+        Returns: {
+          total_vendors: number
+          active_vendors: number
+          total_spend: number
+          average_order_value: number
+          on_time_delivery_rate: number
+          top_vendor_by_spend: string
+          pending_rfqs: number
+          active_pos: number
         }[]
       }
       dkegl_get_real_stock_summary: {
