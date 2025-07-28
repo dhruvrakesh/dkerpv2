@@ -4263,6 +4263,39 @@ export type Database = {
           },
         ]
       }
+      dkegl_vendor_categories: {
+        Row: {
+          category_code: string
+          category_name: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          organization_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          category_code: string
+          category_name: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          category_code?: string
+          category_name?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       dkegl_vendors: {
         Row: {
           address: string | null
