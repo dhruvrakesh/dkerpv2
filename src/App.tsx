@@ -16,7 +16,8 @@ import IssueManagement from "./pages/inventory/IssueManagement";
 import StockManagement from "./pages/inventory/StockManagement";
 import PricingMasterPage from "./pages/inventory/PricingMasterPage";
 import { ProductionAnalyticsDashboard } from "./components/analytics/ProductionAnalyticsDashboard";
-import { VendorManagement } from "./components/procurement/VendorManagement";
+import { ProcurementDashboard } from "./pages/procurement/ProcurementDashboard";
+import { EnhancedVendorManagement } from "./components/procurement/EnhancedVendorManagement";
 import { QualityControlDashboard } from "./components/quality/QualityControlDashboard";
 import { GravurePrinting } from "./components/manufacturing/GravurePrinting";
 import { LaminationCoating } from "./components/manufacturing/LaminationCoating";
@@ -134,16 +135,6 @@ const App = () => (
                 <ProtectedRoute>
                   <InventoryLayout>
                     <ProductionAnalyticsDashboard />
-                  </InventoryLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/procurement/vendors" 
-              element={
-                <ProtectedRoute>
-                  <InventoryLayout>
-                    <VendorManagement />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 
@@ -317,6 +308,36 @@ const App = () => (
               } 
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route 
+              path="/procurement" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <ProcurementDashboard />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/procurement/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <ProcurementDashboard />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/procurement/vendors" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <EnhancedVendorManagement />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -28,7 +28,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({
     phone: vendor?.phone || '',
     supplier_type: vendor?.supplier_type || 'VENDOR',
     category_id: vendor?.category_id || '',
-    status: vendor?.status || 'active',
+    is_active: vendor?.is_active ?? true,
     approval_status: vendor?.approval_status || 'pending',
     address_details: vendor?.address_details || {},
     tax_details: vendor?.tax_details || {},
@@ -181,10 +181,10 @@ export const VendorForm: React.FC<VendorFormProps> = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
+                  <Label htmlFor="is_active">Status</Label>
                   <Select
-                    value={formData.status}
-                    onValueChange={(value) => handleInputChange('status', value)}
+                    value={formData.is_active ? 'active' : 'inactive'}
+                    onValueChange={(value) => handleInputChange('is_active', value === 'active')}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -192,7 +192,6 @@ export const VendorForm: React.FC<VendorFormProps> = ({
                     <SelectContent>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="blacklisted">Blacklisted</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

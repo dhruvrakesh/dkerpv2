@@ -6509,11 +6509,9 @@ export type Database = {
           total_vendors: number
           active_vendors: number
           total_spend: number
-          average_order_value: number
+          avg_order_value: number
           on_time_delivery_rate: number
-          top_vendor_by_spend: string
-          pending_rfqs: number
-          active_pos: number
+          active_rfqs: number
         }[]
       }
       dkegl_get_real_stock_summary: {

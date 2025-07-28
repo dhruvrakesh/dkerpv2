@@ -84,7 +84,8 @@ export const EnhancedVendorManagement = () => {
       vendor.vendor_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vendor.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || vendor.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' ? vendor.is_active : !vendor.is_active);
     const matchesType = typeFilter === 'all' || vendor.supplier_type === typeFilter;
     const matchesCategory = categoryFilter === 'all' || vendor.category_id === categoryFilter;
 
@@ -173,7 +174,7 @@ export const EnhancedVendorManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {vendors.filter(v => v.status === 'active').length}
+              {vendors.filter(v => v.is_active).length}
             </div>
           </CardContent>
         </Card>
@@ -329,7 +330,7 @@ export const EnhancedVendorManagement = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {getStatusBadge(vendor.status, vendor.approval_status)}
+                        {getStatusBadge(vendor.is_active ? 'active' : 'inactive', vendor.approval_status || 'pending')}
                       </TableCell>
                       <TableCell>
                         <div>

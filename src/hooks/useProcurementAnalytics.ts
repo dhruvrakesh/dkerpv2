@@ -54,7 +54,17 @@ export const useProcurementAnalytics = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        setAnalytics(data[0]);
+        const result = data[0];
+        setAnalytics({
+          total_vendors: result.total_vendors,
+          active_vendors: result.active_vendors,
+          total_spend: result.total_spend,
+          average_order_value: result.avg_order_value,
+          on_time_delivery_rate: result.on_time_delivery_rate,
+          top_vendor_by_spend: '', // Will be updated separately
+          pending_rfqs: result.active_rfqs, // Same as active_rfqs
+          active_pos: 0 // Will be updated separately
+        });
       }
     } catch (error: any) {
       toast({

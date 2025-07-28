@@ -14,7 +14,8 @@ import {
   Bell,
   ChevronRight,
   Brain,
-  ShoppingCart
+  ShoppingCart,
+  Building2
 } from 'lucide-react';
 import {
   Sidebar,
@@ -57,15 +58,12 @@ const navigation = [
     ]
   },
   {
-    name: 'Procurement',
-    href: '/procurement',
+    name: "Procurement",
+    href: "/procurement/dashboard",
     icon: ShoppingCart,
     children: [
-      { name: 'Dashboard', href: '/procurement/dashboard' },
-      { name: 'Vendor Management', href: '/procurement/vendors' },
-      { name: 'Purchase Orders', href: '/procurement/purchase-orders' },
-      { name: 'RFQ Management', href: '/procurement/rfq' },
-      { name: 'Analytics', href: '/procurement/analytics' },
+      { name: "Dashboard", href: "/procurement/dashboard" },
+      { name: "Vendors", href: "/procurement/vendors" },
     ]
   },
   {
