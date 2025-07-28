@@ -130,7 +130,7 @@ export default function PricingMaster() {
       const { data: alertsData, error: alertsError } = await supabase
         .from('dkegl_pricing_variance_alerts')
         .select('*')
-        .eq('acknowledged_at', null)
+        .is('acknowledged_at', null)
         .order('created_at', { ascending: false });
 
       if (alertsError) throw alertsError;
