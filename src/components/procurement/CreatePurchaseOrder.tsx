@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Trash2, Plus, Save, Send } from 'lucide-react';
 import { usePurchaseOrderManagement, PurchaseOrderItem } from '@/hooks/usePurchaseOrderManagement';
 import { useVendorManagement } from '@/hooks/useVendorManagement';
+import { useItemMaster } from '@/hooks/useItemMaster';
 import { EnterpriseItemSelector } from '@/components/ui/enterprise-item-selector';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,6 +19,7 @@ export const CreatePurchaseOrder = () => {
   const { toast } = useToast();
   const { createPurchaseOrder, generatePONumber } = usePurchaseOrderManagement();
   const { vendors, fetchVendors } = useVendorManagement();
+  const { items: availableItems, loading: itemsLoading, getItemByCode } = useItemMaster();
 
   const [formData, setFormData] = useState({
     vendor_id: '',
@@ -35,12 +37,6 @@ export const CreatePurchaseOrder = () => {
   const [isDraft, setIsDraft] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Mock items data - replace with actual item fetch
-  const [availableItems] = useState([
-    { id: '1', item_code: 'RAW001', item_name: 'Paper Roll 80GSM', uom: 'KG' },
-    { id: '2', item_code: 'RAW002', item_name: 'Adhesive Film', uom: 'MTR' },
-    { id: '3', item_code: 'RAW003', item_name: 'Ink - Cyan', uom: 'LTR' },
-  ]);
 
   useEffect(() => {
     fetchVendors();
@@ -56,21 +52,22 @@ export const CreatePurchaseOrder = () => {
     }
   };
 
-  const updateItem = (index: number, field: keyof PurchaseOrderItem, value: any) => {
-    const updatedItems = items.map((item, i) => {
-      if (i === index) {
-        const updatedItem = { ...item, [field]: value };
-        if (field === 'item_code') {
-          const selectedItem = availableItems.find(ai => ai.item_code === value);
-          if (selectedItem) {
-            updatedItem.item_name = selectedItem.item_name;
-            updatedItem.uom = selectedItem.uom;
-          }
+  const updateItem = async (index: number, field: keyof PurchaseOrderItem, value: any) => {
+    const updatedItems = [...items];
+    updatedItems[index] = { ...updatedItems[index], [field]: value };
+    
+    if (field === 'item_code') {
+      const selectedItem = await getItemByCode(value);
+      if (selectedItem) {
+        updatedItems[index].item_name = selectedItem.item_name;
+        updatedItems[index].uom = selectedItem.uom;
+        // Auto-populate unit price from pricing info if available
+        const pricingInfo = selectedItem.pricing_info as any;
+        if (pricingInfo?.unit_cost) {
+          updatedItems[index].unit_price = pricingInfo.unit_cost;
         }
-        return updatedItem;
       }
-      return item;
-    });
+    }
     setItems(updatedItems);
   };
 

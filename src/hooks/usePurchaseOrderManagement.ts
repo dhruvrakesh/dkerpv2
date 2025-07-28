@@ -223,6 +223,47 @@ export const usePurchaseOrderManagement = () => {
     return updatePurchaseOrder(id, { status: 'cancelled' });
   };
 
+  const markPOAsReceived = async (id: string): Promise<boolean> => {
+    return updatePurchaseOrder(id, { status: 'received' });
+  };
+
+  const getPODeliveryStatus = async (id: string) => {
+    try {
+      const { data: grnData, error } = await supabase
+        .from('dkegl_grn_log')
+        .select('item_code, qty_received, total_amount')
+        .eq('purchase_order_id', id);
+
+      if (error) throw error;
+
+      const { data: poItems, error: poError } = await supabase
+        .from('dkegl_po_items')
+        .select('item_code, quantity, unit_price')
+        .eq('po_id', id);
+
+      if (poError) throw poError;
+
+      const deliveryStatus = poItems?.map(poItem => {
+        const receivedQty = grnData
+          ?.filter(grn => grn.item_code === poItem.item_code)
+          ?.reduce((total, grn) => total + grn.qty_received, 0) || 0;
+        
+        return {
+          item_code: poItem.item_code,
+          ordered_qty: poItem.quantity,
+          received_qty: receivedQty,
+          pending_qty: poItem.quantity - receivedQty,
+          delivery_percentage: (receivedQty / poItem.quantity) * 100
+        };
+      });
+
+      return deliveryStatus;
+    } catch (error) {
+      console.error('Error getting PO delivery status:', error);
+      return [];
+    }
+  };
+
   const deletePurchaseOrder = async (id: string): Promise<boolean> => {
     try {
       // Delete PO items first
@@ -271,6 +312,8 @@ export const usePurchaseOrderManagement = () => {
     approvePurchaseOrder,
     issuePurchaseOrder,
     cancelPurchaseOrder,
+    markPOAsReceived,
+    getPODeliveryStatus,
     deletePurchaseOrder,
     generatePONumber,
   };
