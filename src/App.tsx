@@ -18,6 +18,8 @@ import PricingMasterPage from "./pages/inventory/PricingMasterPage";
 import { ProductionAnalyticsDashboard } from "./components/analytics/ProductionAnalyticsDashboard";
 import { ProcurementDashboard } from "./pages/procurement/ProcurementDashboard";
 import { EnhancedVendorManagement } from "./components/procurement/EnhancedVendorManagement";
+import { PurchaseOrderPage } from "./pages/procurement/PurchaseOrderPage";
+import { CreatePurchaseOrderPage } from "./pages/procurement/CreatePurchaseOrderPage";
 import { QualityControlDashboard } from "./components/quality/QualityControlDashboard";
 import { GravurePrinting } from "./components/manufacturing/GravurePrinting";
 import { LaminationCoating } from "./components/manufacturing/LaminationCoating";
@@ -334,6 +336,26 @@ const App = () => (
                 <ProtectedRoute>
                   <InventoryLayout>
                     <EnhancedVendorManagement />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/procurement/purchase-orders" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <PurchaseOrderPage />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/procurement/purchase-orders/create" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <CreatePurchaseOrderPage />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 

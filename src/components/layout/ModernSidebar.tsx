@@ -64,6 +64,7 @@ const navigation = [
     children: [
       { name: "Dashboard", href: "/procurement/dashboard" },
       { name: "Vendors", href: "/procurement/vendors" },
+      { name: "Purchase Orders", href: "/procurement/purchase-orders" },
     ]
   },
   {

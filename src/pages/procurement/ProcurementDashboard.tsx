@@ -233,7 +233,10 @@ export const ProcurementDashboard = () => {
                 <Badge variant="outline">New</Badge>
               </div>
               
-              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
+              <div 
+                className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer"
+                onClick={() => window.location.href = '/procurement/purchase-orders/create'}
+              >
                 <div className="flex items-center space-x-3">
                   <ShoppingCart className="h-4 w-4 text-purple-600" />
                   <span className="font-medium">Create PO</span>
