@@ -135,14 +135,52 @@ const TallyDashboard: React.FC = () => {
     return <LoadingSpinner className="h-8 w-8" />;
   }
 
-  if (!metrics) {
+  if (!metrics || (metrics.total_batches === 0 && metrics.total_records === 0)) {
     return (
-      <Alert>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          Failed to load Tally dashboard data. Please try refreshing the page.
-        </AlertDescription>
-      </Alert>
+      <div className="container mx-auto p-6 max-w-7xl">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Tally Integration Dashboard</h1>
+            <p className="text-muted-foreground mt-2">
+              Monitor imports, reconciliation, and ERP posting status
+            </p>
+          </div>
+          <Button variant="outline" onClick={fetchDashboardMetrics}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+
+        {/* Empty State */}
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+          <div className="mb-6 p-6 rounded-full bg-muted/20">
+            <FileSpreadsheet className="h-16 w-16 text-muted-foreground" />
+          </div>
+          <h2 className="text-2xl font-semibold mb-3">Welcome to Tally Integration</h2>
+          <p className="text-muted-foreground mb-6 max-w-md">
+            {!metrics 
+              ? "Loading dashboard data..." 
+              : "No Tally data imports yet. Start by uploading your first Excel file to begin monitoring your sales and purchase data."
+            }
+          </p>
+          {metrics && (
+            <div className="flex gap-4">
+              <Button asChild>
+                <a href="/imports/tally">
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Import First File
+                </a>
+              </Button>
+              <Button variant="outline" asChild>
+                <a href="#" onClick={(e) => e.preventDefault()}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Sample
+                </a>
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
     );
   }
 
