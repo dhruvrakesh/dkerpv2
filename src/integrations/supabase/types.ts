@@ -7207,6 +7207,37 @@ export type Database = {
         Args: { _workflow_progress_id: string }
         Returns: Json
       }
+      dkpkl_parse_ledger_entries: {
+        Args: { _staging_id: string }
+        Returns: Json
+      }
+      dkpkl_parse_purchase_voucher: {
+        Args: { _staging_id: string }
+        Returns: Json
+      }
+      dkpkl_parse_sales_voucher: {
+        Args: { _staging_id: string }
+        Returns: Json
+      }
+      dkpkl_parse_stock_journal: {
+        Args: { _staging_id: string }
+        Returns: Json
+      }
+      dkpkl_process_excel_batch: {
+        Args: {
+          _batch_id: string
+          _import_type: Database["public"]["Enums"]["dkpkl_import_type"]
+          _excel_data: Json
+        }
+        Returns: Json
+      }
+      dkpkl_validate_staging_record: {
+        Args: {
+          _staging_id: string
+          _import_type: Database["public"]["Enums"]["dkpkl_import_type"]
+        }
+        Returns: Json
+      }
       generate_item_code: {
         Args: {
           category_name: string
