@@ -267,12 +267,29 @@ export type Database = {
           bill_date: string
           bill_number: string
           client_version_data: Json | null
+          company_gstin: string | null
+          company_state_code: string | null
           created_at: string
           file_path: string | null
           generated_by: string | null
           id: string
+          invoice_amount_words: string | null
+          invoice_number: string | null
+          invoice_type: string | null
+          irn: string | null
           order_id: string
+          party_gstin: string | null
+          party_state_code: string | null
+          place_of_supply: string | null
+          qr_code_data: string | null
+          reverse_charge: boolean | null
+          round_off_amount: number | null
           status: string
+          template_id: string | null
+          total_cgst_amount: number | null
+          total_igst_amount: number | null
+          total_sgst_amount: number | null
+          total_taxable_amount: number | null
           updated_at: string
         }
         Insert: {
@@ -281,12 +298,29 @@ export type Database = {
           bill_date?: string
           bill_number: string
           client_version_data?: Json | null
+          company_gstin?: string | null
+          company_state_code?: string | null
           created_at?: string
           file_path?: string | null
           generated_by?: string | null
           id?: string
+          invoice_amount_words?: string | null
+          invoice_number?: string | null
+          invoice_type?: string | null
+          irn?: string | null
           order_id: string
+          party_gstin?: string | null
+          party_state_code?: string | null
+          place_of_supply?: string | null
+          qr_code_data?: string | null
+          reverse_charge?: boolean | null
+          round_off_amount?: number | null
           status?: string
+          template_id?: string | null
+          total_cgst_amount?: number | null
+          total_igst_amount?: number | null
+          total_sgst_amount?: number | null
+          total_taxable_amount?: number | null
           updated_at?: string
         }
         Update: {
@@ -295,15 +329,40 @@ export type Database = {
           bill_date?: string
           bill_number?: string
           client_version_data?: Json | null
+          company_gstin?: string | null
+          company_state_code?: string | null
           created_at?: string
           file_path?: string | null
           generated_by?: string | null
           id?: string
+          invoice_amount_words?: string | null
+          invoice_number?: string | null
+          invoice_type?: string | null
+          irn?: string | null
           order_id?: string
+          party_gstin?: string | null
+          party_state_code?: string | null
+          place_of_supply?: string | null
+          qr_code_data?: string | null
+          reverse_charge?: boolean | null
+          round_off_amount?: number | null
           status?: string
+          template_id?: string | null
+          total_cgst_amount?: number | null
+          total_igst_amount?: number | null
+          total_sgst_amount?: number | null
+          total_taxable_amount?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bills_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_invoice_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bpmn_files: {
         Row: {
@@ -1894,6 +1953,128 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dkegl_invoice_line_items: {
+        Row: {
+          bill_id: string
+          cgst_amount: number | null
+          cgst_rate: number | null
+          created_at: string | null
+          discount_amount: number | null
+          discount_percentage: number | null
+          hsn_code: string | null
+          id: string
+          igst_amount: number | null
+          igst_rate: number | null
+          item_code: string | null
+          item_name: string
+          line_sequence: number | null
+          organization_id: string
+          quantity: number
+          sgst_amount: number | null
+          sgst_rate: number | null
+          taxable_amount: number
+          total_amount: number
+          unit_rate: number
+          updated_at: string | null
+        }
+        Insert: {
+          bill_id: string
+          cgst_amount?: number | null
+          cgst_rate?: number | null
+          created_at?: string | null
+          discount_amount?: number | null
+          discount_percentage?: number | null
+          hsn_code?: string | null
+          id?: string
+          igst_amount?: number | null
+          igst_rate?: number | null
+          item_code?: string | null
+          item_name: string
+          line_sequence?: number | null
+          organization_id: string
+          quantity?: number
+          sgst_amount?: number | null
+          sgst_rate?: number | null
+          taxable_amount: number
+          total_amount: number
+          unit_rate: number
+          updated_at?: string | null
+        }
+        Update: {
+          bill_id?: string
+          cgst_amount?: number | null
+          cgst_rate?: number | null
+          created_at?: string | null
+          discount_amount?: number | null
+          discount_percentage?: number | null
+          hsn_code?: string | null
+          id?: string
+          igst_amount?: number | null
+          igst_rate?: number | null
+          item_code?: string | null
+          item_name?: string
+          line_sequence?: number | null
+          organization_id?: string
+          quantity?: number
+          sgst_amount?: number | null
+          sgst_rate?: number | null
+          taxable_amount?: number
+          total_amount?: number
+          unit_rate?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_invoice_line_items_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_invoice_templates: {
+        Row: {
+          created_at: string | null
+          footer_config: Json | null
+          header_config: Json | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          layout_config: Json | null
+          organization_id: string
+          template_name: string
+          template_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          footer_config?: Json | null
+          header_config?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          layout_config?: Json | null
+          organization_id: string
+          template_name: string
+          template_type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          footer_config?: Json | null
+          header_config?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          layout_config?: Json | null
+          organization_id?: string
+          template_name?: string
+          template_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       dkegl_issue_audit_log: {
         Row: {
@@ -4240,6 +4421,47 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      dkegl_tax_calculations: {
+        Row: {
+          bill_id: string
+          created_at: string | null
+          id: string
+          organization_id: string
+          tax_amount: number
+          tax_rate: number
+          tax_type: string
+          taxable_amount: number
+        }
+        Insert: {
+          bill_id: string
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          tax_amount: number
+          tax_rate: number
+          tax_type: string
+          taxable_amount: number
+        }
+        Update: {
+          bill_id?: string
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          tax_amount?: number
+          tax_rate?: number
+          tax_type?: string
+          taxable_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_tax_calculations_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dkegl_upload_sessions: {
         Row: {
@@ -6887,6 +7109,15 @@ export type Database = {
           next_reorder_date: string
         }[]
       }
+      dkegl_calculate_gst: {
+        Args: {
+          _taxable_amount: number
+          _buyer_state_code: string
+          _seller_state_code?: string
+          _gst_rate?: number
+        }
+        Returns: Json
+      }
       dkegl_calculate_item_pricing: {
         Args: {
           _org_id: string
@@ -7217,7 +7448,7 @@ export type Database = {
         Returns: Json
       }
       dkpkl_get_dashboard_metrics: {
-        Args: { _org_id: string }
+        Args: Record<PropertyKey, never> | { _org_id: string }
         Returns: Json
       }
       dkpkl_parse_ledger_entries: {

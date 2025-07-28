@@ -35,6 +35,7 @@ import AIAssistant from "./pages/ai/AIAssistant";
 import EnterpriseStockManagement from "./pages/inventory/EnterpriseStockManagement";
 import DKPKLTallyImport from "./components/imports/DKPKLTallyImport";
 import TallyDashboard from "./components/dashboard/TallyDashboard";
+import InvoiceGeneratorPage from "./pages/invoices/InvoiceGeneratorPage";
 
 const queryClient = new QueryClient();
 
@@ -132,6 +133,14 @@ const App = () => (
                   <InventoryLayout>
                     <TallyDashboard />
                   </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/invoices/generator" 
+              element={
+                <ProtectedRoute>
+                  <InvoiceGeneratorPage />
                 </ProtectedRoute>
               } 
             />

@@ -79,7 +79,8 @@ const navigation = [
       { name: 'Item Master', href: '/inventory/items' },
       { name: 'Pricing Master', href: '/inventory/pricing' },
       { name: 'Tally Import', href: '/imports/tally' },
-      { name: 'Tally Dashboard', href: '/tally/dashboard' }
+      { name: 'Tally Dashboard', href: '/tally/dashboard' },
+      { name: 'Invoice Generator', href: '/invoices/generator' }
     ]
   },
   {
