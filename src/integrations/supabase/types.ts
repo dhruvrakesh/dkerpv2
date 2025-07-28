@@ -7207,6 +7207,10 @@ export type Database = {
         Args: { _workflow_progress_id: string }
         Returns: Json
       }
+      dkpkl_get_dashboard_metrics: {
+        Args: { _org_id: string }
+        Returns: Json
+      }
       dkpkl_parse_ledger_entries: {
         Args: { _staging_id: string }
         Returns: Json
@@ -7223,12 +7227,22 @@ export type Database = {
         Args: { _staging_id: string }
         Returns: Json
       }
+      dkpkl_post_purchase_to_issue: {
+        Args: { _batch_id: string }
+        Returns: Json
+      }
+      dkpkl_post_sales_to_grn: {
+        Args: { _batch_id: string }
+        Returns: Json
+      }
       dkpkl_process_excel_batch: {
-        Args: {
-          _batch_id: string
-          _import_type: Database["public"]["Enums"]["dkpkl_import_type"]
-          _excel_data: Json
-        }
+        Args:
+          | {
+              _batch_id: string
+              _import_type: Database["public"]["Enums"]["dkpkl_import_type"]
+              _excel_data: Json
+            }
+          | { _batch_id: string; _import_type: string; _excel_data: string }
         Returns: Json
       }
       dkpkl_validate_staging_record: {

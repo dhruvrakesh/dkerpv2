@@ -250,15 +250,24 @@ const useDKPKLBulkUpload = () => {
     periodFrom: string,
     periodTo: string
   ): Promise<DKPKLImportBatch> => {
+    // Get current user's organization
+    const { data: userProfile } = await supabase
+      .from('dkegl_user_profiles')
+      .select('organization_id')
+      .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+      .single();
+
     const { data, error } = await supabase
       .from('dkpkl_import_batches')
       .insert({
+        organization_id: userProfile?.organization_id,
         import_type: importType,
         period_start: periodFrom,
         period_end: periodTo,
         file_name: fileName,
         file_size: fileSize,
-        status: 'pending'
+        status: 'pending',
+        uploaded_by: (await supabase.auth.getUser()).data.user?.id
       })
       .select()
       .single();

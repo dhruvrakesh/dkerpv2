@@ -34,6 +34,7 @@ import { BOMManagement } from "./pages/manufacturing/BOMManagement";
 import AIAssistant from "./pages/ai/AIAssistant";
 import EnterpriseStockManagement from "./pages/inventory/EnterpriseStockManagement";
 import DKPKLTallyImport from "./components/imports/DKPKLTallyImport";
+import TallyDashboard from "./components/dashboard/TallyDashboard";
 
 const queryClient = new QueryClient();
 
@@ -120,6 +121,16 @@ const App = () => (
                 <ProtectedRoute>
                   <InventoryLayout>
                     <DKPKLTallyImport />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/tally/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <TallyDashboard />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 
