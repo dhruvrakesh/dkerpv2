@@ -10,18 +10,18 @@ export interface Vendor {
   contact_person?: string;
   email?: string;
   phone?: string;
-  supplier_type: 'MANUFACTURER' | 'DISTRIBUTOR' | 'VENDOR' | 'AGENT';
+  supplier_type?: string;
   category_id?: string;
-  performance_rating: number;
-  quality_rating: number;
-  delivery_rating: number;
-  pricing_rating: number;
-  approval_status: 'pending' | 'approved' | 'rejected' | 'under_review';
-  status: 'active' | 'inactive' | 'blacklisted';
-  tax_details: any;
-  bank_details: any;
-  address_details: any;
-  address?: string; // Legacy field from database
+  performance_rating?: number;
+  quality_rating?: number;
+  delivery_rating?: number;
+  pricing_rating?: number;
+  approval_status?: string;
+  is_active?: boolean;
+  tax_details?: any;
+  bank_details?: any;
+  address_details?: any;
+  address?: string;
   created_at: string;
   updated_at: string;
 }
@@ -62,7 +62,7 @@ export const useVendorManagement = () => {
         query = query.eq('category_id', filters.category);
       }
       if (filters?.status) {
-        query = query.eq('status', filters.status);
+        query = query.eq('is_active', filters.status === 'active');
       }
       if (filters?.supplier_type) {
         query = query.eq('supplier_type', filters.supplier_type);
@@ -228,14 +228,14 @@ export const useVendorManagement = () => {
   const approveVendor = async (id: string) => {
     await updateVendor(id, { 
       approval_status: 'approved',
-      status: 'active'
+      is_active: true
     });
   };
 
   const rejectVendor = async (id: string) => {
     await updateVendor(id, { 
       approval_status: 'rejected',
-      status: 'inactive'
+      is_active: false
     });
   };
 
