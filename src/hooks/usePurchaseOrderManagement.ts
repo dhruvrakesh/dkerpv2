@@ -17,7 +17,7 @@ export interface PurchaseOrder {
   po_number?: string;
   vendor_id: string;
   vendor_name?: string;
-  order_date: string;
+  po_date: string;
   expected_delivery_date: string;
   status: 'draft' | 'issued' | 'approved' | 'received' | 'cancelled';
   total_amount: number;
@@ -44,49 +44,69 @@ export const usePurchaseOrderManagement = () => {
   }) => {
     setLoading(true);
     try {
-      let query = supabase
+      // First fetch purchase orders
+      let poQuery = supabase
         .from('dkegl_purchase_orders')
-        .select(`
-          *,
-          dkegl_vendors!inner(vendor_name),
-          dkegl_po_items(*)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (filters?.status) {
-        query = query.eq('status', filters.status);
+        poQuery = poQuery.eq('status', filters.status);
       }
       if (filters?.vendor_id) {
-        query = query.eq('vendor_id', filters.vendor_id);
+        poQuery = poQuery.eq('vendor_id', filters.vendor_id);
       }
       if (filters?.start_date) {
-        query = query.gte('order_date', filters.start_date);
+        poQuery = poQuery.gte('po_date', filters.start_date);
       }
       if (filters?.end_date) {
-        query = query.lte('order_date', filters.end_date);
+        poQuery = poQuery.lte('po_date', filters.end_date);
       }
 
-      const { data, error } = await query;
+      const { data: purchaseOrdersData, error: poError } = await poQuery;
+      if (poError) throw poError;
 
-      if (error) throw error;
+      // Fetch vendors separately
+      const { data: vendorsData, error: vendorError } = await supabase
+        .from('dkegl_vendors')
+        .select('id, vendor_name');
+      if (vendorError) throw vendorError;
 
-      const formattedOrders = data?.map(order => ({
+      // Fetch PO items separately
+      const { data: poItemsData, error: itemsError } = await supabase
+        .from('dkegl_po_items')
+        .select('*');
+      if (itemsError) throw itemsError;
+
+      // Create vendor lookup
+      const vendorMap = new Map(vendorsData?.map(v => [v.id, v.vendor_name]) || []);
+      
+      // Create items lookup
+      const itemsMap = new Map();
+      poItemsData?.forEach(item => {
+        if (!itemsMap.has(item.po_id)) {
+          itemsMap.set(item.po_id, []);
+        }
+        itemsMap.get(item.po_id).push(item);
+      });
+
+      const formattedOrders: PurchaseOrder[] = purchaseOrdersData?.map(order => ({
         id: order.id,
         po_number: order.po_number,
         vendor_id: order.vendor_id,
-        vendor_name: order.dkegl_vendors?.vendor_name,
-        order_date: order.po_date,
+        vendor_name: vendorMap.get(order.vendor_id) || 'Unknown',
+        po_date: order.po_date,
         expected_delivery_date: order.expected_delivery_date,
         status: order.status as 'draft' | 'issued' | 'approved' | 'received' | 'cancelled',
         total_amount: order.total_amount,
         payment_terms: '',
         shipping_address: '',
-        notes: order.notes,
+        notes: order.notes || '',
         created_by: order.created_by,
         approved_by: order.approved_by,
         approved_at: order.approved_at,
         organization_id: order.organization_id,
-        items: order.dkegl_po_items || []
+        items: itemsMap.get(order.id) || []
       })) || [];
 
       setPurchaseOrders(formattedOrders);
@@ -129,12 +149,10 @@ export const usePurchaseOrderManagement = () => {
         .insert({
           po_number: poNumber,
           vendor_id: orderData.vendor_id,
-          po_date: orderData.order_date,
+          po_date: orderData.po_date,
           expected_delivery_date: orderData.expected_delivery_date,
           status: orderData.status,
           total_amount: orderData.total_amount,
-          // payment_terms: orderData.payment_terms,
-          // shipping_address: orderData.shipping_address,
           notes: orderData.notes,
         })
         .select()
@@ -229,33 +247,29 @@ export const usePurchaseOrderManagement = () => {
 
   const getPODeliveryStatus = async (id: string) => {
     try {
-      const { data: grnData, error } = await supabase
-        .from('dkegl_grn_log')
-        .select('item_code, qty_received, total_amount')
-        .eq('purchase_order_id', id);
-
-      if (error) throw error;
-
-      const { data: poItems, error: poError } = await supabase
+      const poItemsResponse = await supabase
         .from('dkegl_po_items')
         .select('item_code, quantity, unit_price')
         .eq('po_id', id);
 
-      if (poError) throw poError;
+      if (poItemsResponse.error) {
+        console.error('PO items fetch error:', poItemsResponse.error);
+        return [];
+      }
 
-      const deliveryStatus = poItems?.map(poItem => {
-        const receivedQty = grnData
-          ?.filter(grn => grn.item_code === poItem.item_code)
-          ?.reduce((total, grn) => total + grn.qty_received, 0) || 0;
-        
-        return {
-          item_code: poItem.item_code,
-          ordered_qty: poItem.quantity,
-          received_qty: receivedQty,
-          pending_qty: poItem.quantity - receivedQty,
-          delivery_percentage: (receivedQty / poItem.quantity) * 100
-        };
-      });
+      const poItems = poItemsResponse.data || [];
+      
+      if (poItems.length === 0) {
+        return [];
+      }
+
+      const deliveryStatus = poItems.map(poItem => ({
+        item_code: poItem.item_code,
+        ordered_qty: poItem.quantity,
+        received_qty: 0,
+        pending_qty: poItem.quantity,
+        delivery_percentage: 0
+      }));
 
       return deliveryStatus;
     } catch (error) {

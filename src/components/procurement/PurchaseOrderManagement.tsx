@@ -63,7 +63,7 @@ const PurchaseOrderDetails = ({ po }: { po: PurchaseOrder }) => {
         </div>
         <div>
           <h4 className="font-medium text-sm text-muted-foreground">Order Date</h4>
-          <p>{format(new Date(po.order_date), 'dd MMM yyyy')}</p>
+          <p>{format(new Date(po.po_date), 'dd MMM yyyy')}</p>
         </div>
         <div>
           <h4 className="font-medium text-sm text-muted-foreground">Expected Delivery</h4>
@@ -368,7 +368,7 @@ export const PurchaseOrderManagement = () => {
                     <TableCell>
                       <StatusBadge status={po.status} />
                     </TableCell>
-                    <TableCell>{format(new Date(po.order_date), 'dd MMM yyyy')}</TableCell>
+                    <TableCell>{format(new Date(po.po_date), 'dd MMM yyyy')}</TableCell>
                     <TableCell>{format(new Date(po.expected_delivery_date), 'dd MMM yyyy')}</TableCell>
                     <TableCell>₹{po.total_amount?.toFixed(2)}</TableCell>
                     <TableCell>

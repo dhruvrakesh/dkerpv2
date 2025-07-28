@@ -23,7 +23,7 @@ export const CreatePurchaseOrder = () => {
 
   const [formData, setFormData] = useState({
     vendor_id: '',
-    order_date: new Date().toISOString().split('T')[0],
+    po_date: new Date().toISOString().split('T')[0],
     expected_delivery_date: '',
     payment_terms: '',
     shipping_address: '',
@@ -171,11 +171,11 @@ export const CreatePurchaseOrder = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="order_date">Order Date</Label>
+                <Label htmlFor="po_date">Order Date</Label>
                 <Input
                   type="date"
-                  value={formData.order_date}
-                  onChange={(e) => setFormData({...formData, order_date: e.target.value})}
+                  value={formData.po_date}
+                  onChange={(e) => setFormData({...formData, po_date: e.target.value})}
                 />
               </div>
             </div>
