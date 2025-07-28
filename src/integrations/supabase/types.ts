@@ -4962,6 +4962,586 @@ export type Database = {
           },
         ]
       }
+      dkpkl_account_mapping: {
+        Row: {
+          created_at: string
+          dkegl_account_code: string | null
+          dkegl_ledger_type: string | null
+          id: string
+          is_verified: boolean | null
+          mapping_confidence: number | null
+          mapping_notes: string | null
+          organization_id: string
+          tally_account_code: string | null
+          tally_account_name: string
+          updated_at: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          dkegl_account_code?: string | null
+          dkegl_ledger_type?: string | null
+          id?: string
+          is_verified?: boolean | null
+          mapping_confidence?: number | null
+          mapping_notes?: string | null
+          organization_id?: string
+          tally_account_code?: string | null
+          tally_account_name: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          dkegl_account_code?: string | null
+          dkegl_ledger_type?: string | null
+          id?: string
+          is_verified?: boolean | null
+          mapping_confidence?: number | null
+          mapping_notes?: string | null
+          organization_id?: string
+          tally_account_code?: string | null
+          tally_account_name?: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
+      dkpkl_import_batches: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_log: string | null
+          error_rows: number | null
+          file_hash: string | null
+          file_name: string
+          file_size: number | null
+          id: string
+          import_type: Database["public"]["Enums"]["dkpkl_import_type"]
+          metadata: Json | null
+          organization_id: string
+          period_end: string
+          period_start: string
+          processed_rows: number | null
+          started_at: string | null
+          status: string
+          total_rows: number | null
+          updated_at: string
+          uploaded_by: string | null
+          warning_rows: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_log?: string | null
+          error_rows?: number | null
+          file_hash?: string | null
+          file_name: string
+          file_size?: number | null
+          id?: string
+          import_type: Database["public"]["Enums"]["dkpkl_import_type"]
+          metadata?: Json | null
+          organization_id?: string
+          period_end: string
+          period_start: string
+          processed_rows?: number | null
+          started_at?: string | null
+          status?: string
+          total_rows?: number | null
+          updated_at?: string
+          uploaded_by?: string | null
+          warning_rows?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_log?: string | null
+          error_rows?: number | null
+          file_hash?: string | null
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          import_type?: Database["public"]["Enums"]["dkpkl_import_type"]
+          metadata?: Json | null
+          organization_id?: string
+          period_end?: string
+          period_start?: string
+          processed_rows?: number | null
+          started_at?: string | null
+          status?: string
+          total_rows?: number | null
+          updated_at?: string
+          uploaded_by?: string | null
+          warning_rows?: number | null
+        }
+        Relationships: []
+      }
+      dkpkl_ledger_staging: {
+        Row: {
+          account_code: string | null
+          batch_id: string
+          created_at: string
+          credit_amount: number | null
+          debit_amount: number | null
+          id: string
+          ledger_name: string | null
+          narration: string | null
+          organization_id: string
+          posted_to_erp_at: string | null
+          posting_status: string | null
+          raw_row_id: string | null
+          reference_number: string | null
+          validation_errors: Json | null
+          validation_status: string | null
+          voucher_date: string | null
+          voucher_number: string | null
+        }
+        Insert: {
+          account_code?: string | null
+          batch_id: string
+          created_at?: string
+          credit_amount?: number | null
+          debit_amount?: number | null
+          id?: string
+          ledger_name?: string | null
+          narration?: string | null
+          organization_id?: string
+          posted_to_erp_at?: string | null
+          posting_status?: string | null
+          raw_row_id?: string | null
+          reference_number?: string | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          voucher_date?: string | null
+          voucher_number?: string | null
+        }
+        Update: {
+          account_code?: string | null
+          batch_id?: string
+          created_at?: string
+          credit_amount?: number | null
+          debit_amount?: number | null
+          id?: string
+          ledger_name?: string | null
+          narration?: string | null
+          organization_id?: string
+          posted_to_erp_at?: string | null
+          posting_status?: string | null
+          raw_row_id?: string | null
+          reference_number?: string | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          voucher_date?: string | null
+          voucher_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkpkl_ledger_staging_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_import_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkpkl_ledger_staging_raw_row_id_fkey"
+            columns: ["raw_row_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_raw_rows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkpkl_purchase_staging: {
+        Row: {
+          batch_id: string
+          cgst_amount: number | null
+          created_at: string
+          gst_rate: number | null
+          hsn_code: string | null
+          id: string
+          igst_amount: number | null
+          invoice_date: string | null
+          invoice_number: string | null
+          item_code: string | null
+          item_name: string | null
+          organization_id: string
+          posted_to_erp_at: string | null
+          posting_status: string | null
+          quantity: number | null
+          raw_row_id: string | null
+          sgst_amount: number | null
+          supplier_name: string | null
+          tax_amount: number | null
+          total_amount: number | null
+          unit_rate: number | null
+          validation_errors: Json | null
+          validation_status: string | null
+          voucher_date: string | null
+          voucher_number: string | null
+        }
+        Insert: {
+          batch_id: string
+          cgst_amount?: number | null
+          created_at?: string
+          gst_rate?: number | null
+          hsn_code?: string | null
+          id?: string
+          igst_amount?: number | null
+          invoice_date?: string | null
+          invoice_number?: string | null
+          item_code?: string | null
+          item_name?: string | null
+          organization_id?: string
+          posted_to_erp_at?: string | null
+          posting_status?: string | null
+          quantity?: number | null
+          raw_row_id?: string | null
+          sgst_amount?: number | null
+          supplier_name?: string | null
+          tax_amount?: number | null
+          total_amount?: number | null
+          unit_rate?: number | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          voucher_date?: string | null
+          voucher_number?: string | null
+        }
+        Update: {
+          batch_id?: string
+          cgst_amount?: number | null
+          created_at?: string
+          gst_rate?: number | null
+          hsn_code?: string | null
+          id?: string
+          igst_amount?: number | null
+          invoice_date?: string | null
+          invoice_number?: string | null
+          item_code?: string | null
+          item_name?: string | null
+          organization_id?: string
+          posted_to_erp_at?: string | null
+          posting_status?: string | null
+          quantity?: number | null
+          raw_row_id?: string | null
+          sgst_amount?: number | null
+          supplier_name?: string | null
+          tax_amount?: number | null
+          total_amount?: number | null
+          unit_rate?: number | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          voucher_date?: string | null
+          voucher_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkpkl_purchase_staging_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_import_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkpkl_purchase_staging_raw_row_id_fkey"
+            columns: ["raw_row_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_raw_rows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkpkl_raw_rows: {
+        Row: {
+          batch_id: string
+          created_at: string
+          id: string
+          organization_id: string
+          parsed_status: string | null
+          row_data: Json
+          row_number: number
+          validation_errors: Json | null
+          validation_warnings: Json | null
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          parsed_status?: string | null
+          row_data: Json
+          row_number: number
+          validation_errors?: Json | null
+          validation_warnings?: Json | null
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          parsed_status?: string | null
+          row_data?: Json
+          row_number?: number
+          validation_errors?: Json | null
+          validation_warnings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkpkl_raw_rows_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkpkl_reconciliation_log: {
+        Row: {
+          batch_id: string | null
+          confidence_score: number | null
+          created_at: string
+          id: string
+          notes: string | null
+          organization_id: string
+          reconciliation_data: Json | null
+          reconciliation_type: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_record_id: string | null
+          source_table: string | null
+          status: string | null
+          target_record_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          reconciliation_data?: Json | null
+          reconciliation_type: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_record_id?: string | null
+          source_table?: string | null
+          status?: string | null
+          target_record_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          reconciliation_data?: Json | null
+          reconciliation_type?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_record_id?: string | null
+          source_table?: string | null
+          status?: string | null
+          target_record_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkpkl_reconciliation_log_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkpkl_sales_staging: {
+        Row: {
+          batch_id: string
+          cgst_amount: number | null
+          created_at: string
+          einvoice_number: string | null
+          eway_bill_number: string | null
+          gst_rate: number | null
+          hsn_code: string | null
+          id: string
+          igst_amount: number | null
+          invoice_number: string | null
+          item_code: string | null
+          item_name: string | null
+          organization_id: string
+          party_name: string | null
+          posted_to_erp_at: string | null
+          posting_status: string | null
+          quantity: number | null
+          raw_row_id: string | null
+          sgst_amount: number | null
+          tax_amount: number | null
+          total_amount: number | null
+          unit_rate: number | null
+          validation_errors: Json | null
+          validation_status: string | null
+          voucher_date: string | null
+          voucher_number: string | null
+        }
+        Insert: {
+          batch_id: string
+          cgst_amount?: number | null
+          created_at?: string
+          einvoice_number?: string | null
+          eway_bill_number?: string | null
+          gst_rate?: number | null
+          hsn_code?: string | null
+          id?: string
+          igst_amount?: number | null
+          invoice_number?: string | null
+          item_code?: string | null
+          item_name?: string | null
+          organization_id?: string
+          party_name?: string | null
+          posted_to_erp_at?: string | null
+          posting_status?: string | null
+          quantity?: number | null
+          raw_row_id?: string | null
+          sgst_amount?: number | null
+          tax_amount?: number | null
+          total_amount?: number | null
+          unit_rate?: number | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          voucher_date?: string | null
+          voucher_number?: string | null
+        }
+        Update: {
+          batch_id?: string
+          cgst_amount?: number | null
+          created_at?: string
+          einvoice_number?: string | null
+          eway_bill_number?: string | null
+          gst_rate?: number | null
+          hsn_code?: string | null
+          id?: string
+          igst_amount?: number | null
+          invoice_number?: string | null
+          item_code?: string | null
+          item_name?: string | null
+          organization_id?: string
+          party_name?: string | null
+          posted_to_erp_at?: string | null
+          posting_status?: string | null
+          quantity?: number | null
+          raw_row_id?: string | null
+          sgst_amount?: number | null
+          tax_amount?: number | null
+          total_amount?: number | null
+          unit_rate?: number | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          voucher_date?: string | null
+          voucher_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkpkl_sales_staging_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_import_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkpkl_sales_staging_raw_row_id_fkey"
+            columns: ["raw_row_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_raw_rows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkpkl_stock_staging: {
+        Row: {
+          batch_id: string
+          batch_number: string | null
+          created_at: string
+          godown_name: string | null
+          id: string
+          item_code: string | null
+          item_name: string | null
+          organization_id: string
+          posted_to_erp_at: string | null
+          posting_status: string | null
+          quantity_in: number | null
+          quantity_out: number | null
+          raw_row_id: string | null
+          total_value: number | null
+          unit_rate: number | null
+          validation_errors: Json | null
+          validation_status: string | null
+          voucher_date: string | null
+          voucher_number: string | null
+        }
+        Insert: {
+          batch_id: string
+          batch_number?: string | null
+          created_at?: string
+          godown_name?: string | null
+          id?: string
+          item_code?: string | null
+          item_name?: string | null
+          organization_id?: string
+          posted_to_erp_at?: string | null
+          posting_status?: string | null
+          quantity_in?: number | null
+          quantity_out?: number | null
+          raw_row_id?: string | null
+          total_value?: number | null
+          unit_rate?: number | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          voucher_date?: string | null
+          voucher_number?: string | null
+        }
+        Update: {
+          batch_id?: string
+          batch_number?: string | null
+          created_at?: string
+          godown_name?: string | null
+          id?: string
+          item_code?: string | null
+          item_name?: string | null
+          organization_id?: string
+          posted_to_erp_at?: string | null
+          posting_status?: string | null
+          quantity_in?: number | null
+          quantity_out?: number | null
+          raw_row_id?: string | null
+          total_value?: number | null
+          unit_rate?: number | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          voucher_date?: string | null
+          voucher_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkpkl_stock_staging_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_import_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkpkl_stock_staging_raw_row_id_fkey"
+            columns: ["raw_row_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_raw_rows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gravure_printing: {
         Row: {
           created_at: string | null
@@ -6768,6 +7348,7 @@ export type Database = {
         | "viewer"
         | "quality_controller"
         | "production_planner"
+      dkpkl_import_type: "SALES" | "PURCHASE" | "VOUCHER" | "STOCK" | "PAYROLL"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6959,6 +7540,7 @@ export const Constants = {
         "quality_controller",
         "production_planner",
       ],
+      dkpkl_import_type: ["SALES", "PURCHASE", "VOUCHER", "STOCK", "PAYROLL"],
     },
   },
 } as const
