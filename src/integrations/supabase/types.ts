@@ -5376,6 +5376,74 @@ export type Database = {
           },
         ]
       }
+      dkpkl_purchase_records: {
+        Row: {
+          amount: number | null
+          batch_id: string
+          created_at: string | null
+          gst_details: Json | null
+          id: string
+          item_details: Json | null
+          organization_id: string
+          posted_at: string | null
+          posted_to_erp: boolean | null
+          tax_amount: number | null
+          total_amount: number
+          updated_at: string | null
+          validation_errors: Json | null
+          validation_status: string | null
+          vendor_name: string
+          voucher_date: string
+          voucher_number: string
+        }
+        Insert: {
+          amount?: number | null
+          batch_id: string
+          created_at?: string | null
+          gst_details?: Json | null
+          id?: string
+          item_details?: Json | null
+          organization_id: string
+          posted_at?: string | null
+          posted_to_erp?: boolean | null
+          tax_amount?: number | null
+          total_amount: number
+          updated_at?: string | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          vendor_name: string
+          voucher_date: string
+          voucher_number: string
+        }
+        Update: {
+          amount?: number | null
+          batch_id?: string
+          created_at?: string | null
+          gst_details?: Json | null
+          id?: string
+          item_details?: Json | null
+          organization_id?: string
+          posted_at?: string | null
+          posted_to_erp?: boolean | null
+          tax_amount?: number | null
+          total_amount?: number
+          updated_at?: string | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          vendor_name?: string
+          voucher_date?: string
+          voucher_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkpkl_purchase_records_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkpkl_purchase_staging: {
         Row: {
           batch_id: string
@@ -5583,6 +5651,74 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "dkpkl_reconciliation_log_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkpkl_sales_records: {
+        Row: {
+          amount: number | null
+          batch_id: string
+          created_at: string | null
+          gst_details: Json | null
+          id: string
+          item_details: Json | null
+          organization_id: string
+          party_name: string
+          posted_at: string | null
+          posted_to_erp: boolean | null
+          tax_amount: number | null
+          total_amount: number
+          updated_at: string | null
+          validation_errors: Json | null
+          validation_status: string | null
+          voucher_date: string
+          voucher_number: string
+        }
+        Insert: {
+          amount?: number | null
+          batch_id: string
+          created_at?: string | null
+          gst_details?: Json | null
+          id?: string
+          item_details?: Json | null
+          organization_id: string
+          party_name: string
+          posted_at?: string | null
+          posted_to_erp?: boolean | null
+          tax_amount?: number | null
+          total_amount: number
+          updated_at?: string | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          voucher_date: string
+          voucher_number: string
+        }
+        Update: {
+          amount?: number | null
+          batch_id?: string
+          created_at?: string | null
+          gst_details?: Json | null
+          id?: string
+          item_details?: Json | null
+          organization_id?: string
+          party_name?: string
+          posted_at?: string | null
+          posted_to_erp?: boolean | null
+          tax_amount?: number | null
+          total_amount?: number
+          updated_at?: string | null
+          validation_errors?: Json | null
+          validation_status?: string | null
+          voucher_date?: string
+          voucher_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkpkl_sales_records_batch_id_fkey"
             columns: ["batch_id"]
             isOneToOne: false
             referencedRelation: "dkpkl_import_batches"
@@ -7449,6 +7585,10 @@ export type Database = {
       }
       dkpkl_get_dashboard_metrics: {
         Args: Record<PropertyKey, never> | { _org_id: string }
+        Returns: Json
+      }
+      dkpkl_migrate_staging_to_records: {
+        Args: { _batch_id: string }
         Returns: Json
       }
       dkpkl_parse_ledger_entries: {
