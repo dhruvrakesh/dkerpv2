@@ -107,9 +107,7 @@ const App = () => (
               path="/inventory/stock" 
               element={
                 <ProtectedRoute>
-                  <InventoryLayout>
-                    <StockManagement />
-                  </InventoryLayout>
+                  <EnterpriseStockManagement />
                 </ProtectedRoute>
               } 
             />
