@@ -7,16 +7,19 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Plus, Save, Send } from 'lucide-react';
+import { Trash2, Plus, Save, Send, Calculator } from 'lucide-react';
 import { usePurchaseOrderManagement, PurchaseOrderItem } from '@/hooks/usePurchaseOrderManagement';
 import { useVendorManagement } from '@/hooks/useVendorManagement';
 import { useItemMaster } from '@/hooks/useItemMaster';
 import { EnterpriseItemSelector } from '@/components/ui/enterprise-item-selector';
 import { useToast } from '@/hooks/use-toast';
+import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export const CreatePurchaseOrder = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { organization } = useDKEGLAuth();
   const { createPurchaseOrder, generatePONumber } = usePurchaseOrderManagement();
   const { vendors, fetchVendors } = useVendorManagement();
   const { items: availableItems, loading: itemsLoading, getItemByCode } = useItemMaster();
@@ -30,20 +33,34 @@ export const CreatePurchaseOrder = () => {
     notes: '',
   });
 
-  const [items, setItems] = useState<PurchaseOrderItem[]>([
-    { item_code: '', quantity: 1, unit_price: 0, uom: 'PCS' }
+  const [items, setItems] = useState<(PurchaseOrderItem & { 
+    hsn_code?: string; 
+    gst_rate?: number; 
+    cgst_amount?: number; 
+    sgst_amount?: number; 
+    total_with_tax?: number; 
+  })[]>([
+    { item_code: '', quantity: 1, unit_price: 0, uom: 'PCS', hsn_code: '', gst_rate: 18, cgst_amount: 0, sgst_amount: 0, total_with_tax: 0 }
   ]);
 
   const [isDraft, setIsDraft] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [gstTotals, setGstTotals] = useState({
+    subtotal: 0,
+    total_cgst: 0,
+    total_sgst: 0,
+    total_tax: 0,
+    grand_total: 0
+  });
 
 
   useEffect(() => {
     fetchVendors();
+    calculateGSTTotals(); // Calculate initial totals
   }, []);
 
   const addItem = () => {
-    setItems([...items, { item_code: '', quantity: 1, unit_price: 0, uom: 'PCS' }]);
+    setItems([...items, { item_code: '', quantity: 1, unit_price: 0, uom: 'PCS', hsn_code: '', gst_rate: 18, cgst_amount: 0, sgst_amount: 0, total_with_tax: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -52,7 +69,7 @@ export const CreatePurchaseOrder = () => {
     }
   };
 
-  const updateItem = async (index: number, field: keyof PurchaseOrderItem, value: any) => {
+  const updateItem = async (index: number, field: keyof PurchaseOrderItem | 'hsn_code' | 'gst_rate', value: any) => {
     const updatedItems = [...items];
     updatedItems[index] = { ...updatedItems[index], [field]: value };
     
@@ -61,6 +78,8 @@ export const CreatePurchaseOrder = () => {
       if (selectedItem) {
         updatedItems[index].item_name = selectedItem.item_name;
         updatedItems[index].uom = selectedItem.uom;
+        // Check if item has hsn_code property, fallback to empty string
+        updatedItems[index].hsn_code = (selectedItem as any).hsn_code || '';
         // Auto-populate unit price from pricing info if available
         const pricingInfo = selectedItem.pricing_info as any;
         if (pricingInfo?.unit_cost) {
@@ -68,11 +87,42 @@ export const CreatePurchaseOrder = () => {
         }
       }
     }
+    
+    // Calculate GST amounts when quantity, unit_price, or gst_rate changes
+    if (['quantity', 'unit_price', 'gst_rate'].includes(field)) {
+      const item = updatedItems[index];
+      const lineTotal = (item.quantity || 0) * (item.unit_price || 0);
+      const gstRate = item.gst_rate || 18;
+      const cgstAmount = (lineTotal * (gstRate / 2)) / 100;
+      const sgstAmount = (lineTotal * (gstRate / 2)) / 100;
+      
+      updatedItems[index].cgst_amount = Math.round(cgstAmount * 100) / 100;
+      updatedItems[index].sgst_amount = Math.round(sgstAmount * 100) / 100;
+      updatedItems[index].total_with_tax = Math.round((lineTotal + cgstAmount + sgstAmount) * 100) / 100;
+    }
+    
     setItems(updatedItems);
+    calculateGSTTotals(updatedItems);
+  };
+
+  const calculateGSTTotals = (itemsList = items) => {
+    const subtotal = itemsList.reduce((sum, item) => sum + ((item.quantity || 0) * (item.unit_price || 0)), 0);
+    const total_cgst = itemsList.reduce((sum, item) => sum + (item.cgst_amount || 0), 0);
+    const total_sgst = itemsList.reduce((sum, item) => sum + (item.sgst_amount || 0), 0);
+    const total_tax = total_cgst + total_sgst;
+    const grand_total = subtotal + total_tax;
+    
+    setGstTotals({
+      subtotal: Math.round(subtotal * 100) / 100,
+      total_cgst: Math.round(total_cgst * 100) / 100,
+      total_sgst: Math.round(total_sgst * 100) / 100,
+      total_tax: Math.round(total_tax * 100) / 100,
+      grand_total: Math.round(grand_total * 100) / 100
+    });
   };
 
   const calculateTotal = () => {
-    return items.reduce((total, item) => total + (item.quantity * item.unit_price), 0);
+    return gstTotals.grand_total;
   };
 
   const validateForm = () => {
@@ -99,12 +149,35 @@ export const CreatePurchaseOrder = () => {
       const orderData = {
         ...formData,
         status,
-        total_amount: calculateTotal(),
-        items: items.filter(item => item.item_code),
+        total_amount: gstTotals.subtotal,
+        subtotal_amount: gstTotals.subtotal,
+        total_cgst_amount: gstTotals.total_cgst,
+        total_sgst_amount: gstTotals.total_sgst,
+        grand_total_amount: gstTotals.grand_total,
+        items: items.filter(item => item.item_code).map(item => ({
+          ...item,
+          total_amount: (item.quantity || 0) * (item.unit_price || 0)
+        })),
       };
 
       const poId = await createPurchaseOrder(orderData);
       if (poId) {
+        // Create GST summary for this purchase order
+        if (organization?.id) {
+          await supabase.rpc('dkegl_create_gst_summary', {
+            _org_id: organization.id,
+            _document_type: 'purchase_order',
+            _document_id: poId,
+            _line_items: items.filter(item => item.item_code).map(item => ({
+              taxable_amount: (item.quantity || 0) * (item.unit_price || 0),
+              cgst_amount: item.cgst_amount || 0,
+              sgst_amount: item.sgst_amount || 0,
+              igst_amount: 0,
+              cess_amount: 0
+            }))
+          });
+        }
+        
         toast({
           title: "Success",
           description: `Purchase Order ${status === 'draft' ? 'saved as draft' : 'issued'} successfully`,
@@ -234,10 +307,14 @@ export const CreatePurchaseOrder = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[250px]">Item Code</TableHead>
+                  <TableHead className="w-[200px]">Item Code</TableHead>
+                  <TableHead>HSN Code</TableHead>
                   <TableHead>Quantity</TableHead>
                   <TableHead>UOM</TableHead>
                   <TableHead>Unit Price</TableHead>
+                  <TableHead>GST %</TableHead>
+                  <TableHead>CGST</TableHead>
+                  <TableHead>SGST</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead className="w-[100px]">Action</TableHead>
                 </TableRow>
@@ -251,6 +328,13 @@ export const CreatePurchaseOrder = () => {
                         value={item.item_code}
                         onValueChange={(value) => updateItem(index, 'item_code', value)}
                         placeholder="Select item"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={item.hsn_code || ''}
+                        onChange={(e) => updateItem(index, 'hsn_code', e.target.value)}
+                        placeholder="HSN Code"
                       />
                     </TableCell>
                     <TableCell>
@@ -277,7 +361,23 @@ export const CreatePurchaseOrder = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      ₹{(item.quantity * item.unit_price).toFixed(2)}
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={item.gst_rate || 18}
+                        onChange={(e) => updateItem(index, 'gst_rate', parseFloat(e.target.value) || 18)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      ₹{(item.cgst_amount || 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      ₹{(item.sgst_amount || 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      ₹{(item.total_with_tax || 0).toFixed(2)}
                     </TableCell>
                     <TableCell>
                       <Button
@@ -295,10 +395,23 @@ export const CreatePurchaseOrder = () => {
             </Table>
 
             <div className="flex justify-end mt-4 pt-4 border-t">
-              <div className="text-right">
-                <p className="text-lg font-semibold">
-                  Total Amount: ₹{calculateTotal().toFixed(2)}
-                </p>
+              <div className="text-right space-y-2">
+                <div className="flex justify-between gap-8">
+                  <span>Subtotal:</span>
+                  <span>₹{gstTotals.subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span>CGST:</span>
+                  <span>₹{gstTotals.total_cgst.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span>SGST:</span>
+                  <span>₹{gstTotals.total_sgst.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between gap-8 font-semibold text-lg border-t pt-2">
+                  <span>Grand Total:</span>
+                  <span>₹{gstTotals.grand_total.toFixed(2)}</span>
+                </div>
               </div>
             </div>
           </CardContent>

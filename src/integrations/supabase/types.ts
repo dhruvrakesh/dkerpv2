@@ -1954,6 +1954,121 @@ export type Database = {
           },
         ]
       }
+      dkegl_gst_summary: {
+        Row: {
+          created_at: string | null
+          document_id: string
+          document_type: string
+          grand_total: number | null
+          id: string
+          organization_id: string | null
+          round_off_amount: number | null
+          total_cess_amount: number | null
+          total_cgst_amount: number | null
+          total_igst_amount: number | null
+          total_sgst_amount: number | null
+          total_tax_amount: number | null
+          total_taxable_amount: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_id: string
+          document_type: string
+          grand_total?: number | null
+          id?: string
+          organization_id?: string | null
+          round_off_amount?: number | null
+          total_cess_amount?: number | null
+          total_cgst_amount?: number | null
+          total_igst_amount?: number | null
+          total_sgst_amount?: number | null
+          total_tax_amount?: number | null
+          total_taxable_amount?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_id?: string
+          document_type?: string
+          grand_total?: number | null
+          id?: string
+          organization_id?: string | null
+          round_off_amount?: number | null
+          total_cess_amount?: number | null
+          total_cgst_amount?: number | null
+          total_igst_amount?: number | null
+          total_sgst_amount?: number | null
+          total_tax_amount?: number | null
+          total_taxable_amount?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_gst_summary_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_hsn_tax_rates: {
+        Row: {
+          cess_rate: number | null
+          cgst_rate: number | null
+          commodity_description: string | null
+          created_at: string | null
+          effective_from: string | null
+          effective_until: string | null
+          hsn_code: string
+          id: string
+          igst_rate: number | null
+          is_active: boolean | null
+          organization_id: string | null
+          sgst_rate: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          cess_rate?: number | null
+          cgst_rate?: number | null
+          commodity_description?: string | null
+          created_at?: string | null
+          effective_from?: string | null
+          effective_until?: string | null
+          hsn_code: string
+          id?: string
+          igst_rate?: number | null
+          is_active?: boolean | null
+          organization_id?: string | null
+          sgst_rate?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          cess_rate?: number | null
+          cgst_rate?: number | null
+          commodity_description?: string | null
+          created_at?: string | null
+          effective_from?: string | null
+          effective_until?: string | null
+          hsn_code?: string
+          id?: string
+          igst_rate?: number | null
+          is_active?: boolean | null
+          organization_id?: string | null
+          sgst_rate?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_hsn_tax_rates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_invoice_line_items: {
         Row: {
           bill_id: string
@@ -2030,6 +2145,47 @@ export type Database = {
             columns: ["bill_id"]
             isOneToOne: false
             referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_invoice_sequences: {
+        Row: {
+          created_at: string | null
+          current_number: number | null
+          financial_year: string
+          id: string
+          organization_id: string | null
+          prefix: string
+          sequence_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_number?: number | null
+          financial_year: string
+          id?: string
+          organization_id?: string | null
+          prefix: string
+          sequence_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_number?: number | null
+          financial_year?: string
+          id?: string
+          organization_id?: string | null
+          prefix?: string
+          sequence_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_invoice_sequences_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -2227,6 +2383,8 @@ export type Database = {
           category_id: string | null
           created_at: string
           dimensions: Json | null
+          exemption_reason: string | null
+          gst_applicable: boolean | null
           hsn_code: string | null
           id: string
           item_code: string
@@ -2257,6 +2415,8 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           dimensions?: Json | null
+          exemption_reason?: string | null
+          gst_applicable?: boolean | null
           hsn_code?: string | null
           id?: string
           item_code: string
@@ -2287,6 +2447,8 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           dimensions?: Json | null
+          exemption_reason?: string | null
+          gst_applicable?: boolean | null
           hsn_code?: string | null
           id?: string
           item_code?: string
@@ -2883,46 +3045,64 @@ export type Database = {
       }
       dkegl_po_items: {
         Row: {
+          cgst_amount: number | null
           created_at: string
           delivery_date: string | null
+          gst_rate: number | null
+          hsn_code: string | null
           id: string
+          igst_amount: number | null
           item_code: string
           item_name: string
           notes: string | null
           organization_id: string | null
           po_id: string | null
           quantity: number
+          sgst_amount: number | null
           total_amount: number | null
+          total_with_tax: number | null
           unit_price: number
           uom: string | null
           updated_at: string
         }
         Insert: {
+          cgst_amount?: number | null
           created_at?: string
           delivery_date?: string | null
+          gst_rate?: number | null
+          hsn_code?: string | null
           id?: string
+          igst_amount?: number | null
           item_code: string
           item_name: string
           notes?: string | null
           organization_id?: string | null
           po_id?: string | null
           quantity: number
+          sgst_amount?: number | null
           total_amount?: number | null
+          total_with_tax?: number | null
           unit_price: number
           uom?: string | null
           updated_at?: string
         }
         Update: {
+          cgst_amount?: number | null
           created_at?: string
           delivery_date?: string | null
+          gst_rate?: number | null
+          hsn_code?: string | null
           id?: string
+          igst_amount?: number | null
           item_code?: string
           item_name?: string
           notes?: string | null
           organization_id?: string | null
           po_id?: string | null
           quantity?: number
+          sgst_amount?: number | null
           total_amount?: number | null
+          total_with_tax?: number | null
           unit_price?: number
           uom?: string | null
           updated_at?: string
@@ -3365,13 +3545,18 @@ export type Database = {
           created_by: string | null
           currency: string | null
           expected_delivery_date: string | null
+          grand_total_amount: number | null
           id: string
           notes: string | null
           organization_id: string | null
           po_date: string
           po_number: string
           status: string
+          subtotal_amount: number | null
           total_amount: number | null
+          total_cgst_amount: number | null
+          total_igst_amount: number | null
+          total_sgst_amount: number | null
           updated_at: string
           vendor_id: string | null
         }
@@ -3382,13 +3567,18 @@ export type Database = {
           created_by?: string | null
           currency?: string | null
           expected_delivery_date?: string | null
+          grand_total_amount?: number | null
           id?: string
           notes?: string | null
           organization_id?: string | null
           po_date?: string
           po_number: string
           status?: string
+          subtotal_amount?: number | null
           total_amount?: number | null
+          total_cgst_amount?: number | null
+          total_igst_amount?: number | null
+          total_sgst_amount?: number | null
           updated_at?: string
           vendor_id?: string | null
         }
@@ -3399,13 +3589,18 @@ export type Database = {
           created_by?: string | null
           currency?: string | null
           expected_delivery_date?: string | null
+          grand_total_amount?: number | null
           id?: string
           notes?: string | null
           organization_id?: string | null
           po_date?: string
           po_number?: string
           status?: string
+          subtotal_amount?: number | null
           total_amount?: number | null
+          total_cgst_amount?: number | null
+          total_igst_amount?: number | null
+          total_sgst_amount?: number | null
           updated_at?: string
           vendor_id?: string | null
         }
@@ -5244,6 +5439,8 @@ export type Database = {
           file_hash: string | null
           file_name: string
           file_size: number | null
+          gst_summary: Json | null
+          gst_validation_enabled: boolean | null
           id: string
           import_type: Database["public"]["Enums"]["dkpkl_import_type"]
           metadata: Json | null
@@ -5266,6 +5463,8 @@ export type Database = {
           file_hash?: string | null
           file_name: string
           file_size?: number | null
+          gst_summary?: Json | null
+          gst_validation_enabled?: boolean | null
           id?: string
           import_type: Database["public"]["Enums"]["dkpkl_import_type"]
           metadata?: Json | null
@@ -5288,6 +5487,8 @@ export type Database = {
           file_hash?: string | null
           file_name?: string
           file_size?: number | null
+          gst_summary?: Json | null
+          gst_validation_enabled?: boolean | null
           id?: string
           import_type?: Database["public"]["Enums"]["dkpkl_import_type"]
           metadata?: Json | null
@@ -7307,12 +7508,19 @@ export type Database = {
         }[]
       }
       dkegl_calculate_gst: {
-        Args: {
-          _taxable_amount: number
-          _buyer_state_code: string
-          _seller_state_code?: string
-          _gst_rate?: number
-        }
+        Args:
+          | {
+              _org_id: string
+              _hsn_code: string
+              _taxable_amount: number
+              _is_interstate?: boolean
+            }
+          | {
+              _taxable_amount: number
+              _buyer_state_code: string
+              _seller_state_code?: string
+              _gst_rate?: number
+            }
         Returns: Json
       }
       dkegl_calculate_item_pricing: {
@@ -7387,6 +7595,15 @@ export type Database = {
         Returns: {
           count: number
         }[]
+      }
+      dkegl_create_gst_summary: {
+        Args: {
+          _org_id: string
+          _document_type: string
+          _document_id: string
+          _line_items: Json
+        }
+        Returns: string
       }
       dkegl_detect_material_shortages: {
         Args: { _org_id: string; _stage_id: string; _order_id: string }
@@ -7501,6 +7718,10 @@ export type Database = {
           reorder_recommendation: string
           last_movement_date: string
         }[]
+      }
+      dkegl_get_next_invoice_number: {
+        Args: { _org_id: string; _sequence_type: string }
+        Returns: string
       }
       dkegl_get_order_cost_summary: {
         Args: { _order_id: string }
