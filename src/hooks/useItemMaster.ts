@@ -33,34 +33,39 @@ export const useItemMaster = () => {
     try {
       setLoading(true);
       
-      // Get items with stock and usage data
+      // Get items from item master as primary source
       let query = supabase
-        .from('dkegl_stock')
+        .from('dkegl_item_master')
         .select(`
+          id,
           item_code,
-          current_qty,
-          dkegl_item_master!inner (
-            id,
-            item_code,
-            item_name,
-            uom,
-            hsn_code,
-            pricing_info,
-            reorder_level,
-            status,
-            dkegl_categories (category_name)
-          )
+          item_name,
+          uom,
+          hsn_code,
+          pricing_info,
+          reorder_level,
+          status,
+          dkegl_categories (category_name)
         `)
         .eq('organization_id', organization.id)
-        .eq('dkegl_item_master.status', 'active')
-        .gt('current_qty', 0)
-        .order('dkegl_item_master.item_name', { referencedTable: 'dkegl_item_master' });
+        .eq('status', 'active')
+        .order('item_name');
 
       if (searchTerm) {
-        query = query.or(`dkegl_item_master.item_code.ilike.%${searchTerm}%,dkegl_item_master.item_name.ilike.%${searchTerm}%`);
+        query = query.or(`item_code.ilike.%${searchTerm}%,item_name.ilike.%${searchTerm}%`);
       }
 
-      const { data: stockData, error: stockError } = await query.limit(100);
+      const { data: itemData, error: itemError } = await query.limit(100);
+      if (itemError) throw itemError;
+
+      // Get aggregated stock quantities for these items
+      const itemCodes = itemData?.map(item => item.item_code) || [];
+      const { data: stockData, error: stockError } = await supabase
+        .from('dkegl_stock')
+        .select('item_code, current_qty')
+        .eq('organization_id', organization.id)
+        .in('item_code', itemCodes);
+
       if (stockError) throw stockError;
 
       // Get usage statistics
@@ -94,21 +99,30 @@ export const useItemMaster = () => {
         return acc;
       }, {} as Record<string, { usage_frequency: number; last_used: Date | null; total_issued: number }>) || {};
 
-      const transformedItems = stockData?.map(stock => {
-        const itemMaster = stock.dkegl_item_master;
-        const usage = usageStats[stock.item_code] || { usage_frequency: 0, last_used: null, total_issued: 0 };
+      // Create stock map for aggregation
+      const stockMap = stockData?.reduce((acc, stock) => {
+        if (!acc[stock.item_code]) {
+          acc[stock.item_code] = 0;
+        }
+        acc[stock.item_code] += stock.current_qty;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      const transformedItems = itemData?.map(item => {
+        const usage = usageStats[item.item_code] || { usage_frequency: 0, last_used: null, total_issued: 0 };
+        const totalStock = stockMap[item.item_code] || 0;
         
         return {
-          id: itemMaster.id,
-          item_code: itemMaster.item_code,
-          item_name: itemMaster.item_name,
-          uom: itemMaster.uom || 'PCS',
-          hsn_code: itemMaster.hsn_code || '',
-          category_name: (itemMaster.dkegl_categories as any)?.category_name,
-          pricing_info: itemMaster.pricing_info,
-          reorder_level: itemMaster.reorder_level,
-          stock_qty: stock.current_qty,
-          status: itemMaster.status,
+          id: item.id,
+          item_code: item.item_code,
+          item_name: item.item_name,
+          uom: item.uom || 'PCS',
+          hsn_code: item.hsn_code || '',
+          category_name: (item.dkegl_categories as any)?.category_name,
+          pricing_info: item.pricing_info,
+          reorder_level: item.reorder_level,
+          stock_qty: totalStock,
+          status: item.status,
           last_used: usage.last_used,
           usage_frequency: usage.usage_frequency
         };
