@@ -33,6 +33,7 @@ import { UiornTrackingDashboard } from "./components/manufacturing/UiornTracking
 import { BOMManagement } from "./pages/manufacturing/BOMManagement";
 import AIAssistant from "./pages/ai/AIAssistant";
 import EnterpriseStockManagement from "./pages/inventory/EnterpriseStockManagement";
+import OpeningStockManager from "./pages/inventory/OpeningStockManager";
 import DKPKLTallyImport from "./components/imports/DKPKLTallyImport";
 import TallyDashboard from "./components/dashboard/TallyDashboard";
 import SalesReportPage from "./pages/tally/SalesReportPage";
@@ -184,6 +185,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <EnterpriseStockManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/inventory/opening-stock" 
+              element={
+                <ProtectedRoute>
+                  <OpeningStockManager />
                 </ProtectedRoute>
               } 
             />
