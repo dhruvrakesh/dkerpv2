@@ -91,6 +91,16 @@ export const GSTDashboard: React.FC = () => {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
+          <Button 
+            onClick={() => {
+              fetchGSTSummary();
+              fetchComplianceStatus();
+            }}
+            className="gap-2"
+          >
+            <TrendingUp className="h-4 w-4" />
+            Refresh
+          </Button>
         </div>
       </div>
 

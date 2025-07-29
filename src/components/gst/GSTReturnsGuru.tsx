@@ -111,9 +111,17 @@ export const GSTReturnsGuru: React.FC = () => {
               </Select>
             </div>
 
-            <Button onClick={handleGenerateReturn} className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              Generate Return
+            <Button 
+              onClick={handleGenerateReturn} 
+              disabled={loading || !selectedMonth || !selectedYear || !returnType}
+              className="flex items-center gap-2"
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+              ) : (
+                <FileText className="h-4 w-4" />
+              )}
+              {loading ? 'Generating...' : 'Generate Return'}
             </Button>
           </div>
         </CardContent>

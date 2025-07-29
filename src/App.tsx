@@ -41,6 +41,8 @@ import ExecutiveDashboardPage from "./pages/tally/ExecutiveDashboardPage";
 import InvoiceGeneratorPage from "./pages/invoices/InvoiceGeneratorPage";
 import GSTDashboardPage from "./pages/gst/GSTDashboardPage";
 import GSTReturnsPage from "./pages/gst/GSTReturnsPage";
+import GSTCompliancePage from "./pages/gst/GSTCompliancePage";
+import GSTAnalyticsPage from "./pages/gst/GSTAnalyticsPage";
 
 const queryClient = new QueryClient();
 
@@ -439,6 +441,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <GSTReturnsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/gst/compliance" 
+              element={
+                <ProtectedRoute>
+                  <GSTCompliancePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/gst/analytics" 
+              element={
+                <ProtectedRoute>
+                  <GSTAnalyticsPage />
                 </ProtectedRoute>
               } 
             />

@@ -1954,6 +1954,121 @@ export type Database = {
           },
         ]
       }
+      dkegl_gst_compliance: {
+        Row: {
+          compliance_month: number
+          compliance_score: number | null
+          compliance_year: number
+          created_at: string | null
+          due_date: string
+          filed_date: string | null
+          filing_status: string | null
+          id: string
+          interest_paid: number | null
+          late_fee_paid: number | null
+          organization_id: string | null
+          penalty_paid: number | null
+          return_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          compliance_month: number
+          compliance_score?: number | null
+          compliance_year: number
+          created_at?: string | null
+          due_date: string
+          filed_date?: string | null
+          filing_status?: string | null
+          id?: string
+          interest_paid?: number | null
+          late_fee_paid?: number | null
+          organization_id?: string | null
+          penalty_paid?: number | null
+          return_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          compliance_month?: number
+          compliance_score?: number | null
+          compliance_year?: number
+          created_at?: string | null
+          due_date?: string
+          filed_date?: string | null
+          filing_status?: string | null
+          id?: string
+          interest_paid?: number | null
+          late_fee_paid?: number | null
+          organization_id?: string | null
+          penalty_paid?: number | null
+          return_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_gst_compliance_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_gst_rates: {
+        Row: {
+          cess_rate: number | null
+          cgst_rate: number
+          created_at: string | null
+          effective_from: string
+          effective_until: string | null
+          gst_rate: number
+          hsn_code: string
+          id: string
+          igst_rate: number
+          is_active: boolean | null
+          organization_id: string | null
+          sgst_rate: number
+          updated_at: string | null
+        }
+        Insert: {
+          cess_rate?: number | null
+          cgst_rate?: number
+          created_at?: string | null
+          effective_from?: string
+          effective_until?: string | null
+          gst_rate?: number
+          hsn_code: string
+          id?: string
+          igst_rate?: number
+          is_active?: boolean | null
+          organization_id?: string | null
+          sgst_rate?: number
+          updated_at?: string | null
+        }
+        Update: {
+          cess_rate?: number | null
+          cgst_rate?: number
+          created_at?: string | null
+          effective_from?: string
+          effective_until?: string | null
+          gst_rate?: number
+          hsn_code?: string
+          id?: string
+          igst_rate?: number
+          is_active?: boolean | null
+          organization_id?: string | null
+          sgst_rate?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_gst_rates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_gst_summary: {
         Row: {
           created_at: string | null
@@ -2006,6 +2121,86 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "dkegl_gst_summary_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_gst_transactions: {
+        Row: {
+          cess_amount: number | null
+          cgst_amount: number | null
+          created_at: string | null
+          gst_rate: number
+          hsn_code: string
+          id: string
+          igst_amount: number | null
+          invoice_date: string
+          invoice_number: string
+          item_code: string | null
+          organization_id: string | null
+          party_gstin: string | null
+          party_name: string
+          place_of_supply: string
+          reverse_charge: boolean | null
+          sgst_amount: number | null
+          taxable_amount: number
+          total_amount: number
+          total_tax_amount: number | null
+          transaction_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          cess_amount?: number | null
+          cgst_amount?: number | null
+          created_at?: string | null
+          gst_rate?: number
+          hsn_code: string
+          id?: string
+          igst_amount?: number | null
+          invoice_date: string
+          invoice_number: string
+          item_code?: string | null
+          organization_id?: string | null
+          party_gstin?: string | null
+          party_name: string
+          place_of_supply: string
+          reverse_charge?: boolean | null
+          sgst_amount?: number | null
+          taxable_amount?: number
+          total_amount?: number
+          total_tax_amount?: number | null
+          transaction_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          cess_amount?: number | null
+          cgst_amount?: number | null
+          created_at?: string | null
+          gst_rate?: number
+          hsn_code?: string
+          id?: string
+          igst_amount?: number | null
+          invoice_date?: string
+          invoice_number?: string
+          item_code?: string | null
+          organization_id?: string | null
+          party_gstin?: string | null
+          party_name?: string
+          place_of_supply?: string
+          reverse_charge?: boolean | null
+          sgst_amount?: number | null
+          taxable_amount?: number
+          total_amount?: number
+          total_tax_amount?: number | null
+          transaction_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_gst_transactions_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "dkegl_organizations"
