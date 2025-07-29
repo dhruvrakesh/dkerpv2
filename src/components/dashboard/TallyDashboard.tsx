@@ -21,13 +21,13 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface DashboardMetrics {
-  total_batches: number;
-  completed_batches: number;
-  completion_rate: number;
-  total_records: number;
-  posted_records: number;
-  posting_rate: number;
-  recent_activity: any[];
+  totalBatches: number;
+  completedBatches: number;
+  completionRate: number;
+  totalRecords: number;
+  postedRecords: number;
+  postingRate: number;
+  recentActivity: any[];
 }
 
 const TallyDashboard: React.FC = () => {
@@ -135,7 +135,7 @@ const TallyDashboard: React.FC = () => {
     return <LoadingSpinner className="h-8 w-8" />;
   }
 
-  if (!metrics || (metrics.total_batches === 0 && metrics.total_records === 0)) {
+  if (!metrics || (metrics.totalBatches === 0 && metrics.totalRecords === 0)) {
     return (
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="flex items-center justify-between mb-6">
@@ -205,11 +205,11 @@ const TallyDashboard: React.FC = () => {
   };
 
   // Use the completion and posting rates from the metrics
-  const completionRate = metrics.completion_rate || 0;
-  const postingRate = metrics.posting_rate || 0;
+  const completionRate = metrics.completionRate || 0;
+  const postingRate = metrics.postingRate || 0;
   
   // Calculate pending batches from total and completed
-  const pendingBatches = metrics.total_batches - metrics.completed_batches;
+  const pendingBatches = metrics.totalBatches - metrics.completedBatches;
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
@@ -243,7 +243,7 @@ const TallyDashboard: React.FC = () => {
             <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.total_batches}</div>
+            <div className="text-2xl font-bold">{metrics.totalBatches}</div>
             <p className="text-xs text-muted-foreground">
               {pendingBatches} pending
             </p>
@@ -267,9 +267,9 @@ const TallyDashboard: React.FC = () => {
             <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.total_records.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{metrics.totalRecords?.toLocaleString() || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {metrics.posted_records} posted to ERP
+              {metrics.postedRecords || 0} posted to ERP
             </p>
           </CardContent>
         </Card>
@@ -298,11 +298,11 @@ const TallyDashboard: React.FC = () => {
               <div className="flex justify-between items-center">
                 <span className="text-sm">Completed</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{metrics.completed_batches}</span>
+                  <span className="text-sm font-medium">{metrics.completedBatches}</span>
                   <div className="w-20 bg-muted rounded-full h-2">
                     <div 
                       className="bg-green-500 h-2 rounded-full" 
-                      style={{ width: `${metrics.total_batches > 0 ? (metrics.completed_batches / metrics.total_batches) * 100 : 0}%` }}
+                      style={{ width: `${metrics.totalBatches > 0 ? (metrics.completedBatches / metrics.totalBatches) * 100 : 0}%` }}
                     />
                   </div>
                 </div>
@@ -315,7 +315,7 @@ const TallyDashboard: React.FC = () => {
                   <div className="w-20 bg-muted rounded-full h-2">
                     <div 
                       className="bg-yellow-500 h-2 rounded-full" 
-                      style={{ width: `${metrics.total_batches > 0 ? (pendingBatches / metrics.total_batches) * 100 : 0}%` }}
+                      style={{ width: `${metrics.totalBatches > 0 ? (pendingBatches / metrics.totalBatches) * 100 : 0}%` }}
                     />
                   </div>
                 </div>
@@ -337,7 +337,7 @@ const TallyDashboard: React.FC = () => {
                   <span className="text-sm font-medium text-green-700">Posted Records</span>
                 </div>
                 <span className="text-sm font-bold text-green-700">
-                  {metrics.posted_records.toLocaleString()}
+                  {metrics.postedRecords?.toLocaleString() || 0}
                 </span>
               </div>
               
@@ -347,7 +347,7 @@ const TallyDashboard: React.FC = () => {
                   <span className="text-sm font-medium text-blue-700">Pending Records</span>
                 </div>
                 <span className="text-sm font-bold text-blue-700">
-                  {(metrics.total_records - metrics.posted_records).toLocaleString()}
+                  {((metrics.totalRecords || 0) - (metrics.postedRecords || 0)).toLocaleString()}
                 </span>
               </div>
               
@@ -370,9 +370,9 @@ const TallyDashboard: React.FC = () => {
           <CardDescription>Latest import batches and their status</CardDescription>
         </CardHeader>
         <CardContent>
-          {metrics.recent_activity && metrics.recent_activity.length > 0 ? (
+          {metrics.recentActivity && metrics.recentActivity.length > 0 ? (
             <div className="space-y-4">
-              {metrics.recent_activity.map((batch: any) => (
+              {metrics.recentActivity.map((batch: any) => (
                 <div 
                   key={batch.id} 
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
