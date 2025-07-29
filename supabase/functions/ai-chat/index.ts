@@ -1116,7 +1116,9 @@ async function logUsage(userId: string, sessionId: string, model: string, operat
         completion_tokens: completionTokens,
         total_tokens: promptTokens + completionTokens,
         cost_usd: totalCost,
-        metadata: { prompt_cost: promptCost, completion_cost: completionCost }
+        metadata: {
+          timestamp: new Date().toISOString()
+        }
       });
   } catch (error) {
     console.error('Failed to log usage:', error);

@@ -70,9 +70,9 @@ export const EnterpriseStockDashboard = () => {
       const { data: orgId } = await supabase.rpc('dkegl_get_current_user_org');
       if (!orgId) throw new Error('Organization not found');
 
-      // Load stock data and metrics in parallel
+      // Load stock data and metrics in parallel using comprehensive functions
       const [stockResponse, metricsResponse] = await Promise.all([
-        supabase.rpc('dkegl_get_real_stock_summary', { _org_id: orgId }),
+        supabase.rpc('dkegl_get_comprehensive_stock_summary', { _org_id: orgId }),
         supabase.rpc('dkegl_get_stock_metrics', { _org_id: orgId })
       ]);
 
