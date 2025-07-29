@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { AlertTriangle, TrendingUp, TrendingDown, Package, DollarSign, Clock, RefreshCw } from 'lucide-react';
 import { useAdvancedStockAnalytics } from '@/hooks/useAdvancedStockAnalytics';
+import { useComprehensiveStockAnalytics } from '@/hooks/useComprehensiveStockAnalytics';
 import { useToast } from '@/hooks/use-toast';
 import { StockMovementChart } from '@/components/analytics/StockMovementChart';
 import { StockAgingChart } from '@/components/analytics/StockAgingChart';
@@ -28,6 +29,15 @@ export const EnhancedStockAnalyticsDashboard = () => {
     calculateValuationMetrics,
     setRefreshInterval,
   } = useAdvancedStockAnalytics();
+
+  // Use comprehensive stock analytics for accurate data
+  const {
+    stockData: comprehensiveStock,
+    analyticsData: stockTotals,
+    keyMetrics,
+    isLoading: comprehensiveLoading,
+    refreshData: refreshComprehensiveData,
+  } = useComprehensiveStockAnalytics();
 
   const [stockMovements, setStockMovements] = useState<any[]>([]);
   const [abcAnalysis, setAbcAnalysis] = useState<any[]>([]);
@@ -60,12 +70,13 @@ export const EnhancedStockAnalyticsDashboard = () => {
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
+    refreshComprehensiveData();
   };
 
-  // Calculate summary metrics
-  const totalStockValue = realTimeStock?.reduce((sum, item) => sum + item.total_value, 0) || 0;
-  const criticalStockItems = realTimeStock?.filter(item => item.critical_stock).length || 0;
-  const totalItems = realTimeStock?.length || 0;
+  // Use comprehensive metrics instead
+  const totalStockValue = stockTotals.total_current * 1; // Simplified calculation
+  const criticalStockItems = keyMetrics.criticalStockItems;
+  const totalItems = stockTotals.total_items;
 
   const criticalRecommendations = reorderRecommendations?.filter(
     item => item.urgency === 'critical'
@@ -86,9 +97,9 @@ export const EnhancedStockAnalyticsDashboard = () => {
             variant="outline"
             size="sm"
             onClick={handleRefresh}
-            disabled={stockLoading}
+            disabled={stockLoading || comprehensiveLoading}
           >
-            <RefreshCw className={cn("h-4 w-4 mr-2", stockLoading && "animate-spin")} />
+            <RefreshCw className={cn("h-4 w-4 mr-2", (stockLoading || comprehensiveLoading) && "animate-spin")} />
             Refresh
           </Button>
         </div>
@@ -176,9 +187,9 @@ export const EnhancedStockAnalyticsDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {stockLoading ? (
-                    <div className="text-center py-8">Loading stock data...</div>
-                  ) : realTimeStock?.slice(0, 10).map((item) => (
+                  {comprehensiveLoading ? (
+                    <div className="text-center py-8">Loading comprehensive stock data...</div>
+                  ) : comprehensiveStock?.slice(0, 10).map((item) => (
                     <div key={item.item_code} className="flex items-center justify-between py-2 border-b">
                       <div className="space-y-1">
                         <p className="text-sm font-medium leading-none">{item.item_name}</p>
@@ -189,8 +200,15 @@ export const EnhancedStockAnalyticsDashboard = () => {
                         <div className="text-xs text-muted-foreground">
                           ₹{item.total_value.toLocaleString('en-IN')}
                         </div>
-                        {item.critical_stock && (
-                          <Badge variant="destructive" className="text-xs">Critical</Badge>
+                        <div className="flex gap-1 text-xs">
+                          <span className="text-green-600">+{item.total_grn_qty}</span>
+                          <span className="text-red-600">-{item.total_issued_qty}</span>
+                          {item.variance_qty !== 0 && (
+                            <span className="text-orange-600">Δ{Math.abs(item.variance_qty)}</span>
+                          )}
+                        </div>
+                        {item.is_low_stock && (
+                          <Badge variant="destructive" className="text-xs">Low Stock</Badge>
                         )}
                       </div>
                     </div>
@@ -199,50 +217,57 @@ export const EnhancedStockAnalyticsDashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Valuation Breakdown */}
+            {/* Stock Reconciliation Summary */}
             <Card>
               <CardHeader>
-                <CardTitle>Valuation Breakdown</CardTitle>
-                <CardDescription>Inventory valuation by method</CardDescription>
+                <CardTitle>Stock Reconciliation</CardTitle>
+                <CardDescription>Opening + GRNs - Issues = Current Stock</CardDescription>
               </CardHeader>
               <CardContent>
-                {valuationMetrics ? (
-                  <div className="space-y-4">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-sm">Standard Cost</span>
-                        <span className="font-medium">
-                          ₹{valuationMetrics.method_breakdown.standard_cost_value.toLocaleString('en-IN')}
+                        <span className="text-sm text-blue-600">Opening Stock</span>
+                        <span className="font-medium text-blue-600">
+                          {stockTotals.total_opening.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm">Weighted Average</span>
-                        <span className="font-medium">
-                          ₹{valuationMetrics.method_breakdown.weighted_avg_value.toLocaleString('en-IN')}
+                        <span className="text-sm text-green-600">+ Total GRNs</span>
+                        <span className="font-medium text-green-600">
+                          +{stockTotals.total_grn.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm">FIFO</span>
-                        <span className="font-medium">
-                          ₹{valuationMetrics.method_breakdown.fifo_value.toLocaleString('en-IN')}
+                        <span className="text-sm text-red-600">- Total Issues</span>
+                        <span className="font-medium text-red-600">
+                          -{stockTotals.total_issued.toLocaleString()}
                         </span>
                       </div>
                     </div>
-                    <div className="pt-4 border-t">
+                    <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium">Cost Variance</span>
-                        <span className={cn(
-                          "font-medium",
-                          valuationMetrics.variance_analysis.cost_variance > 0 ? "text-warning" : "text-green-600"
-                        )}>
-                          ₹{valuationMetrics.variance_analysis.cost_variance.toLocaleString('en-IN')}
+                        <span className="text-sm">Calculated Stock</span>
+                        <span className="font-medium">
+                          {stockTotals.total_calculated.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium text-primary">Current Stock</span>
+                        <span className="font-medium text-primary">
+                          {stockTotals.total_current.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between pt-2 border-t">
+                        <span className="text-sm font-medium text-orange-600">Total Variance</span>
+                        <span className="font-medium text-orange-600">
+                          {stockTotals.total_variance.toLocaleString()}
                         </span>
                       </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center py-8">Loading valuation data...</div>
-                )}
+                </div>
               </CardContent>
             </Card>
           </div>

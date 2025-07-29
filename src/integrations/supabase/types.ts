@@ -7140,6 +7140,64 @@ export type Database = {
           },
         ]
       }
+      dkpkl_unified_purchase_view: {
+        Row: {
+          amount: number | null
+          batch_id: string | null
+          batch_status: string | null
+          created_at: string | null
+          gst_details: Json | null
+          import_type: Database["public"]["Enums"]["dkpkl_import_type"] | null
+          item_details: Json | null
+          organization_id: string | null
+          period_end: string | null
+          period_start: string | null
+          tax_amount: number | null
+          total_amount: number | null
+          validation_status: string | null
+          vendor_name: string | null
+          voucher_date: string | null
+          voucher_number: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkpkl_purchase_records_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkpkl_unified_sales_view: {
+        Row: {
+          amount: number | null
+          batch_id: string | null
+          batch_status: string | null
+          created_at: string | null
+          customer_name: string | null
+          gst_details: Json | null
+          import_type: Database["public"]["Enums"]["dkpkl_import_type"] | null
+          item_details: Json | null
+          organization_id: string | null
+          period_end: string | null
+          period_start: string | null
+          tax_amount: number | null
+          total_amount: number | null
+          validation_status: string | null
+          voucher_date: string | null
+          voucher_number: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkpkl_sales_records_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "dkpkl_import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       eligible_adhesive_coating_uiorns: {
         Row: {
           deckle: number | null
@@ -7385,6 +7443,26 @@ export type Database = {
         Args: { _org_id: string } | { _org_id: string; _days_back?: number }
         Returns: Json
       }
+      dkegl_get_comprehensive_stock_summary: {
+        Args: { _org_id: string }
+        Returns: {
+          item_code: string
+          item_name: string
+          category_name: string
+          current_qty: number
+          unit_cost: number
+          total_value: number
+          last_transaction_date: string
+          location: string
+          reorder_level: number
+          is_low_stock: boolean
+          opening_qty: number
+          total_grn_qty: number
+          total_issued_qty: number
+          calculated_qty: number
+          variance_qty: number
+        }[]
+      }
       dkegl_get_context_inventory_data: {
         Args: { _org_id: string; _context_type?: string }
         Returns: Json
@@ -7498,6 +7576,18 @@ export type Database = {
           estimated_value: number
         }[]
       }
+      dkegl_get_stock_analytics_totals: {
+        Args: { _org_id: string }
+        Returns: {
+          total_opening: number
+          total_grn: number
+          total_issued: number
+          total_current: number
+          total_calculated: number
+          total_variance: number
+          total_items: number
+        }[]
+      }
       dkegl_get_stock_metrics: {
         Args: { _org_id: string }
         Returns: {
@@ -7583,8 +7673,24 @@ export type Database = {
         Args: { _workflow_progress_id: string }
         Returns: Json
       }
+      dkpkl_get_customer_analysis: {
+        Args: { _org_id: string; _start_date?: string; _end_date?: string }
+        Returns: Json
+      }
       dkpkl_get_dashboard_metrics: {
         Args: Record<PropertyKey, never> | { _org_id: string }
+        Returns: Json
+      }
+      dkpkl_get_executive_summary: {
+        Args: { _org_id: string; _period?: string }
+        Returns: Json
+      }
+      dkpkl_get_purchase_summary: {
+        Args: { _org_id: string; _start_date?: string; _end_date?: string }
+        Returns: Json
+      }
+      dkpkl_get_sales_summary: {
+        Args: { _org_id: string; _start_date?: string; _end_date?: string }
         Returns: Json
       }
       dkpkl_migrate_staging_to_records: {

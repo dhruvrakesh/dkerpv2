@@ -58,10 +58,10 @@ export const EnhancedStockSummary = () => {
         throw new Error('Organization not found');
       }
 
-      console.log('Loading stock summary for org:', orgId);
+      console.log('Loading comprehensive stock summary for org:', orgId);
 
-      // Use the new RPC function to get real stock data
-      const { data, error } = await supabase.rpc('dkegl_get_real_stock_summary', {
+      // Use the new comprehensive stock summary function
+      const { data, error } = await supabase.rpc('dkegl_get_comprehensive_stock_summary', {
         _org_id: orgId
       });
 
@@ -70,26 +70,28 @@ export const EnhancedStockSummary = () => {
         throw error;
       }
 
-      console.log('Stock summary data loaded:', data?.length || 0, 'records');
+      console.log('Comprehensive stock summary data loaded:', data?.length || 0, 'records');
       const stockBreakdown = data || [];
       setBreakdown(stockBreakdown);
 
-      // Calculate simplified totals from current stock data
-      const totals = stockBreakdown.reduce((acc, item) => ({
-        total_opening: 0, // Not available from dkegl_stock
-        total_grn: 0, // Not available from dkegl_stock
-        total_issued: 0, // Not available from dkegl_stock
-        total_current: acc.total_current + (item.current_qty || 0),
-        total_calculated: 0, // Not available from dkegl_stock
-        total_variance: 0 // Not available from dkegl_stock
-      }), {
+      // Get aggregated totals using the new function
+      const { data: totalsData, error: totalsError } = await supabase.rpc('dkegl_get_stock_analytics_totals', {
+        _org_id: orgId
+      });
+
+      if (totalsError) {
+        console.error('Error loading totals:', totalsError);
+        throw totalsError;
+      }
+
+      const totals = totalsData[0] || {
         total_opening: 0,
         total_grn: 0,
         total_issued: 0,
         total_current: 0,
         total_calculated: 0,
         total_variance: 0
-      });
+      };
 
       setSummaryTotals(totals);
 
@@ -120,8 +122,8 @@ export const EnhancedStockSummary = () => {
       const { data: orgId } = await supabase.rpc('dkegl_get_current_user_org');
       if (!orgId) throw new Error('Organization not found');
 
-      // Call the refresh function
-      await supabase.rpc('dkegl_refresh_stock_summary', { _org_id: orgId });
+      // The comprehensive function doesn't need a refresh as it calculates real-time
+      console.log('Stock summary will be refreshed on next load');
 
       toast({
         title: "Success",
