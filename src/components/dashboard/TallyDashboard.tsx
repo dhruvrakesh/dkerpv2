@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   FileSpreadsheet, 
   TrendingUp, 
+  TrendingDown,
   AlertTriangle, 
   CheckCircle, 
   Clock, 
@@ -234,6 +235,45 @@ const TallyDashboard: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Enterprise Reports Navigation */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Enterprise Reports</CardTitle>
+          <CardDescription>Access comprehensive business intelligence reports</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Button variant="outline" asChild className="h-auto p-4 flex flex-col items-center gap-2">
+              <a href="/tally/sales-report">
+                <TrendingUp className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-medium">Sales Analytics</div>
+                  <div className="text-xs text-muted-foreground">Revenue, customers, trends</div>
+                </div>
+              </a>
+            </Button>
+            <Button variant="outline" asChild className="h-auto p-4 flex flex-col items-center gap-2">
+              <a href="/tally/purchase-report">
+                <TrendingDown className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-medium">Purchase Analytics</div>
+                  <div className="text-xs text-muted-foreground">Vendor performance, spending</div>
+                </div>
+              </a>
+            </Button>
+            <Button variant="outline" asChild className="h-auto p-4 flex flex-col items-center gap-2">
+              <a href="/tally/executive-dashboard">
+                <Database className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-medium">Executive Dashboard</div>
+                  <div className="text-xs text-muted-foreground">High-level KPIs, profitability</div>
+                </div>
+              </a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

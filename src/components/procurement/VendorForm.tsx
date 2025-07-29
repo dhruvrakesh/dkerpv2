@@ -27,7 +27,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({
     email: vendor?.email || '',
     phone: vendor?.phone || '',
     supplier_type: vendor?.supplier_type || 'VENDOR',
-    category_id: vendor?.category_id || '',
+    category_id: vendor?.category_id || null,
     is_active: vendor?.is_active ?? true,
     approval_status: vendor?.approval_status || 'pending',
     address_details: vendor?.address_details || {},
@@ -76,7 +76,12 @@ export const VendorForm: React.FC<VendorFormProps> = ({
     setLoading(true);
     
     try {
-      await onSubmit(formData);
+      // Clean up form data - convert empty strings to null for UUID fields
+      const cleanedData = {
+        ...formData,
+        category_id: formData.category_id === '' ? null : formData.category_id,
+      };
+      await onSubmit(cleanedData);
     } catch (error) {
       // Error handled in parent component
     } finally {
@@ -162,13 +167,14 @@ export const VendorForm: React.FC<VendorFormProps> = ({
                 <div className="space-y-2">
                   <Label htmlFor="category_id">Category</Label>
                   <Select
-                    value={formData.category_id}
-                    onValueChange={(value) => handleInputChange('category_id', value)}
+                    value={formData.category_id || ''}
+                    onValueChange={(value) => handleInputChange('category_id', value === '' ? null : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="">No Category</SelectItem>
                       {categories.map(category => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.category_name}
