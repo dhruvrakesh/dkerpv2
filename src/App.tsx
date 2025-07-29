@@ -35,6 +35,9 @@ import AIAssistant from "./pages/ai/AIAssistant";
 import EnterpriseStockManagement from "./pages/inventory/EnterpriseStockManagement";
 import DKPKLTallyImport from "./components/imports/DKPKLTallyImport";
 import TallyDashboard from "./components/dashboard/TallyDashboard";
+import SalesReportPage from "./pages/tally/SalesReportPage";
+import PurchaseReportPage from "./pages/tally/PurchaseReportPage";
+import ExecutiveDashboardPage from "./pages/tally/ExecutiveDashboardPage";
 import InvoiceGeneratorPage from "./pages/invoices/InvoiceGeneratorPage";
 
 const queryClient = new QueryClient();
@@ -132,6 +135,36 @@ const App = () => (
                 <ProtectedRoute>
                   <InventoryLayout>
                     <TallyDashboard />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/tally/sales-report" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <SalesReportPage />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/tally/purchase-report" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <PurchaseReportPage />
+                  </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/tally/executive-dashboard" 
+              element={
+                <ProtectedRoute>
+                  <InventoryLayout>
+                    <ExecutiveDashboardPage />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 

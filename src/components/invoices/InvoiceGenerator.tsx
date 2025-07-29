@@ -10,6 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, FileText, Download, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useVendorManagement } from '@/hooks/useVendorManagement';
+import { useItemMaster } from '@/hooks/useItemMaster';
+import { EnterpriseVendorSelector, VendorOption } from '@/components/ui/enterprise-vendor-selector';
+import { EnterpriseItemSelector } from '@/components/ui/enterprise-item-selector';
 
 interface LineItem {
   id: string;
@@ -50,6 +54,9 @@ interface InvoiceData {
 
 export function InvoiceGenerator() {
   const { toast } = useToast();
+  const { vendors } = useVendorManagement();
+  const { items } = useItemMaster();
+  const [selectedVendor, setSelectedVendor] = useState<VendorOption | null>(null);
   const [invoiceData, setInvoiceData] = useState<InvoiceData>({
     invoice_number: '',
     invoice_type: 'tax_invoice',
@@ -329,11 +336,34 @@ export function InvoiceGenerator() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="party_name">Party Name *</Label>
-                <Input
-                  id="party_name"
-                  value={invoiceData.party_name}
-                  onChange={(e) => setInvoiceData(prev => ({ ...prev, party_name: e.target.value }))}
-                  placeholder="Customer Name"
+                <EnterpriseVendorSelector
+                  vendors={vendors.map(v => ({
+                    id: v.id,
+                    vendor_code: v.vendor_code || '',
+                    vendor_name: v.vendor_name,
+                    vendor_type: v.supplier_type,
+                    contact_person: v.contact_person,
+                    email: v.email,
+                    phone: v.phone,
+                    gstin: v.tax_details?.gstin || '',
+                    address: v.address || '',
+                    city: v.address_details?.city || '',
+                    state: v.address_details?.state || ''
+                  }))}
+                  value={selectedVendor?.id || ''}
+                  onValueChange={(value, vendor) => {
+                    setSelectedVendor(vendor || null);
+                    setInvoiceData(prev => ({
+                      ...prev,
+                      party_name: vendor?.vendor_name || '',
+                      party_gstin: vendor?.gstin || '',
+                      party_address: vendor?.address || '',
+                      party_state_code: vendor?.state || ''
+                    }));
+                  }}
+                  placeholder="Select customer/vendor..."
+                  showCategories={true}
+                  showRecentVendors={true}
                 />
               </div>
               <div>
@@ -393,10 +423,26 @@ export function InvoiceGenerator() {
                 <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                   <div className="md:col-span-2">
                     <Label>Item Name *</Label>
-                    <Input
-                      value={item.item_name}
-                      onChange={(e) => updateLineItem(item.id, 'item_name', e.target.value)}
-                      placeholder="Item description"
+                    <EnterpriseItemSelector
+                      items={items.map(i => ({
+                        id: i.id,
+                        item_code: i.item_code,
+                        item_name: i.item_name,
+                        uom: i.uom,
+                        category_name: i.category_name
+                      }))}
+                      value={item.item_code}
+                      onValueChange={(itemCode) => {
+                        const selectedItem = items.find(i => i.item_code === itemCode);
+                        if (selectedItem) {
+                          updateLineItem(item.id, 'item_code', selectedItem.item_code);
+                          updateLineItem(item.id, 'item_name', selectedItem.item_name);
+                          updateLineItem(item.id, 'hsn_code', selectedItem.pricing_info?.hsn_code || '');
+                        }
+                      }}
+                      placeholder="Select item..."
+                      showCategories={true}
+                      showRecentItems={true}
                     />
                   </div>
                   <div>
