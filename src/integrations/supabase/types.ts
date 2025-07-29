@@ -4204,6 +4204,7 @@ export type Database = {
           opening_qty: number
           organization_id: string | null
           pricing_method: string | null
+          reorder_level: number | null
           reserved_qty: number | null
           unit_cost: number | null
           valuation_method: string | null
@@ -4220,6 +4221,7 @@ export type Database = {
           opening_qty?: number
           organization_id?: string | null
           pricing_method?: string | null
+          reorder_level?: number | null
           reserved_qty?: number | null
           unit_cost?: number | null
           valuation_method?: string | null
@@ -4236,6 +4238,7 @@ export type Database = {
           opening_qty?: number
           organization_id?: string | null
           pricing_method?: string | null
+          reorder_level?: number | null
           reserved_qty?: number | null
           unit_cost?: number | null
           valuation_method?: string | null
