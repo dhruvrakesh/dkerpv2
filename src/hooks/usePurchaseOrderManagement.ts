@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useDKEGLAuth } from './useDKEGLAuth';
 
 export interface PurchaseOrderItem {
   id?: string;
@@ -35,6 +36,7 @@ export const usePurchaseOrderManagement = () => {
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { organization } = useDKEGLAuth();
 
   const fetchPurchaseOrders = async (filters?: {
     status?: string;
@@ -42,12 +44,18 @@ export const usePurchaseOrderManagement = () => {
     start_date?: string;
     end_date?: string;
   }) => {
+    if (!organization?.id) {
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     try {
       // First fetch purchase orders
       let poQuery = supabase
         .from('dkegl_purchase_orders')
         .select('*')
+        .eq('organization_id', organization.id)
         .order('created_at', { ascending: false });
 
       if (filters?.status) {
@@ -69,13 +77,15 @@ export const usePurchaseOrderManagement = () => {
       // Fetch vendors separately
       const { data: vendorsData, error: vendorError } = await supabase
         .from('dkegl_vendors')
-        .select('id, vendor_name');
+        .select('id, vendor_name')
+        .eq('organization_id', organization.id);
       if (vendorError) throw vendorError;
 
-      // Fetch PO items separately
+      // Fetch PO items separately - filter by organization via purchase orders
       const { data: poItemsData, error: itemsError } = await supabase
         .from('dkegl_po_items')
-        .select('*');
+        .select('*, dkegl_purchase_orders!inner(organization_id)')
+        .eq('dkegl_purchase_orders.organization_id', organization.id);
       if (itemsError) throw itemsError;
 
       // Create vendor lookup
@@ -124,8 +134,12 @@ export const usePurchaseOrderManagement = () => {
 
   const generatePONumber = async (): Promise<string> => {
     try {
+      if (!organization?.id) {
+        throw new Error('Organization not found');
+      }
+
       const { data, error } = await supabase.rpc('dkegl_generate_vendor_code', {
-        _org_id: 'current_org_id' // This should be replaced with actual org ID
+        _org_id: organization.id
       });
 
       if (error) throw error;
@@ -135,18 +149,24 @@ export const usePurchaseOrderManagement = () => {
       return poNumber;
     } catch (error) {
       console.error('Error generating PO number:', error);
-      // Fallback to timestamp-based PO number
-      return `PO-${Date.now()}`;
+      // Fallback to organization-specific PO number
+      const orgCode = organization?.code || 'ORG';
+      return `${orgCode}-PO-${Date.now()}`;
     }
   };
 
   const createPurchaseOrder = async (orderData: Omit<PurchaseOrder, 'id' | 'po_number'>): Promise<string | null> => {
     try {
+      if (!organization?.id) {
+        throw new Error('Organization context not available');
+      }
+
       const poNumber = await generatePONumber();
       
       const { data: poData, error: poError } = await supabase
         .from('dkegl_purchase_orders')
         .insert({
+          organization_id: organization.id,
           po_number: poNumber,
           vendor_id: orderData.vendor_id,
           po_date: orderData.po_date,
@@ -163,6 +183,7 @@ export const usePurchaseOrderManagement = () => {
       // Insert PO items
       if (orderData.items.length > 0) {
         const itemsToInsert = orderData.items.map(item => ({
+          organization_id: organization.id,
           po_id: poData.id,
           item_code: item.item_code,
           item_name: item.item_name || '',
@@ -203,7 +224,8 @@ export const usePurchaseOrderManagement = () => {
       const { error } = await supabase
         .from('dkegl_purchase_orders')
         .update(updates)
-        .eq('id', id);
+        .eq('id', id)
+        .eq('organization_id', organization?.id);
 
       if (error) throw error;
 
@@ -249,8 +271,9 @@ export const usePurchaseOrderManagement = () => {
     try {
       const poItemsResponse = await supabase
         .from('dkegl_po_items')
-        .select('item_code, quantity, unit_price')
-        .eq('po_id', id);
+        .select('item_code, quantity, unit_price, dkegl_purchase_orders!inner(organization_id)')
+        .eq('po_id', id)
+        .eq('dkegl_purchase_orders.organization_id', organization?.id);
 
       if (poItemsResponse.error) {
         console.error('PO items fetch error:', poItemsResponse.error);
@@ -280,6 +303,18 @@ export const usePurchaseOrderManagement = () => {
 
   const deletePurchaseOrder = async (id: string): Promise<boolean> => {
     try {
+      // First verify the PO belongs to the organization
+      const { data: poData } = await supabase
+        .from('dkegl_purchase_orders')
+        .select('id')
+        .eq('id', id)
+        .eq('organization_id', organization?.id)
+        .single();
+        
+      if (!poData) {
+        throw new Error('Purchase order not found or access denied');
+      }
+
       // Delete PO items first
       await supabase
         .from('dkegl_po_items')
@@ -290,7 +325,8 @@ export const usePurchaseOrderManagement = () => {
       const { error } = await supabase
         .from('dkegl_purchase_orders')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('organization_id', organization?.id);
 
       if (error) throw error;
 
@@ -314,8 +350,10 @@ export const usePurchaseOrderManagement = () => {
   };
 
   useEffect(() => {
-    fetchPurchaseOrders();
-  }, []);
+    if (organization?.id) {
+      fetchPurchaseOrders();
+    }
+  }, [organization?.id]);
 
   return {
     purchaseOrders,
