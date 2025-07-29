@@ -251,7 +251,7 @@ export function EnterpriseItemSelector({
                   </CommandEmpty>
                 ) : (
                   Object.entries(groupedResults).map(([category, categoryItems]) => (
-                    <React.Fragment key={category}>
+                    <div key={category}>
                       {showCategories && Object.keys(groupedResults).length > 1 && (
                         <CommandGroup heading={category}>
                           <div className="px-2 py-1">
@@ -304,7 +304,7 @@ export function EnterpriseItemSelector({
                           <Separator />
                         </div>
                       )}
-                    </React.Fragment>
+                    </div>
                   ))
                 )}
 

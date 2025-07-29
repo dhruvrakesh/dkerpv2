@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useDKEGLAuth } from './useDKEGLAuth';
 
 interface ItemMasterItem {
   id: string;
   item_code: string;
   item_name: string;
   uom: string;
+  hsn_code?: string;
   category_name?: string;
   pricing_info?: any;
   reorder_level?: number;
@@ -17,8 +19,14 @@ export const useItemMaster = () => {
   const [items, setItems] = useState<ItemMasterItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { organization } = useDKEGLAuth();
 
   const fetchItems = async (searchTerm?: string) => {
+    if (!organization?.id) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       
@@ -29,11 +37,13 @@ export const useItemMaster = () => {
           item_code,
           item_name,
           uom,
+          hsn_code,
           pricing_info,
           reorder_level,
           dkegl_categories(category_name),
           dkegl_stock(current_qty)
         `)
+        .eq('organization_id', organization.id)
         .eq('status', 'active')
         .order('item_name');
 
@@ -50,6 +60,7 @@ export const useItemMaster = () => {
         item_code: item.item_code,
         item_name: item.item_name,
         uom: item.uom || 'PCS',
+        hsn_code: (item as any).hsn_code || '',
         category_name: (item.dkegl_categories as any)?.category_name,
         pricing_info: item.pricing_info,
         reorder_level: item.reorder_level,
@@ -70,6 +81,8 @@ export const useItemMaster = () => {
   };
 
   const getItemByCode = async (itemCode: string): Promise<ItemMasterItem | null> => {
+    if (!organization?.id) return null;
+    
     try {
       const { data, error } = await supabase
         .from('dkegl_item_master')
@@ -78,11 +91,13 @@ export const useItemMaster = () => {
           item_code,
           item_name,
           uom,
+          hsn_code,
           pricing_info,
           reorder_level,
           dkegl_categories(category_name),
           dkegl_stock(current_qty)
         `)
+        .eq('organization_id', organization.id)
         .eq('item_code', itemCode)
         .eq('status', 'active')
         .single();
@@ -94,6 +109,7 @@ export const useItemMaster = () => {
         item_code: data.item_code,
         item_name: data.item_name,
         uom: data.uom || 'PCS',
+        hsn_code: (data as any).hsn_code || '',
         category_name: (data.dkegl_categories as any)?.category_name,
         pricing_info: data.pricing_info,
         reorder_level: data.reorder_level,
@@ -106,8 +122,10 @@ export const useItemMaster = () => {
   };
 
   useEffect(() => {
-    fetchItems();
-  }, []);
+    if (organization?.id) {
+      fetchItems();
+    }
+  }, [organization?.id]);
 
   return {
     items,

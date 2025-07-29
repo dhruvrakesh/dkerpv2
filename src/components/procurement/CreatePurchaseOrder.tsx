@@ -78,13 +78,51 @@ export const CreatePurchaseOrder = () => {
       if (selectedItem) {
         updatedItems[index].item_name = selectedItem.item_name;
         updatedItems[index].uom = selectedItem.uom;
-        // Check if item has hsn_code property, fallback to empty string
-        updatedItems[index].hsn_code = (selectedItem as any).hsn_code || '';
+        // Auto-populate HSN code from item master
+        updatedItems[index].hsn_code = selectedItem.hsn_code || '';
         // Auto-populate unit price from pricing info if available
         const pricingInfo = selectedItem.pricing_info as any;
         if (pricingInfo?.unit_cost) {
           updatedItems[index].unit_price = pricingInfo.unit_cost;
         }
+        // Auto-lookup GST rate for HSN code
+        if (selectedItem.hsn_code && organization?.id) {
+          try {
+            const { data: hsnData } = await supabase
+              .from('dkegl_hsn_tax_rates')
+              .select('cgst_rate, sgst_rate')
+              .eq('organization_id', organization.id)
+              .eq('hsn_code', selectedItem.hsn_code)
+              .single();
+            
+            if (hsnData) {
+              const totalGstRate = (hsnData.cgst_rate || 9) + (hsnData.sgst_rate || 9);
+              updatedItems[index].gst_rate = totalGstRate;
+            }
+          } catch (error) {
+            // Fallback to default 18% if HSN lookup fails
+            console.log('HSN lookup failed, using default GST rate');
+          }
+        }
+      }
+    }
+    
+    // Auto-lookup GST rate when HSN code is manually changed
+    if (field === 'hsn_code' && value && organization?.id) {
+      try {
+        const { data: hsnData } = await supabase
+          .from('dkegl_hsn_tax_rates')
+          .select('cgst_rate, sgst_rate')
+          .eq('organization_id', organization.id)
+          .eq('hsn_code', value)
+          .single();
+        
+        if (hsnData) {
+          const totalGstRate = (hsnData.cgst_rate || 9) + (hsnData.sgst_rate || 9);
+          updatedItems[index].gst_rate = totalGstRate;
+        }
+      } catch (error) {
+        console.log('HSN lookup failed, keeping current GST rate');
       }
     }
     
