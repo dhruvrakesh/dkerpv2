@@ -7641,6 +7641,19 @@ export type Database = {
           shortage_quantity: number
         }[]
       }
+      dkegl_generate_gstr_returns: {
+        Args: {
+          _org_id: string
+          _return_type: string
+          _month: number
+          _year: number
+        }
+        Returns: {
+          return_data: Json
+          summary: Json
+          validation_errors: Json
+        }[]
+      }
       dkegl_generate_item_code: {
         Args: {
           _org_id: string
@@ -7704,6 +7717,22 @@ export type Database = {
       dkegl_get_current_user_org: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      dkegl_get_gst_summary: {
+        Args: { _org_id: string; _start_date?: string; _end_date?: string }
+        Returns: {
+          total_gst_liability: number
+          total_input_tax_credit: number
+          net_gst_payable: number
+          cgst_amount: number
+          sgst_amount: number
+          igst_amount: number
+          total_taxable_turnover: number
+          gst_rate_wise_breakdown: Json
+          monthly_gst_trend: Json
+          vendor_wise_gst: Json
+          customer_wise_gst: Json
+        }[]
       }
       dkegl_get_inventory_analytics: {
         Args: { _org_id: string }
@@ -7894,6 +7923,16 @@ export type Database = {
       dkegl_schedule_daily_reconciliation: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      dkegl_track_gst_compliance: {
+        Args: { _org_id: string }
+        Returns: {
+          compliance_score: number
+          pending_returns: Json
+          upcoming_deadlines: Json
+          penalty_calculations: Json
+          recommendations: Json
+        }[]
       }
       dkegl_track_material_consumption: {
         Args: {

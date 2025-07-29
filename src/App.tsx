@@ -39,6 +39,8 @@ import SalesReportPage from "./pages/tally/SalesReportPage";
 import PurchaseReportPage from "./pages/tally/PurchaseReportPage";
 import ExecutiveDashboardPage from "./pages/tally/ExecutiveDashboardPage";
 import InvoiceGeneratorPage from "./pages/invoices/InvoiceGeneratorPage";
+import GSTDashboardPage from "./pages/gst/GSTDashboardPage";
+import GSTReturnsPage from "./pages/gst/GSTReturnsPage";
 
 const queryClient = new QueryClient();
 
@@ -421,6 +423,22 @@ const App = () => (
                   <InventoryLayout>
                     <CreatePurchaseOrderPage />
                   </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/gst/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <GSTDashboardPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/gst/returns" 
+              element={
+                <ProtectedRoute>
+                  <GSTReturnsPage />
                 </ProtectedRoute>
               } 
             />

@@ -15,7 +15,8 @@ import {
   ChevronRight,
   Brain,
   ShoppingCart,
-  Building2
+  Building2,
+  Calculator
 } from 'lucide-react';
 import {
   Sidebar,
@@ -91,6 +92,17 @@ const navigation = [
       { name: 'Production Reports', href: '/analytics/production' },
       { name: 'Stock Analysis', href: '/analytics/stock' },
       { name: 'Performance KPIs', href: '/analytics/kpi' }
+    ]
+  },
+  {
+    name: 'GST & Compliance',
+    href: '/gst',
+    icon: Calculator,
+    children: [
+      { name: 'GST Dashboard', href: '/gst/dashboard' },
+      { name: 'Returns Guru', href: '/gst/returns' },
+      { name: 'Compliance Center', href: '/gst/compliance' },
+      { name: 'Tax Analytics', href: '/gst/analytics' }
     ]
   },
   {
