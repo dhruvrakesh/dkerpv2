@@ -1,11 +1,11 @@
 import React from 'react';
 import { InventoryLayout } from '@/components/layout/InventoryLayout';
-import { EnhancedStockAnalyticsDashboard } from '@/components/analytics/EnhancedStockAnalyticsDashboard';
+import { EnterpriseStockManagementDashboard } from '@/components/inventory/EnterpriseStockManagementDashboard';
 
 export default function EnterpriseStockManagement() {
   return (
     <InventoryLayout>
-      <EnhancedStockAnalyticsDashboard />
+      <EnterpriseStockManagementDashboard />
     </InventoryLayout>
   );
 }

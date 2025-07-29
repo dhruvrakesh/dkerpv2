@@ -4678,6 +4678,53 @@ export type Database = {
           },
         ]
       }
+      dkegl_stock_snapshots: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          id: string
+          metadata: Json | null
+          organization_id: string | null
+          record_count: number
+          snapshot_data: Json
+          snapshot_date: string
+          total_value: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          record_count?: number
+          snapshot_data: Json
+          snapshot_date: string
+          total_value?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          record_count?: number
+          snapshot_data?: Json
+          snapshot_date?: string
+          total_value?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkegl_stock_snapshots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkegl_stock_summary: {
         Row: {
           calculated_qty: number | null
@@ -7760,7 +7807,7 @@ export type Database = {
         Returns: number
       }
       dkegl_capture_daily_stock_snapshot: {
-        Args: { _org_id: string }
+        Args: { _org_id?: string }
         Returns: Json
       }
       dkegl_cleanup_old_security_logs: {
@@ -7957,6 +8004,33 @@ export type Database = {
           total_stage_cost: number
           waste_percentage: number
           efficiency_percentage: number
+        }[]
+      }
+      dkegl_get_paginated_stock: {
+        Args: {
+          _org_id: string
+          _page?: number
+          _page_size?: number
+          _search?: string
+          _category_filter?: string
+          _status_filter?: string
+          _sort_column?: string
+          _sort_direction?: string
+        }
+        Returns: {
+          item_code: string
+          item_name: string
+          category_name: string
+          current_qty: number
+          unit_cost: number
+          total_value: number
+          location: string
+          uom: string
+          reorder_level: number
+          is_low_stock: boolean
+          last_transaction_date: string
+          last_updated: string
+          total_count: number
         }[]
       }
       dkegl_get_predictive_insights: {

@@ -141,6 +141,7 @@ export function EnterpriseItemSelector({
       ? new Set(recentItems.map(item => item.item_code))
       : new Set()
     
+    // Fix: Filter duplicates properly to prevent doubling
     const filteredResults = searchResults.filter(item => 
       !recentItemCodes.has(item.item_code)
     )
