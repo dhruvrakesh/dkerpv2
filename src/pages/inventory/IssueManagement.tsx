@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EnterpriseItemSelector } from '@/components/ui/enterprise-item-selector';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -112,13 +113,18 @@ export default function IssueManagement() {
       
       setIssueRecords(formattedIssues);
 
-      // Load available items with current stock
+      // Load available items with current stock and category info
       const { data: stockData, error: stockError } = await supabase
         .from('dkegl_stock')
         .select(`
           item_code,
           current_qty,
-          dkegl_item_master!fk_stock_item_master(id, item_name, uom)
+          dkegl_item_master!fk_stock_item_master(
+            id, 
+            item_name, 
+            uom,
+            dkegl_categories(category_name)
+          )
         `)
         .gt('current_qty', 0);
 
@@ -129,7 +135,11 @@ export default function IssueManagement() {
         item_code: stock.item_code,
         item_name: stock.dkegl_item_master.item_name,
         uom: stock.dkegl_item_master.uom,
-        current_qty: stock.current_qty
+        category_name: (stock.dkegl_item_master.dkegl_categories as any)?.category_name,
+        status: 'active',
+        current_qty: stock.current_qty,
+        usage_frequency: Math.floor(Math.random() * 50) + 1, // Mock data for now
+        last_used: Math.random() > 0.5 ? new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000) : undefined
       })).sort((a, b) => a.item_name.localeCompare(b.item_name)) || [];
       
       setAvailableItems(formattedStock);
@@ -555,18 +565,20 @@ export default function IssueManagement() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="item_code">Item *</Label>
-                    <Select value={issueForm.item_code} onValueChange={handleItemSelect}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select item" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableItems.map(item => (
-                          <SelectItem key={item.id} value={item.item_code}>
-                            {item.item_code} - {item.item_name} (Stock: {item.current_qty})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <EnterpriseItemSelector
+                      items={availableItems}
+                      value={issueForm.item_code}
+                      onValueChange={handleItemSelect}
+                      placeholder="Select item to issue"
+                      searchPlaceholder="Search by item code, name, or category..."
+                      showCategories={true}
+                      showRecentItems={true}
+                    />
+                    {issueForm.item_code && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Stock: {getCurrentStock(issueForm.item_code)} {getUom(issueForm.item_code)}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="date">Date *</Label>
