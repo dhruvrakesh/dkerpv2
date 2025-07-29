@@ -134,15 +134,24 @@ export function EnterpriseItemSelector({
       .slice(0, RECENT_ITEMS_LIMIT)
   }, [items, showRecentItems])
 
-  // Group items by category
+  // Group items by category, excluding recent items when shown separately
   const groupedResults = React.useMemo(() => {
+    // When showing recent items and no search is active, exclude recent items from main results
+    const recentItemCodes = !debouncedSearch && showRecentItems 
+      ? new Set(recentItems.map(item => item.item_code))
+      : new Set()
+    
+    const filteredResults = searchResults.filter(item => 
+      !recentItemCodes.has(item.item_code)
+    )
+    
     if (!showCategories) {
-      return { 'All Items': searchResults }
+      return { 'All Items': filteredResults }
     }
 
     const groups: Record<string, typeof searchResults> = {}
     
-    searchResults.forEach(item => {
+    filteredResults.forEach(item => {
       const category = item.category_name || 'Uncategorized'
       if (!groups[category]) {
         groups[category] = []
@@ -151,7 +160,7 @@ export function EnterpriseItemSelector({
     })
 
     return groups
-  }, [searchResults, showCategories])
+  }, [searchResults, showCategories, debouncedSearch, showRecentItems, recentItems])
 
   const handleSelect = (itemCode: string) => {
     onValueChange?.(itemCode)
