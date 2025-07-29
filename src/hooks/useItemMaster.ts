@@ -13,6 +13,9 @@ interface ItemMasterItem {
   pricing_info?: any;
   reorder_level?: number;
   stock_qty?: number;
+  last_used?: Date;
+  usage_frequency?: number;
+  status?: string;
 }
 
 export const useItemMaster = () => {
@@ -30,42 +33,86 @@ export const useItemMaster = () => {
     try {
       setLoading(true);
       
+      // Get items with stock and usage data
       let query = supabase
-        .from('dkegl_item_master')
+        .from('dkegl_stock')
         .select(`
-          id,
           item_code,
-          item_name,
-          uom,
-          hsn_code,
-          pricing_info,
-          reorder_level,
-          dkegl_categories(category_name),
-          dkegl_stock(current_qty)
+          current_qty,
+          dkegl_item_master!inner (
+            id,
+            item_code,
+            item_name,
+            uom,
+            hsn_code,
+            pricing_info,
+            reorder_level,
+            status,
+            dkegl_categories (category_name)
+          )
         `)
         .eq('organization_id', organization.id)
-        .eq('status', 'active')
-        .order('item_name');
+        .eq('dkegl_item_master.status', 'active')
+        .gt('current_qty', 0)
+        .order('dkegl_item_master.item_name', { referencedTable: 'dkegl_item_master' });
 
       if (searchTerm) {
-        query = query.or(`item_code.ilike.%${searchTerm}%,item_name.ilike.%${searchTerm}%`);
+        query = query.or(`dkegl_item_master.item_code.ilike.%${searchTerm}%,dkegl_item_master.item_name.ilike.%${searchTerm}%`);
       }
 
-      const { data, error } = await query.limit(100);
+      const { data: stockData, error: stockError } = await query.limit(100);
+      if (stockError) throw stockError;
 
-      if (error) throw error;
+      // Get usage statistics
+      const { data: usageData, error: usageError } = await supabase
+        .from('dkegl_issue_log')
+        .select(`
+          item_code,
+          date,
+          qty_issued
+        `)
+        .eq('organization_id', organization.id)
+        .gte('date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
 
-      const transformedItems = data?.map(item => ({
-        id: item.id,
-        item_code: item.item_code,
-        item_name: item.item_name,
-        uom: item.uom || 'PCS',
-        hsn_code: (item as any).hsn_code || '',
-        category_name: (item.dkegl_categories as any)?.category_name,
-        pricing_info: item.pricing_info,
-        reorder_level: item.reorder_level,
-        stock_qty: (item.dkegl_stock as any)?.[0]?.current_qty || 0
-      })) || [];
+      if (usageError) throw usageError;
+
+      // Calculate usage statistics
+      const usageStats = usageData?.reduce((acc, usage) => {
+        if (!acc[usage.item_code]) {
+          acc[usage.item_code] = {
+            usage_frequency: 0,
+            last_used: null,
+            total_issued: 0
+          };
+        }
+        acc[usage.item_code].usage_frequency++;
+        acc[usage.item_code].total_issued += usage.qty_issued;
+        const usageDate = new Date(usage.date);
+        if (!acc[usage.item_code].last_used || usageDate > acc[usage.item_code].last_used) {
+          acc[usage.item_code].last_used = usageDate;
+        }
+        return acc;
+      }, {} as Record<string, { usage_frequency: number; last_used: Date | null; total_issued: number }>) || {};
+
+      const transformedItems = stockData?.map(stock => {
+        const itemMaster = stock.dkegl_item_master;
+        const usage = usageStats[stock.item_code] || { usage_frequency: 0, last_used: null, total_issued: 0 };
+        
+        return {
+          id: itemMaster.id,
+          item_code: itemMaster.item_code,
+          item_name: itemMaster.item_name,
+          uom: itemMaster.uom || 'PCS',
+          hsn_code: itemMaster.hsn_code || '',
+          category_name: (itemMaster.dkegl_categories as any)?.category_name,
+          pricing_info: itemMaster.pricing_info,
+          reorder_level: itemMaster.reorder_level,
+          stock_qty: stock.current_qty,
+          status: itemMaster.status,
+          last_used: usage.last_used,
+          usage_frequency: usage.usage_frequency
+        };
+      }) || [];
 
       setItems(transformedItems);
     } catch (error: any) {
@@ -85,35 +132,41 @@ export const useItemMaster = () => {
     
     try {
       const { data, error } = await supabase
-        .from('dkegl_item_master')
+        .from('dkegl_stock')
         .select(`
-          id,
           item_code,
-          item_name,
-          uom,
-          hsn_code,
-          pricing_info,
-          reorder_level,
-          dkegl_categories(category_name),
-          dkegl_stock(current_qty)
+          current_qty,
+          dkegl_item_master!inner (
+            id,
+            item_code,
+            item_name,
+            uom,
+            hsn_code,
+            pricing_info,
+            reorder_level,
+            status,
+            dkegl_categories (category_name)
+          )
         `)
         .eq('organization_id', organization.id)
         .eq('item_code', itemCode)
-        .eq('status', 'active')
+        .eq('dkegl_item_master.status', 'active')
         .single();
 
       if (error) throw error;
 
+      const itemMaster = data.dkegl_item_master;
       return {
-        id: data.id,
-        item_code: data.item_code,
-        item_name: data.item_name,
-        uom: data.uom || 'PCS',
-        hsn_code: (data as any).hsn_code || '',
-        category_name: (data.dkegl_categories as any)?.category_name,
-        pricing_info: data.pricing_info,
-        reorder_level: data.reorder_level,
-        stock_qty: (data.dkegl_stock as any)?.[0]?.current_qty || 0
+        id: itemMaster.id,
+        item_code: itemMaster.item_code,
+        item_name: itemMaster.item_name,
+        uom: itemMaster.uom || 'PCS',
+        hsn_code: itemMaster.hsn_code || '',
+        category_name: (itemMaster.dkegl_categories as any)?.category_name,
+        pricing_info: itemMaster.pricing_info,
+        reorder_level: itemMaster.reorder_level,
+        stock_qty: data.current_qty,
+        status: itemMaster.status
       };
     } catch (error: any) {
       console.error('Error fetching item by code:', error);

@@ -113,34 +113,73 @@ export default function IssueManagement() {
       
       setIssueRecords(formattedIssues);
 
+      // Get organization ID
+      const { data: userProfile } = await supabase
+        .from('dkegl_user_profiles')
+        .select('organization_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!userProfile?.organization_id) {
+        throw new Error('Organization not found');
+      }
+
       // Load available items with current stock and category info
       const { data: stockData, error: stockError } = await supabase
         .from('dkegl_stock')
         .select(`
           item_code,
           current_qty,
-          dkegl_item_master!fk_stock_item_master(
+          dkegl_item_master!inner (
             id, 
             item_name, 
             uom,
-            dkegl_categories(category_name)
+            status,
+            dkegl_categories (category_name)
           )
         `)
+        .eq('organization_id', userProfile.organization_id)
+        .eq('dkegl_item_master.status', 'active')
         .gt('current_qty', 0);
 
       if (stockError) throw stockError;
+
+      // Get usage statistics
+      const { data: usageData, error: usageError } = await supabase
+        .from('dkegl_issue_log')
+        .select('item_code, date, qty_issued')
+        .eq('organization_id', userProfile.organization_id)
+        .gte('date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+
+      if (usageError) throw usageError;
+
+      // Calculate usage statistics
+      const usageStats = usageData?.reduce((acc, usage) => {
+        if (!acc[usage.item_code]) {
+          acc[usage.item_code] = { count: 0, lastUsed: null };
+        }
+        acc[usage.item_code].count++;
+        const usageDate = new Date(usage.date);
+        if (!acc[usage.item_code].lastUsed || usageDate > acc[usage.item_code].lastUsed) {
+          acc[usage.item_code].lastUsed = usageDate;
+        }
+        return acc;
+      }, {} as Record<string, { count: number; lastUsed: Date | null }>) || {};
       
-      const formattedStock = stockData?.map(stock => ({
-        id: stock.dkegl_item_master.id,
-        item_code: stock.item_code,
-        item_name: stock.dkegl_item_master.item_name,
-        uom: stock.dkegl_item_master.uom,
-        category_name: (stock.dkegl_item_master.dkegl_categories as any)?.category_name,
-        status: 'active',
-        current_qty: stock.current_qty,
-        usage_frequency: Math.floor(Math.random() * 50) + 1, // Mock data for now
-        last_used: Math.random() > 0.5 ? new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000) : undefined
-      })).sort((a, b) => a.item_name.localeCompare(b.item_name)) || [];
+      const formattedStock = stockData?.map(stock => {
+        const usage = usageStats[stock.item_code] || { count: 0, lastUsed: null };
+        return {
+          id: stock.dkegl_item_master.id,
+          item_code: stock.item_code,
+          item_name: stock.dkegl_item_master.item_name,
+          uom: stock.dkegl_item_master.uom,
+          category_name: (stock.dkegl_item_master.dkegl_categories as any)?.category_name,
+          status: stock.dkegl_item_master.status,
+          current_qty: stock.current_qty,
+          usage_frequency: usage.count,
+          last_used: usage.lastUsed
+        };
+      }).sort((a, b) => a.item_name.localeCompare(b.item_name)) || [];
       
       setAvailableItems(formattedStock);
 

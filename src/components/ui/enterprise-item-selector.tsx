@@ -193,15 +193,15 @@ export function EnterpriseItemSelector({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="start">
+      <PopoverContent className="w-[400px] p-0 bg-popover border shadow-lg z-50" align="start">
         <Command shouldFilter={false}>
-          <div className="flex items-center border-b px-3">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+          <div className="flex items-center border-b border-border px-3 bg-background">
+            <Search className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
             <CommandInput
               placeholder={searchPlaceholder}
               value={searchValue}
               onValueChange={setSearchValue}
-              className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+              className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
           <CommandList asChild>
