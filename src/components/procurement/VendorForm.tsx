@@ -79,7 +79,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({
       // Clean up form data - convert empty strings to null for UUID fields
       const cleanedData = {
         ...formData,
-        category_id: formData.category_id === '' ? null : formData.category_id,
+        category_id: formData.category_id === 'no-category' || formData.category_id === '' ? null : formData.category_id,
       };
       await onSubmit(cleanedData);
     } catch (error) {
@@ -167,14 +167,14 @@ export const VendorForm: React.FC<VendorFormProps> = ({
                 <div className="space-y-2">
                   <Label htmlFor="category_id">Category</Label>
                   <Select
-                    value={formData.category_id || ''}
-                    onValueChange={(value) => handleInputChange('category_id', value === '' ? null : value)}
+                    value={formData.category_id || 'no-category'}
+                    onValueChange={(value) => handleInputChange('category_id', value === 'no-category' ? null : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Category</SelectItem>
+                      <SelectItem value="no-category">No Category</SelectItem>
                       {categories.map(category => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.category_name}
