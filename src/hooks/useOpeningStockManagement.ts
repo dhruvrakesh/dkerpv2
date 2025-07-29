@@ -85,7 +85,18 @@ export function useOpeningStockManagement() {
         .limit(50);
 
       if (error) throw error;
-      setAuditTrail(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData: AuditTrailEntry[] = (data || []).map(item => ({
+        id: item.id,
+        action: item.action,
+        user_id: item.user_id || 'system',
+        timestamp: item.created_at,
+        details: item.metadata || item.new_values,
+        affected_items: 1 // Default to 1, could be enhanced to calculate actual count
+      }));
+      
+      setAuditTrail(transformedData);
     } catch (error) {
       console.error('Error fetching audit trail:', error);
     }
