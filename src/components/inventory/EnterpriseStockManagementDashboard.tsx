@@ -211,12 +211,12 @@ export const EnterpriseStockManagementDashboard: React.FC = () => {
 
                 <div>
                   <Label>Category</Label>
-                  <Select value={filters.category} onValueChange={(value) => handleFilterChange('category', value)}>
+                  <Select value={filters.category || 'all'} onValueChange={(value) => handleFilterChange('category', value === 'all' ? '' : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Categories</SelectItem>
+                      <SelectItem value="all">All Categories</SelectItem>
                       <SelectItem value="Raw Material">Raw Material</SelectItem>
                       <SelectItem value="Finished Goods">Finished Goods</SelectItem>
                       <SelectItem value="Consumables">Consumables</SelectItem>
@@ -226,12 +226,12 @@ export const EnterpriseStockManagementDashboard: React.FC = () => {
 
                 <div>
                   <Label>Stock Status</Label>
-                  <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
+                  <Select value={filters.status || 'all'} onValueChange={(value) => handleFilterChange('status', value === 'all' ? '' : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="All Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Status</SelectItem>
+                      <SelectItem value="all">All Status</SelectItem>
                       <SelectItem value="in_stock">In Stock</SelectItem>
                       <SelectItem value="low_stock">Low Stock</SelectItem>
                       <SelectItem value="out_of_stock">Out of Stock</SelectItem>

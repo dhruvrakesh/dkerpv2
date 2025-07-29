@@ -34,6 +34,7 @@ import { BOMManagement } from "./pages/manufacturing/BOMManagement";
 import AIAssistant from "./pages/ai/AIAssistant";
 import EnterpriseStockManagement from "./pages/inventory/EnterpriseStockManagement";
 import OpeningStockManager from "./pages/inventory/OpeningStockManager";
+import StockValuationPage from "./pages/inventory/StockValuationPage";
 import DKPKLTallyImport from "./components/imports/DKPKLTallyImport";
 import TallyDashboard from "./components/dashboard/TallyDashboard";
 import SalesReportPage from "./pages/tally/SalesReportPage";
@@ -193,6 +194,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <OpeningStockManager />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/inventory/stock-valuation" 
+              element={
+                <ProtectedRoute>
+                  <StockValuationPage />
                 </ProtectedRoute>
               } 
             />
