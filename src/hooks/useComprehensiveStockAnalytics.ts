@@ -128,6 +128,29 @@ export const useComprehensiveStockAnalytics = () => {
       : 0,
   };
 
+  // Stock reconciliation function
+  const runStockReconciliation = useCallback(async () => {
+    if (!organization?.id) return null;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('stock-reconciliation', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+      
+      // Refresh data after reconciliation
+      refreshData();
+      
+      return data;
+    } catch (error) {
+      console.error('Failed to run stock reconciliation:', error);
+      throw error;
+    }
+  }, [organization?.id, refreshData]);
+
   return {
     // Data
     stockData: stockData || [],
@@ -145,6 +168,7 @@ export const useComprehensiveStockAnalytics = () => {
     // Actions
     refreshData,
     getStockMovements,
+    runStockReconciliation,
   };
 };
 

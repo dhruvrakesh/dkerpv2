@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { RefreshCw, TrendingUp, TrendingDown, Equal, Plus, Minus } from 'lucide-react';
+import { RefreshCw, TrendingUp, TrendingDown, Equal, Plus, Minus, Database } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface StockBreakdown {
   item_code: string;
@@ -35,9 +36,10 @@ interface SummaryTotals {
 }
 
 export const EnhancedStockSummary = () => {
-  const { toast } = useToast();
+  const { toast: showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isReconciling, setIsReconciling] = useState(false);
   const [breakdown, setBreakdown] = useState<StockBreakdown[]>([]);
   const [summaryTotals, setSummaryTotals] = useState<SummaryTotals>({
     total_opening: 0,
@@ -97,7 +99,7 @@ export const EnhancedStockSummary = () => {
 
       // If no data found, show informative message
       if (stockBreakdown.length === 0) {
-        toast({
+        showToast({
           title: "No Stock Data",
           description: "No stock data found. Please check inventory records.",
           variant: "default"
@@ -105,7 +107,7 @@ export const EnhancedStockSummary = () => {
       }
     } catch (error) {
       console.error('Error loading stock summary:', error);
-      toast({
+      showToast({
         title: "Error",
         description: `Failed to load stock summary: ${error.message}`,
         variant: "destructive"
@@ -125,7 +127,7 @@ export const EnhancedStockSummary = () => {
       // The comprehensive function doesn't need a refresh as it calculates real-time
       console.log('Stock summary will be refreshed on next load');
 
-      toast({
+      showToast({
         title: "Success",
         description: "Stock summary refreshed successfully",
       });
@@ -134,13 +136,37 @@ export const EnhancedStockSummary = () => {
       await loadStockSummary();
     } catch (error) {
       console.error('Error refreshing stock summary:', error);
-      toast({
+      showToast({
         title: "Error",
         description: "Failed to refresh stock summary",
         variant: "destructive"
       });
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  const runStockReconciliation = async () => {
+    setIsReconciling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('stock-reconciliation', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast.success(`Stock reconciliation completed! ${data.result?.consolidations_count || 0} consolidations, ${data.result?.discrepancies_count || 0} discrepancies found.`);
+        // Refresh data after reconciliation
+        await loadStockSummary();
+      }
+    } catch (error) {
+      toast.error('Failed to run stock reconciliation');
+      console.error('Reconciliation error:', error);
+    } finally {
+      setIsReconciling(false);
     }
   };
 
@@ -170,14 +196,25 @@ export const EnhancedStockSummary = () => {
             Complete stock calculation breakdown with variance analysis
           </p>
         </div>
-        <Button 
-          onClick={refreshStockSummary} 
-          disabled={refreshing}
-          variant="outline"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh Summary
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={runStockReconciliation} 
+            disabled={isReconciling || loading}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Database className={`h-4 w-4 ${isReconciling ? 'animate-pulse' : ''}`} />
+            {isReconciling ? 'Reconciling...' : 'Reconcile Stock'}
+          </Button>
+          <Button 
+            onClick={refreshStockSummary} 
+            disabled={refreshing}
+            variant="outline"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh Summary
+          </Button>
+        </div>
       </div>
 
       {/* Stock Formula Card */}

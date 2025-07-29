@@ -7639,6 +7639,10 @@ export type Database = {
         Args: { _org_id: string } | { _org_id: string; _opening_date?: string }
         Returns: Json
       }
+      dkegl_reconcile_stock_data: {
+        Args: { _org_id: string }
+        Returns: Json
+      }
       dkegl_refresh_stock_summary: {
         Args: { _org_id: string } | { _org_id: string; _opening_date?: string }
         Returns: undefined
