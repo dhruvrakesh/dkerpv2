@@ -6,17 +6,21 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Download, Upload, FileSpreadsheet, History, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Download, Upload, FileSpreadsheet, History, AlertTriangle, CheckCircle, Edit3 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useOpeningStockManagement } from '@/hooks/useOpeningStockManagement';
 import { OpeningStockImportDialog } from './OpeningStockImportDialog';
 import { OpeningStockExportDialog } from './OpeningStockExportDialog';
 import { OpeningStockAuditTrail } from './OpeningStockAuditTrail';
+import { OpeningStockEditModal } from './OpeningStockEditModal';
 
 export function OpeningStockManagementDashboard() {
   const { toast } = useToast();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [updating, setUpdating] = useState(false);
   
   const {
     openingStock,
@@ -25,6 +29,7 @@ export function OpeningStockManagementDashboard() {
     importing,
     exporting,
     fetchOpeningStock,
+    fetchAuditTrail,
     importOpeningStock,
     exportOpeningStock,
     validateOpeningStock,
@@ -33,7 +38,8 @@ export function OpeningStockManagementDashboard() {
 
   React.useEffect(() => {
     fetchOpeningStock();
-  }, [fetchOpeningStock]);
+    fetchAuditTrail();
+  }, [fetchOpeningStock, fetchAuditTrail]);
 
   const handleRefresh = () => {
     fetchOpeningStock();
@@ -59,6 +65,24 @@ export function OpeningStockManagementDashboard() {
         description: "Unable to validate opening stock data.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleEditItem = (item: any) => {
+    setSelectedItem(item);
+    setEditModalOpen(true);
+  };
+
+  const handleUpdateItem = async (itemCode: string, updates: { opening_qty: number; unit_cost: number }, reason: string) => {
+    setUpdating(true);
+    try {
+      await updateOpeningStock(itemCode, updates, reason);
+      setEditModalOpen(false);
+      setSelectedItem(null);
+    } catch (error) {
+      // Error is handled in the hook
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -185,18 +209,19 @@ export function OpeningStockManagementDashboard() {
                   {/* Data table would go here */}
                   <div className="border rounded-md">
                     <div className="p-4 border-b bg-muted/50">
-                      <div className="grid grid-cols-6 gap-4 text-sm font-medium">
+                      <div className="grid grid-cols-7 gap-4 text-sm font-medium">
                         <div>Item Code</div>
                         <div>Item Name</div>
                         <div>Opening Qty</div>
                         <div>Unit Cost</div>
                         <div>Total Value</div>
                         <div>Status</div>
+                        <div>Actions</div>
                       </div>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
                       {openingStock.slice(0, 50).map((item, index) => (
-                        <div key={index} className="p-4 border-b grid grid-cols-6 gap-4 text-sm">
+                        <div key={index} className="p-4 border-b grid grid-cols-7 gap-4 text-sm items-center">
                           <div className="font-mono">{item.item_code}</div>
                           <div className="truncate">{item.item_name}</div>
                           <div>{item.opening_qty}</div>
@@ -206,6 +231,16 @@ export function OpeningStockManagementDashboard() {
                             <Badge variant={item.is_valid ? "default" : "destructive"}>
                               {item.is_valid ? "Valid" : "Invalid"}
                             </Badge>
+                          </div>
+                          <div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEditItem(item)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -304,6 +339,15 @@ export function OpeningStockManagementDashboard() {
         onExport={exportOpeningStock}
         exporting={exporting}
         totalRecords={totalItems}
+      />
+
+      {/* Edit Modal */}
+      <OpeningStockEditModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        item={selectedItem}
+        onSave={handleUpdateItem}
+        loading={updating}
       />
     </div>
   );

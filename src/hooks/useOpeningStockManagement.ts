@@ -184,10 +184,20 @@ export function useOpeningStockManagement() {
     }
   }, [openingStock]);
 
-  const updateOpeningStock = useCallback(async (itemCode: string, updates: Partial<OpeningStockItem>) => {
+  const updateOpeningStock = useCallback(async (
+    itemCode: string, 
+    updates: { opening_qty: number; unit_cost: number }, 
+    reason: string
+  ) => {
     try {
+      // Get current item data for audit comparison
+      const currentItem = openingStock.find(item => item.item_code === itemCode);
+      if (!currentItem) {
+        throw new Error('Item not found');
+      }
+
       // Update the specific item in the database
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('dkegl_stock')
         .update({
           current_qty: updates.opening_qty,
@@ -196,20 +206,67 @@ export function useOpeningStockManagement() {
         })
         .eq('item_code', itemCode);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Create audit log entry
+      const { error: auditError } = await supabase
+        .from('dkegl_audit_log')
+        .insert({
+          organization_id: null, // Will be set by function
+          table_name: 'opening_stock',
+          record_id: null,
+          action: 'UPDATE',
+          old_values: {
+            item_code: itemCode,
+            item_name: currentItem.item_name,
+            opening_qty: currentItem.opening_qty,
+            unit_cost: currentItem.unit_cost,
+          },
+          new_values: {
+            item_code: itemCode,
+            item_name: currentItem.item_name,
+            opening_qty: updates.opening_qty,
+            unit_cost: updates.unit_cost,
+          },
+          metadata: {
+            reason: reason,
+            value_change: {
+              old_value: currentItem.opening_qty * currentItem.unit_cost,
+              new_value: updates.opening_qty * updates.unit_cost,
+              difference: (updates.opening_qty * updates.unit_cost) - (currentItem.opening_qty * currentItem.unit_cost)
+            },
+            variance_percentages: {
+              qty_variance: currentItem.opening_qty !== 0 
+                ? ((updates.opening_qty - currentItem.opening_qty) / currentItem.opening_qty) * 100 
+                : 0,
+              cost_variance: currentItem.unit_cost !== 0 
+                ? ((updates.unit_cost - currentItem.unit_cost) / currentItem.unit_cost) * 100 
+                : 0
+            }
+          },
+          user_id: null, // Will be set by RLS
+        });
+
+      if (auditError) {
+        console.error('Audit log error:', auditError);
+        // Continue despite audit error - main update succeeded
+      }
 
       // Update local state
       setOpeningStock(prev => 
         prev.map(item => 
           item.item_code === itemCode 
-            ? { ...item, ...updates }
+            ? { ...item, opening_qty: updates.opening_qty, unit_cost: updates.unit_cost }
             : item
         )
       );
 
+      // Refresh audit trail to show new entry
+      fetchAuditTrail();
+
       toast({
         title: "Update Successful",
-        description: "Opening stock item updated successfully.",
+        description: "Opening stock item updated with audit trail logged.",
       });
     } catch (error) {
       console.error('Error updating opening stock:', error);
@@ -218,8 +275,9 @@ export function useOpeningStockManagement() {
         description: "Failed to update opening stock item.",
         variant: "destructive",
       });
+      throw error;
     }
-  }, [toast]);
+  }, [openingStock, fetchAuditTrail, toast]);
 
   return {
     openingStock,
