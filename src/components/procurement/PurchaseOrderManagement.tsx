@@ -135,8 +135,8 @@ export const PurchaseOrderManagement = () => {
   const { vendors, fetchVendors } = useVendorManagement();
 
   const [filters, setFilters] = useState({
-    status: '',
-    vendor_id: '',
+    status: 'all',
+    vendor_id: 'all',
     search: '',
   });
 
@@ -148,8 +148,8 @@ export const PurchaseOrderManagement = () => {
   }, []);
 
   const filteredPOs = purchaseOrders.filter(po => {
-    const matchesStatus = !filters.status || po.status === filters.status;
-    const matchesVendor = !filters.vendor_id || po.vendor_id === filters.vendor_id;
+    const matchesStatus = filters.status === 'all' || po.status === filters.status;
+    const matchesVendor = filters.vendor_id === 'all' || po.vendor_id === filters.vendor_id;
     const matchesSearch = !filters.search || 
       po.po_number?.toLowerCase().includes(filters.search.toLowerCase()) ||
       po.vendor_name?.toLowerCase().includes(filters.search.toLowerCase());
@@ -307,7 +307,7 @@ export const PurchaseOrderManagement = () => {
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Status</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="issued">Issued</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
@@ -323,7 +323,7 @@ export const PurchaseOrderManagement = () => {
                   <SelectValue placeholder="All Vendors" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Vendors</SelectItem>
+                  <SelectItem value="all">All Vendors</SelectItem>
                   {vendors.map(vendor => (
                     <SelectItem key={vendor.id} value={vendor.id}>
                       {vendor.vendor_name}

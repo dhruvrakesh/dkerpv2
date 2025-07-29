@@ -420,7 +420,7 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
                       </SelectTrigger>
                       <SelectContent>
                         {loadingStages ? (
-                          <SelectItem value="">Loading stages...</SelectItem>
+                          <SelectItem value="loading" disabled>Loading stages...</SelectItem>
                         ) : (
                           workflowStages.map(stage => {
                             const stageConfig = stage.stage_config as any;
