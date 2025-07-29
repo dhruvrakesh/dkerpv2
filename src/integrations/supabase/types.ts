@@ -7588,6 +7588,18 @@ export type Database = {
           total_items: number
         }[]
       }
+      dkegl_get_stock_health_metrics: {
+        Args: { _org_id: string }
+        Returns: {
+          total_items: number
+          items_with_opening_stock: number
+          items_with_transactions: number
+          items_with_variances: number
+          total_variance_value: number
+          data_quality_score: number
+          last_reconciliation_date: string
+        }[]
+      }
       dkegl_get_stock_metrics: {
         Args: { _org_id: string }
         Returns: {
@@ -7654,6 +7666,10 @@ export type Database = {
       dkegl_safe_populate_stock_summary: {
         Args: { _org_id: string; _opening_date?: string }
         Returns: Json
+      }
+      dkegl_schedule_daily_reconciliation: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       dkegl_track_material_consumption: {
         Args: {
