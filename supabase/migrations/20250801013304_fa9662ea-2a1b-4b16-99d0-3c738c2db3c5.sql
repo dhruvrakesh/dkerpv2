@@ -1,0 +1,6 @@
+-- Check current structure of dkegl_stock_corrections table
+SELECT column_name, data_type, is_nullable, column_default 
+FROM information_schema.columns 
+WHERE table_name = 'dkegl_stock_corrections' 
+AND table_schema = 'public'
+ORDER BY ordinal_position;
