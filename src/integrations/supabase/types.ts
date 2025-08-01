@@ -7977,18 +7977,14 @@ export type Database = {
           item_code: string
           item_name: string
           category_name: string
+          location: string
           current_qty: number
           unit_cost: number
           total_value: number
           last_transaction_date: string
-          location: string
+          stock_status: string
           reorder_level: number
-          is_low_stock: boolean
-          opening_qty: number
-          total_grn_qty: number
-          total_issued_qty: number
-          calculated_qty: number
-          variance_qty: number
+          days_of_cover: number
         }[]
       }
       dkegl_get_context_inventory_data: {
@@ -8154,13 +8150,14 @@ export type Database = {
       dkegl_get_stock_analytics_totals: {
         Args: { _org_id: string }
         Returns: {
-          total_opening: number
-          total_grn: number
-          total_issued: number
-          total_current: number
-          total_calculated: number
-          total_variance: number
           total_items: number
+          total_value: number
+          out_of_stock_items: number
+          low_stock_items: number
+          in_stock_items: number
+          negative_stock_items: number
+          total_locations: number
+          last_updated: string
         }[]
       }
       dkegl_get_stock_health_metrics: {
@@ -8248,7 +8245,7 @@ export type Database = {
         Returns: Json
       }
       dkegl_run_emergency_cleanup: {
-        Args: { _org_id: string }
+        Args: { _org_id?: string }
         Returns: Json
       }
       dkegl_safe_populate_stock_summary: {
