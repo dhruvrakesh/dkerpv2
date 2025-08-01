@@ -50,8 +50,8 @@ export const HistoricalStockViewer: React.FC<HistoricalStockViewerProps> = ({
       item.item_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.item_name.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategory = !categoryFilter || item.category_name === categoryFilter;
-    const matchesAging = !agingFilter || item.aging_category === agingFilter;
+    const matchesCategory = !categoryFilter || categoryFilter === 'all' || item.category_name === categoryFilter;
+    const matchesAging = !agingFilter || agingFilter === 'all' || item.aging_category === agingFilter;
     
     return matchesSearch && matchesCategory && matchesAging;
   });
@@ -249,10 +249,10 @@ export const HistoricalStockViewer: React.FC<HistoricalStockViewerProps> = ({
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Categories</SelectItem>
+                    <SelectItem value="all">All Categories</SelectItem>
                     {uniqueCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
+                      <SelectItem key={category} value={category || 'uncategorized'}>
+                        {category || 'Uncategorized'}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -266,10 +266,10 @@ export const HistoricalStockViewer: React.FC<HistoricalStockViewerProps> = ({
                     <SelectValue placeholder="All Ages" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Ages</SelectItem>
+                    <SelectItem value="all">All Ages</SelectItem>
                     {uniqueAgingCategories.map((aging) => (
-                      <SelectItem key={aging} value={aging}>
-                        {aging}
+                      <SelectItem key={aging} value={aging || 'unknown'}>
+                        {aging || 'Unknown'}
                       </SelectItem>
                     ))}
                   </SelectContent>
