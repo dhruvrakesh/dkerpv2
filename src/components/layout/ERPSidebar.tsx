@@ -49,7 +49,8 @@ const navigation = [
       { name: 'Stock Management', href: '/inventory/stock' },
       { name: 'GRN Logs', href: '/inventory/grn' },
       { name: 'Issue Logs', href: '/inventory/issues' },
-      { name: 'Item Master', href: '/inventory/items' }
+      { name: 'Item Master', href: '/inventory/items' },
+      { name: 'Pricing Master', href: '/inventory/pricing' }
     ]
   },
   {

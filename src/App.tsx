@@ -45,6 +45,7 @@ import GSTDashboardPage from "./pages/gst/GSTDashboardPage";
 import GSTReturnsPage from "./pages/gst/GSTReturnsPage";
 import GSTCompliancePage from "./pages/gst/GSTCompliancePage";
 import GSTAnalyticsPage from "./pages/gst/GSTAnalyticsPage";
+import GRNPricingDashboard from "./pages/procurement/GRNPricingDashboard";
 
 const queryClient = new QueryClient();
 
@@ -441,6 +442,14 @@ const App = () => (
                   <InventoryLayout>
                     <CreatePurchaseOrderPage />
                   </InventoryLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/procurement/grn-pricing" 
+              element={
+                <ProtectedRoute>
+                  <GRNPricingDashboard />
                 </ProtectedRoute>
               } 
             />
