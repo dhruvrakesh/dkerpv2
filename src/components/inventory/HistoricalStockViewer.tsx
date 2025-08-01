@@ -59,30 +59,32 @@ export const HistoricalStockViewer: React.FC<HistoricalStockViewerProps> = ({
   const handleViewSnapshot = async (snapshot: StockSnapshot) => {
     setSelectedSnapshot(snapshot);
     
-    // For now, we'll fetch the snapshot data from the database
-    // In a real implementation, this would be stored properly in snapshot_data field
+    // Parse actual snapshot data from the database
     try {
-      const mockData: SnapshotDetail[] = [
-        {
-          item_code: 'SAMPLE001',
-          item_name: 'Sample Item',
-          category_name: 'Raw Material',
-          current_qty: 100,
-          unit_cost: 25.50,
-          total_value: 2550,
-          is_low_stock: false,
-          aging_category: 'Fresh (0-30 days)'
-        }
-      ];
-      setSnapshotData(mockData);
+      let parsedData: SnapshotDetail[] = [];
+      
+      if (snapshot.snapshot_data && Array.isArray(snapshot.snapshot_data)) {
+        parsedData = snapshot.snapshot_data.map((item: any) => ({
+          item_code: item.item_code || 'N/A',
+          item_name: item.item_name || 'Unknown Item',
+          category_name: item.category_name || 'Uncategorized',
+          current_qty: Number(item.current_qty) || 0,
+          unit_cost: Number(item.unit_cost) || 0,
+          total_value: (Number(item.current_qty) || 0) * (Number(item.unit_cost) || 0),
+          is_low_stock: item.current_qty <= 10,
+          aging_category: item.aging_category || 'Unknown'
+        }));
+      }
+      
+      setSnapshotData(parsedData);
     } catch (error) {
-      console.error('Error loading snapshot data:', error);
+      console.error('Error parsing snapshot data:', error);
       setSnapshotData([]);
     }
     
     setSearchTerm('');
-    setCategoryFilter('');
-    setAgingFilter('');
+    setCategoryFilter('all');
+    setAgingFilter('all');
     setViewDialogOpen(true);
   };
 

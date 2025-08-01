@@ -74,19 +74,7 @@ export function OpeningStockEditModal({
       newErrors.push('Reason must be at least 5 characters');
     }
 
-    // Check for significant changes
-    if (item) {
-      const qtyVariance = Math.abs(calculateVariance(item.opening_qty, formData.opening_qty));
-      const costVariance = Math.abs(calculateVariance(item.unit_cost, formData.unit_cost));
-
-      if (qtyVariance > 50) {
-        newErrors.push('Quantity change > 50% requires manager approval');
-      }
-
-      if (costVariance > 10) {
-        newErrors.push('Cost change > 10% may indicate pricing inconsistency');
-      }
-    }
+    // Note: Removed variance blocking - these are now just warnings, not errors
 
     setErrors(newErrors);
     return newErrors.length === 0;
@@ -231,13 +219,33 @@ export function OpeningStockEditModal({
             )}
 
             {/* Warnings for significant changes */}
-            {(Math.abs(qtyVariance) > 20 || Math.abs(costVariance) > 5) && errors.length === 0 && (
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Significant changes detected. This modification will be logged in the audit trail.
-                </AlertDescription>
-              </Alert>
+            {item && (
+              <>
+                {Math.abs(qtyVariance) > 50 && (
+                  <Alert className="border-yellow-200 bg-yellow-50">
+                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                    <AlertDescription className="text-yellow-800">
+                      Warning: Quantity change exceeds 50%. Please verify this is correct.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {Math.abs(costVariance) > 10 && (
+                  <Alert className="border-yellow-200 bg-yellow-50">
+                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                    <AlertDescription className="text-yellow-800">
+                      Warning: Cost change exceeds 10%. This may indicate pricing inconsistency.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {(Math.abs(qtyVariance) > 5 || Math.abs(costVariance) > 5) && errors.length === 0 && (
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      This modification will be logged in the audit trail for review.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </>
             )}
           </div>
         )}
