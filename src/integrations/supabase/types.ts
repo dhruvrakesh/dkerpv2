@@ -397,6 +397,45 @@ export type Database = {
         }
         Relationships: []
       }
+      bpmn_templates: {
+        Row: {
+          bpmn_xml: string
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          tags: string[] | null
+          template_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bpmn_xml: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          tags?: string[] | null
+          template_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bpmn_xml?: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          tags?: string[] | null
+          template_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           category_name: string
