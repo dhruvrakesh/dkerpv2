@@ -30,7 +30,7 @@ import { format } from 'date-fns';
 const StatusBadge = ({ status }: { status: string }) => {
   const statusConfig = {
     draft: { label: 'Draft', variant: 'secondary' as const },
-    issued: { label: 'Issued', variant: 'default' as const },
+    sent: { label: 'Sent', variant: 'default' as const },
     approved: { label: 'Approved', variant: 'default' as const },
     received: { label: 'Received', variant: 'default' as const },
     cancelled: { label: 'Cancelled', variant: 'destructive' as const },
@@ -182,12 +182,12 @@ export const PurchaseOrderManagement = () => {
       actions.push(
         <DropdownMenuItem key="issue" onClick={() => handleStatusChange(po.id!, 'issue')}>
           <Send className="h-4 w-4 mr-2" />
-          Issue PO
+          Send PO
         </DropdownMenuItem>
       );
     }
 
-    if (po.status === 'issued') {
+    if (po.status === 'sent') {
       actions.push(
         <DropdownMenuItem key="approve" onClick={() => handleStatusChange(po.id!, 'approve')}>
           <Check className="h-4 w-4 mr-2" />
@@ -196,7 +196,7 @@ export const PurchaseOrderManagement = () => {
       );
     }
 
-    if (['draft', 'issued'].includes(po.status)) {
+    if (['draft', 'sent'].includes(po.status)) {
       actions.push(
         <DropdownMenuItem key="cancel" onClick={() => handleStatusChange(po.id!, 'cancel')}>
           <X className="h-4 w-4 mr-2" />
@@ -222,7 +222,7 @@ export const PurchaseOrderManagement = () => {
   const summaryStats = {
     total: purchaseOrders.length,
     draft: purchaseOrders.filter(po => po.status === 'draft').length,
-    issued: purchaseOrders.filter(po => po.status === 'issued').length,
+    sent: purchaseOrders.filter(po => po.status === 'sent').length,
     approved: purchaseOrders.filter(po => po.status === 'approved').length,
     totalValue: purchaseOrders.reduce((sum, po) => sum + (po.total_amount || 0), 0),
   };
@@ -257,10 +257,10 @@ export const PurchaseOrderManagement = () => {
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-2xl font-bold">{summaryStats.issued}</p>
-                <p className="text-xs text-muted-foreground">Issued</p>
-              </div>
+               <div>
+                 <p className="text-2xl font-bold">{summaryStats.sent}</p>
+                 <p className="text-xs text-muted-foreground">Sent</p>
+               </div>
             </div>
           </CardContent>
         </Card>
@@ -306,14 +306,14 @@ export const PurchaseOrderManagement = () => {
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="issued">Issued</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="received">Received</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
+                 <SelectContent>
+                   <SelectItem value="all">All Status</SelectItem>
+                   <SelectItem value="draft">Draft</SelectItem>
+                   <SelectItem value="sent">Sent</SelectItem>
+                   <SelectItem value="approved">Approved</SelectItem>
+                   <SelectItem value="received">Received</SelectItem>
+                   <SelectItem value="cancelled">Cancelled</SelectItem>
+                 </SelectContent>
               </Select>
               <Select
                 value={filters.vendor_id}

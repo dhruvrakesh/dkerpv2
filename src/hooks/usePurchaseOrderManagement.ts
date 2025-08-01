@@ -20,7 +20,7 @@ export interface PurchaseOrder {
   vendor_name?: string;
   po_date: string;
   expected_delivery_date: string;
-  status: 'draft' | 'issued' | 'approved' | 'received' | 'cancelled';
+  status: 'draft' | 'sent' | 'approved' | 'received' | 'cancelled';
   total_amount: number;
   payment_terms?: string;
   shipping_address?: string;
@@ -107,7 +107,7 @@ export const usePurchaseOrderManagement = () => {
         vendor_name: vendorMap.get(order.vendor_id) || 'Unknown',
         po_date: order.po_date,
         expected_delivery_date: order.expected_delivery_date,
-        status: order.status as 'draft' | 'issued' | 'approved' | 'received' | 'cancelled',
+        status: order.status as 'draft' | 'sent' | 'approved' | 'received' | 'cancelled',
         total_amount: order.total_amount,
         payment_terms: '',
         shipping_address: '',
@@ -256,7 +256,7 @@ export const usePurchaseOrderManagement = () => {
   };
 
   const issuePurchaseOrder = async (id: string): Promise<boolean> => {
-    return updatePurchaseOrder(id, { status: 'issued' });
+    return updatePurchaseOrder(id, { status: 'sent' });
   };
 
   const cancelPurchaseOrder = async (id: string): Promise<boolean> => {

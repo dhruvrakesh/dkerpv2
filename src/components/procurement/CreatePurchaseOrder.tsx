@@ -179,7 +179,7 @@ export const CreatePurchaseOrder = () => {
     return true;
   };
 
-  const handleSave = async (status: 'draft' | 'issued') => {
+  const handleSave = async (status: 'draft' | 'sent') => {
     if (!validateForm()) return;
 
     setSaving(true);
@@ -218,7 +218,7 @@ export const CreatePurchaseOrder = () => {
         
         toast({
           title: "Success",
-          description: `Purchase Order ${status === 'draft' ? 'saved as draft' : 'issued'} successfully`,
+          description: `Purchase Order ${status === 'draft' ? 'saved as draft' : 'sent'} successfully`,
         });
         navigate('/procurement/purchase-orders');
       }
@@ -246,11 +246,11 @@ export const CreatePurchaseOrder = () => {
             Save Draft
           </Button>
           <Button
-            onClick={() => handleSave('issued')}
+            onClick={() => handleSave('sent')}
             disabled={saving}
           >
             <Send className="h-4 w-4 mr-2" />
-            Issue PO
+            Send PO
           </Button>
         </div>
       </div>
