@@ -4678,6 +4678,51 @@ export type Database = {
           },
         ]
       }
+      dkegl_stock_corrections: {
+        Row: {
+          correction_type: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          item_code: string
+          new_location: string | null
+          new_qty: number | null
+          old_location: string | null
+          old_qty: number | null
+          organization_id: string
+          reason: string | null
+          reference_number: string | null
+        }
+        Insert: {
+          correction_type: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          item_code: string
+          new_location?: string | null
+          new_qty?: number | null
+          old_location?: string | null
+          old_qty?: number | null
+          organization_id: string
+          reason?: string | null
+          reference_number?: string | null
+        }
+        Update: {
+          correction_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          item_code?: string
+          new_location?: string | null
+          new_qty?: number | null
+          old_location?: string | null
+          old_qty?: number | null
+          organization_id?: string
+          reason?: string | null
+          reference_number?: string | null
+        }
+        Relationships: []
+      }
       dkegl_stock_snapshots: {
         Row: {
           created_at: string | null
@@ -7814,6 +7859,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      dkegl_consolidate_stock_locations: {
+        Args: { _org_id: string }
+        Returns: Json
+      }
+      dkegl_correct_negative_stocks: {
+        Args: { _org_id: string }
+        Returns: Json
+      }
       dkegl_count_adhesive_started: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -8145,6 +8198,15 @@ export type Database = {
           unit_cost: number
         }[]
       }
+      dkegl_get_stock_reconciliation_summary: {
+        Args: { _org_id: string }
+        Returns: {
+          summary_type: string
+          item_count: number
+          total_value: number
+          details: Json
+        }[]
+      }
       dkegl_get_workflow_status: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -8183,6 +8245,10 @@ export type Database = {
       }
       dkegl_reserve_order_materials: {
         Args: { _order_id: string }
+        Returns: Json
+      }
+      dkegl_run_emergency_cleanup: {
+        Args: { _org_id: string }
         Returns: Json
       }
       dkegl_safe_populate_stock_summary: {
