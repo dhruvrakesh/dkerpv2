@@ -138,18 +138,16 @@ export const usePurchaseOrderManagement = () => {
         throw new Error('Organization not found');
       }
 
-      const { data, error } = await supabase.rpc('dkegl_generate_vendor_code', {
+      const { data, error } = await supabase.rpc('dkegl_generate_po_number', {
         _org_id: organization.id
       });
 
       if (error) throw error;
       
-      // Convert vendor code pattern to PO pattern
-      const poNumber = data.replace('V-', 'PO-');
-      return poNumber;
+      return data;
     } catch (error) {
       console.error('Error generating PO number:', error);
-      // Fallback to organization-specific PO number
+      // Fallback to organization-specific PO number with timestamp
       const orgCode = organization?.code || 'ORG';
       return `${orgCode}-PO-${Date.now()}`;
     }
@@ -190,7 +188,7 @@ export const usePurchaseOrderManagement = () => {
           quantity: item.quantity,
           unit_price: item.unit_price,
           uom: item.uom,
-          total_amount: item.quantity * item.unit_price,
+          // Remove total_amount calculation - let database handle via generated column
         }));
 
         const { error: itemsError } = await supabase
@@ -210,9 +208,31 @@ export const usePurchaseOrderManagement = () => {
       return poData.id;
     } catch (error) {
       console.error('Error creating purchase order:', error);
+      
+      let errorMessage = "Failed to create purchase order";
+      
+      // Enhanced error handling for specific error types
+      if (error instanceof Error) {
+        if (error.message.includes('violates check constraint') || 
+            error.message.includes('generated always')) {
+          errorMessage = "Database constraint error. Please contact support.";
+        } else if (error.message.includes('duplicate key value') || 
+                   error.message.includes('already exists')) {
+          // Retry with new PO number on duplicate
+          try {
+            const newPoNumber = await generatePONumber();
+            console.log('Retrying with new PO number:', newPoNumber);
+            // Could implement retry logic here if needed
+          } catch (retryError) {
+            console.error('Retry failed:', retryError);
+          }
+          errorMessage = "PO number conflict. Please try again.";
+        }
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to create purchase order",
+        description: errorMessage,
         variant: "destructive",
       });
       return null;

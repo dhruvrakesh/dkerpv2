@@ -364,6 +364,60 @@ export type Database = {
           },
         ]
       }
+      bpmn_audit_trail: {
+        Row: {
+          action_details: Json
+          action_type: string
+          ai_suggestion_data: Json | null
+          bpmn_file_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string
+          version_id: string | null
+        }
+        Insert: {
+          action_details?: Json
+          action_type: string
+          ai_suggestion_data?: Json | null
+          bpmn_file_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id: string
+          version_id?: string | null
+        }
+        Update: {
+          action_details?: Json
+          action_type?: string
+          ai_suggestion_data?: Json | null
+          bpmn_file_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string
+          version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bpmn_audit_trail_bpmn_file_id_fkey"
+            columns: ["bpmn_file_id"]
+            isOneToOne: false
+            referencedRelation: "bpmn_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bpmn_audit_trail_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "bpmn_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bpmn_files: {
         Row: {
           created_at: string | null
@@ -435,6 +489,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      bpmn_versions: {
+        Row: {
+          ai_suggestions_applied: Json | null
+          bpmn_file_id: string
+          bpmn_xml: string
+          change_summary: string | null
+          created_at: string
+          created_by: string
+          file_path: string | null
+          file_size: number | null
+          id: string
+          metadata: Json | null
+          version_number: number
+          version_type: string
+        }
+        Insert: {
+          ai_suggestions_applied?: Json | null
+          bpmn_file_id: string
+          bpmn_xml: string
+          change_summary?: string | null
+          created_at?: string
+          created_by: string
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          metadata?: Json | null
+          version_number?: number
+          version_type: string
+        }
+        Update: {
+          ai_suggestions_applied?: Json | null
+          bpmn_file_id?: string
+          bpmn_xml?: string
+          change_summary?: string | null
+          created_at?: string
+          created_by?: string
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          metadata?: Json | null
+          version_number?: number
+          version_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bpmn_versions_bpmn_file_id_fkey"
+            columns: ["bpmn_file_id"]
+            isOneToOne: false
+            referencedRelation: "bpmn_files"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categories: {
         Row: {
@@ -7820,6 +7927,15 @@ export type Database = {
           count: number
         }[]
       }
+      create_ai_revised_version: {
+        Args: {
+          p_bpmn_file_id: string
+          p_revised_xml: string
+          p_suggestions_applied: Json
+          p_change_summary?: string
+        }
+        Returns: string
+      }
       dkegl_analyze_consumption_patterns: {
         Args: { _org_id: string; _item_code?: string }
         Returns: {
@@ -7996,6 +8112,10 @@ export type Database = {
           size_mm?: string
           gsm?: number
         }
+        Returns: string
+      }
+      dkegl_generate_po_number: {
+        Args: { _org_id: string }
         Returns: string
       }
       dkegl_generate_vendor_code: {
@@ -8455,6 +8575,14 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      log_bpmn_download: {
+        Args: {
+          p_bpmn_file_id: string
+          p_version_id?: string
+          p_download_type?: string
+        }
+        Returns: undefined
       }
       set_limit: {
         Args: { "": number }
