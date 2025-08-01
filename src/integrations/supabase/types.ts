@@ -8284,7 +8284,7 @@ export type Database = {
         Returns: Json
       }
       dkegl_run_emergency_cleanup: {
-        Args: { _org_id?: string }
+        Args: { _org_code?: string } | { _org_id?: string }
         Returns: Json
       }
       dkegl_safe_populate_stock_summary: {
