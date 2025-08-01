@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
   TrendingDown,
@@ -57,6 +58,7 @@ interface PriceAlert {
 
 export function GRNPricingAnalytics() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [grnTrends, setGrnTrends] = useState<GRNPriceTrend[]>([]);
   const [vendorPerformance, setVendorPerformance] = useState<VendorPerformance[]>([]);
@@ -260,6 +262,10 @@ export function GRNPricingAnalytics() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate('/inventory/pricing')}>
+            <DollarSign className="h-4 w-4 mr-2" />
+            Stock Valuation
+          </Button>
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Export Report

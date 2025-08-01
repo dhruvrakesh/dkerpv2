@@ -66,6 +66,7 @@ const navigation = [
       { name: "Dashboard", href: "/procurement/dashboard" },
       { name: "Vendors", href: "/procurement/vendors" },
       { name: "Purchase Orders", href: "/procurement/purchase-orders" },
+      { name: "GRN Pricing Analytics", href: "/procurement/grn-pricing" },
     ]
   },
   {

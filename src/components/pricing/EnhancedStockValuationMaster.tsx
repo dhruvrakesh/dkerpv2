@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import {
   DollarSign,
   Plus,
@@ -24,7 +25,8 @@ import {
   TrendingUp,
   Calculator,
   FileCheck,
-  History
+  History,
+  BarChart3
 } from 'lucide-react';
 
 interface StandardCostRecord {
@@ -73,6 +75,7 @@ interface ValuationSummary {
 
 export function EnhancedStockValuationMaster() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [standardCosts, setStandardCosts] = useState<StandardCostRecord[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalWorkflow[]>([]);
@@ -344,6 +347,13 @@ export function EnhancedStockValuationMaster() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/procurement/grn-pricing')}
+          >
+            <BarChart3 className="h-4 w-4 mr-2" />
+            View GRN Pricing
+          </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => { resetForm(); setSelectedRecord(null); }}>
