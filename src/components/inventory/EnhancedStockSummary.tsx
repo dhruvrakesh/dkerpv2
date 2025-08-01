@@ -33,6 +33,7 @@ interface SummaryTotals {
   total_current: number;
   total_calculated: number;
   total_variance: number;
+  total_items: number;
 }
 
 export const EnhancedStockSummary = () => {
@@ -47,7 +48,8 @@ export const EnhancedStockSummary = () => {
     total_issued: 0,
     total_current: 0,
     total_calculated: 0,
-    total_variance: 0
+    total_variance: 0,
+    total_items: 0,
   });
 
   const loadStockSummary = async () => {
@@ -92,7 +94,8 @@ export const EnhancedStockSummary = () => {
         total_issued: 0,
         total_current: 0,
         total_calculated: 0,
-        total_variance: 0
+        total_variance: 0,
+        total_items: 0,
       };
 
       setSummaryTotals(totals);

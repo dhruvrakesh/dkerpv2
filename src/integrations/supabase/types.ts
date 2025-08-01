@@ -8193,14 +8193,13 @@ export type Database = {
       dkegl_get_stock_analytics_totals: {
         Args: { _org_id: string }
         Returns: {
+          total_opening: number
+          total_grn: number
+          total_issued: number
+          total_current: number
+          total_calculated: number
+          total_variance: number
           total_items: number
-          total_value: number
-          out_of_stock_items: number
-          low_stock_items: number
-          in_stock_items: number
-          negative_stock_items: number
-          total_locations: number
-          last_updated: string
         }[]
       }
       dkegl_get_stock_health_metrics: {
