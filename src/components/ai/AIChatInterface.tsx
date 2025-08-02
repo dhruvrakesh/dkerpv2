@@ -28,9 +28,10 @@ interface AIChatInterfaceProps {
   contextType?: string;
   contextData?: any;
   className?: string;
+  stockSummaryData?: any; // Add stock data direct bridge
 }
 
-export function AIChatInterface({ contextType = 'general', contextData = {}, className }: AIChatInterfaceProps) {
+export function AIChatInterface({ contextType = 'general', contextData = {}, className, stockSummaryData }: AIChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -77,7 +78,10 @@ export function AIChatInterface({ contextType = 'general', contextData = {}, cla
           sessionId,
           message: userMessage,
           contextType: selectedContext,
-          contextData,
+          contextData: {
+            ...contextData,
+            ...(stockSummaryData && { stockSummary: stockSummaryData })
+          },
           model: 'gpt-4o-mini',
           streaming: false
         }

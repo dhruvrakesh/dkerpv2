@@ -77,9 +77,18 @@ export function useOpeningStockManagement() {
 
   const fetchAuditTrail = useCallback(async () => {
     try {
+      // Get current user's organization context first
+      const { data: orgData, error: orgError } = await supabase.rpc('dkegl_get_current_user_org');
+      
+      if (orgError) {
+        console.error('Failed to get organization context:', orgError);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('dkegl_audit_log')
         .select('*')
+        .eq('organization_id', orgData)
         .eq('table_name', 'opening_stock')
         .order('created_at', { ascending: false })
         .limit(50);

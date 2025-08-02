@@ -296,6 +296,27 @@ serve(async (req) => {
 });
 
 async function buildSystemPrompt(contextType: string, contextData: any, userOrg: string | null, supabase: any): Promise<string> {
+  let stockSummaryContext = '';
+  
+  // Include stock summary data directly if provided in context
+  if (contextData && contextData.stockSummary) {
+    const stockData = contextData.stockSummary;
+    const stockCount = Array.isArray(stockData) ? stockData.length : 0;
+    const totalValue = Array.isArray(stockData) 
+      ? stockData.reduce((sum, item) => sum + ((item.current_qty || 0) * (item.unit_cost || 0)), 0)
+      : 0;
+    const lowStockCount = Array.isArray(stockData)
+      ? stockData.filter(item => (item.current_qty || 0) <= (item.reorder_level || 10)).length
+      : 0;
+    
+    stockSummaryContext = `\n\nREAL-TIME STOCK SUMMARY (${stockCount} items):
+    - Total stock value: ${totalValue.toLocaleString()}
+    - Low stock items: ${lowStockCount}
+    - Zero stock items: ${Array.isArray(stockData) ? stockData.filter(item => (item.current_qty || 0) <= 0).length : 0}
+    
+    You have direct access to this comprehensive stock data. Use it to answer specific questions about inventory without making function calls for basic stock queries.`;
+  }
+
   const basePrompt = `You are an AI assistant integrated into the DKEGL Enterprise ERP system. You help users with manufacturing, inventory, analytics, and general business operations.
 
 You have access to real-time ERP data through function calls. Use these functions to provide accurate, data-driven responses:
@@ -306,10 +327,11 @@ You have access to real-time ERP data through function calls. Use these function
 - get_memory_insights: Access historical trends and patterns from daily snapshots
 
 Current context: ${contextType}
-Context data: ${JSON.stringify(contextData)}
+Context data: ${JSON.stringify(contextData)}${stockSummaryContext}
 
 Guidelines:
 - Use function calls to get real-time data when users ask about specific metrics
+- If stock summary data is provided in context, use it directly for inventory questions
 - Be helpful, accurate, and concise
 - Focus on ERP-related tasks and manufacturing processes
 - Provide actionable insights and recommendations based on actual data
@@ -680,39 +702,71 @@ async function getPredictiveInsights(args: any, userOrg: string, supabase: any) 
 }
 
 async function getInventoryStatus(args: any, userOrg: string, supabase: any) {
-  // First try to get from stock summary, fallback to stock table
-  let summaryQuery = supabase
-    .from('dkegl_stock_summary')
-    .select('*');
+  // Use the comprehensive stock summary RPC that works correctly
+  try {
+    const { data: comprehensiveData, error: rpcError } = await supabase.rpc('dkegl_get_comprehensive_stock_summary', {
+      _org_id: userOrg
+    });
 
-  if (args.item_code) {
-    summaryQuery = summaryQuery.eq('item_code', args.item_code);
+    if (rpcError) {
+      console.error('Comprehensive stock summary RPC failed:', rpcError);
+      // Fallback to direct table query
+    } else if (comprehensiveData && comprehensiveData.length > 0) {
+      let filteredData = comprehensiveData;
+
+      // Apply filters
+      if (args.item_code) {
+        filteredData = filteredData.filter(item => item.item_code === args.item_code);
+      }
+
+      if (args.category) {
+        filteredData = filteredData.filter(item => 
+          item.category_name && item.category_name.toLowerCase().includes(args.category.toLowerCase())
+        );
+      }
+
+      if (args.low_stock_only) {
+        filteredData = filteredData.filter(item => 
+          item.current_qty <= (item.reorder_level || 10) || item.reorder_suggested
+        );
+      }
+
+      // Limit results and sort
+      filteredData = filteredData
+        .sort((a, b) => (b.current_qty || 0) - (a.current_qty || 0))
+        .slice(0, 50);
+
+      return {
+        inventory_data: filteredData,
+        summary: {
+          total_items: comprehensiveData.length,
+          low_stock_items: comprehensiveData.filter(item => 
+            item.current_qty <= (item.reorder_level || 10)
+          ).length,
+          zero_stock_items: comprehensiveData.filter(item => 
+            (item.current_qty || 0) <= 0
+          ).length,
+          total_value: comprehensiveData.reduce((sum, item) => 
+            sum + ((item.current_qty || 0) * (item.unit_cost || 0)), 0
+          )
+        }
+      };
+    }
+  } catch (error) {
+    console.error('Error using comprehensive stock summary:', error);
   }
 
-  if (args.category) {
-    summaryQuery = summaryQuery.eq('category_name', args.category);
-  }
-
-  if (args.low_stock_only) {
-    summaryQuery = summaryQuery.or('reorder_suggested.eq.true,current_qty.lte.reorder_level');
-  }
-
-  summaryQuery = summaryQuery.limit(50).order('current_qty', { ascending: false });
-
-  const { data: summaryData } = await summaryQuery;
-
-  // If no summary data, get from stock table
-  if (!summaryData || summaryData.length === 0) {
-    let query = supabase
-      .from('dkegl_stock')
+  // Fallback to direct stock table query if comprehensive data failed
+  let query = supabase
+    .from('dkegl_stock')
     .select(`
       item_code, 
       current_qty, 
       unit_cost,
       last_transaction_date,
       location,
-      item_master:dkegl_item_master!inner(item_name, reorder_level),
-      category:dkegl_item_master!inner(category:dkegl_categories(category_name))
+      dkegl_item_master!inner(item_name, reorder_level, category_id),
+      dkegl_categories!inner(category_name)
     `)
     .eq('organization_id', userOrg);
 
@@ -721,12 +775,12 @@ async function getInventoryStatus(args: any, userOrg: string, supabase: any) {
   }
 
   if (args.low_stock_only) {
-    // Filter for items below reorder level
-    query = query.lt('current_qty', 'item_master.reorder_level');
+    // Filter for items below reorder level (using a basic threshold)
+    query = query.lte('current_qty', 10);
   }
 
   if (args.category) {
-    query = query.ilike('category.category_name', `%${args.category}%`);
+    query = query.ilike('dkegl_categories.category_name', `%${args.category}%`);
   }
 
   query = query.order('current_qty', { ascending: true }).limit(20);
@@ -740,13 +794,13 @@ async function getInventoryStatus(args: any, userOrg: string, supabase: any) {
   // Transform data to match expected format
   const transformedData = data?.map(item => ({
     item_code: item.item_code,
-    item_name: item.item_master?.item_name,
-    category_name: item.category?.category_name,
+    item_name: item.dkegl_item_master?.item_name,
+    category_name: item.dkegl_categories?.category_name,
     current_qty: item.current_qty,
     unit_cost: item.unit_cost,
     total_value: item.current_qty * (item.unit_cost || 0),
-    reorder_level: item.item_master?.reorder_level,
-    low_stock: item.current_qty <= (item.item_master?.reorder_level || 0),
+    reorder_level: item.dkegl_item_master?.reorder_level,
+    low_stock: item.current_qty <= (item.dkegl_item_master?.reorder_level || 10),
     last_transaction_date: item.last_transaction_date,
     location: item.location
   }));

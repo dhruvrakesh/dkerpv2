@@ -1,10 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { InventoryLayout } from '@/components/layout/InventoryLayout';
 import { AIChatInterface } from '@/components/ai/AIChatInterface';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Brain, MessageSquare, Zap, Shield } from 'lucide-react';
+import { useStockAnalysisContext } from '@/hooks/useStockAnalysisContext';
 
 export default function AIAssistant() {
+  const { stockData, refreshData, loading } = useStockAnalysisContext();
+
+  // Refresh stock data when component mounts
+  useEffect(() => {
+    if (!loading && (!stockData || stockData.length === 0)) {
+      refreshData();
+    }
+  }, [refreshData, loading, stockData]);
+
   return (
     <InventoryLayout>
       <div className="space-y-6">
@@ -13,13 +23,17 @@ export default function AIAssistant() {
           <h1 className="text-3xl font-bold tracking-tight">AI Assistant</h1>
           <p className="text-muted-foreground">
             Get intelligent insights and assistance for your ERP operations
+            {stockData.length > 0 && ` (${stockData.length} stock items loaded)`}
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Chat Interface */}
+          {/* Chat Interface with Stock Data Context */}
           <div className="lg:col-span-2">
-            <AIChatInterface contextType="manufacturing" />
+            <AIChatInterface 
+              contextType="inventory" 
+              stockSummaryData={stockData}
+            />
           </div>
 
           {/* Features Sidebar */}
