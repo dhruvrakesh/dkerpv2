@@ -6,7 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Download, Upload, FileSpreadsheet, History, AlertTriangle, CheckCircle, Edit3 } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Download, Upload, FileSpreadsheet, History, AlertTriangle, CheckCircle, Edit3, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import { useOpeningStockManagement } from '@/hooks/useOpeningStockManagement';
 import { OpeningStockImportDialog } from './OpeningStockImportDialog';
@@ -21,6 +25,12 @@ export function OpeningStockManagementDashboard() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [updating, setUpdating] = useState(false);
+  
+  // Sorting and Pagination State
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   
   const {
     openingStock,
@@ -93,11 +103,93 @@ export function OpeningStockManagementDashboard() {
     }).format(amount);
   };
 
-  // Calculate summary metrics
-  const totalItems = openingStock?.length || 0;
+  // Sorting and Pagination Logic
+  const sortedData = React.useMemo(() => {
+    if (!openingStock || !sortColumn) return openingStock || [];
+    
+    return [...openingStock].sort((a, b) => {
+      let aValue = a[sortColumn as keyof typeof a];
+      let bValue = b[sortColumn as keyof typeof b];
+      
+      // Handle numeric columns
+      if (sortColumn === 'opening_qty' || sortColumn === 'unit_cost') {
+        aValue = Number(aValue) || 0;
+        bValue = Number(bValue) || 0;
+      }
+      
+      // Handle calculated total value
+      if (sortColumn === 'total_value') {
+        aValue = (a.opening_qty * a.unit_cost) || 0;
+        bValue = (b.opening_qty * b.unit_cost) || 0;
+      }
+      
+      // String comparison for other columns
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+      
+      // Numeric comparison
+      if (sortDirection === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+  }, [openingStock, sortColumn, sortDirection]);
+
+  // Pagination calculations
+  const totalItems = sortedData?.length || 0;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = sortedData?.slice(startIndex, endIndex) || [];
+
+  // Summary metrics
   const totalValue = openingStock?.reduce((sum, item) => sum + (item.opening_qty * item.unit_cost), 0) || 0;
   const validItems = openingStock?.filter(item => item.is_valid)?.length || 0;
   const invalidItems = totalItems - validItems;
+
+  // Table columns configuration
+  const columns = [
+    { key: 'item_code', label: 'Item Code', sortable: true },
+    { key: 'item_name', label: 'Item Name', sortable: true },
+    { key: 'opening_qty', label: 'Opening Qty', sortable: true },
+    { key: 'unit_cost', label: 'Unit Cost', sortable: true },
+    { key: 'total_value', label: 'Total Value', sortable: true },
+    { key: 'is_valid', label: 'Status', sortable: false },
+  ];
+
+  // Sorting handlers
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1); // Reset to first page when sorting
+  };
+
+  const renderSortIcon = (column: string) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="ml-2 h-4 w-4" />
+      : <ArrowDown className="ml-2 h-4 w-4" />;
+  };
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
 
   return (
     <div className="space-y-6">
@@ -201,56 +293,160 @@ export function OpeningStockManagementDashboard() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-sm text-muted-foreground">Loading opening stock data...</div>
+                <div className="space-y-4">
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {columns.map((column) => (
+                            <TableHead key={column.key}>
+                              <Skeleton className="h-4 w-20" />
+                            </TableHead>
+                          ))}
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Array.from({ length: 10 }).map((_, index) => (
+                          <TableRow key={index}>
+                            {columns.map((column) => (
+                              <TableCell key={column.key}>
+                                <Skeleton className="h-4 w-full" />
+                              </TableCell>
+                            ))}
+                            <TableCell>
+                              <Skeleton className="h-8 w-8" />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               ) : openingStock && openingStock.length > 0 ? (
                 <div className="space-y-4">
-                  {/* Data table would go here */}
-                  <div className="border rounded-md">
-                    <div className="p-4 border-b bg-muted/50">
-                      <div className="grid grid-cols-7 gap-4 text-sm font-medium">
-                        <div>Item Code</div>
-                        <div>Item Name</div>
-                        <div>Opening Qty</div>
-                        <div>Unit Cost</div>
-                        <div>Total Value</div>
-                        <div>Status</div>
-                        <div>Actions</div>
+                  {/* Sortable and Paginated Table */}
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {columns.map((column) => (
+                            <TableHead 
+                              key={column.key}
+                              className={cn(
+                                column.sortable && "cursor-pointer select-none hover:bg-muted/50"
+                              )}
+                              onClick={() => column.sortable && handleSort(column.key)}
+                            >
+                              <div className="flex items-center">
+                                {column.label}
+                                {column.sortable && renderSortIcon(column.key)}
+                              </div>
+                            </TableHead>
+                          ))}
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedData.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={columns.length + 1} className="text-center py-8">
+                              No opening stock data found
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          paginatedData.map((item, index) => (
+                            <TableRow key={`${item.item_code}-${index}`}>
+                              <TableCell className="font-medium font-mono">{item.item_code}</TableCell>
+                              <TableCell className="max-w-[250px] truncate" title={item.item_name}>
+                                {item.item_name}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {item.opening_qty.toLocaleString()}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(item.unit_cost)}
+                              </TableCell>
+                              <TableCell className="text-right font-medium">
+                                {formatCurrency(item.opening_qty * item.unit_cost)}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={item.is_valid ? "default" : "destructive"}>
+                                  {item.is_valid ? "Valid" : "Invalid"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleEditItem(item)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Edit3 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center space-x-2">
+                      <p className="text-sm text-muted-foreground">
+                        Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} entries
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center space-x-6">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Rows per page</p>
+                        <Select
+                          value={pageSize.toString()}
+                          onValueChange={(value) => handlePageSizeChange(Number(value))}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {[25, 50, 100].map((size) => (
+                              <SelectItem key={size} value={size.toString()}>
+                                {size}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">
+                          Page {currentPage} of {totalPages}
+                        </p>
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage <= 1}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                            <span className="sr-only">Previous page</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage >= totalPages}
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                            <span className="sr-only">Next page</span>
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {openingStock.slice(0, 50).map((item, index) => (
-                        <div key={index} className="p-4 border-b grid grid-cols-7 gap-4 text-sm items-center">
-                          <div className="font-mono">{item.item_code}</div>
-                          <div className="truncate">{item.item_name}</div>
-                          <div>{item.opening_qty}</div>
-                          <div>{formatCurrency(item.unit_cost)}</div>
-                          <div>{formatCurrency(item.opening_qty * item.unit_cost)}</div>
-                          <div>
-                            <Badge variant={item.is_valid ? "default" : "destructive"}>
-                              {item.is_valid ? "Valid" : "Invalid"}
-                            </Badge>
-                          </div>
-                          <div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEditItem(item)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Edit3 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
                   </div>
-                  {openingStock.length > 50 && (
-                    <p className="text-sm text-muted-foreground text-center">
-                      Showing first 50 of {openingStock.length} entries. Use export for complete data.
-                    </p>
-                  )}
                 </div>
               ) : (
                 <div className="text-center py-8">
