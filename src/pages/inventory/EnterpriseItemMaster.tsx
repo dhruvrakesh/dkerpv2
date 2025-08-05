@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { Textarea } from '@/components/ui/textarea';
 import { AlertCircle, Download, Edit, FileText, Plus, Upload, Package, Cog, Archive, Zap } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -881,6 +882,133 @@ export const EnterpriseItemMaster = () => {
     });
   };
 
+  // Handle form submission for add/edit item
+  const handleSubmit = async () => {
+    if (!userProfile?.organization_id) {
+      toast({
+        title: "Error",
+        description: "No organization found",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate required fields
+    if (!formData.item_name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Item name is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.category_id) {
+      toast({
+        title: "Validation Error", 
+        description: "Category is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      if (isEditing && formData.id) {
+        // Update existing item
+        const { error } = await supabase
+          .from('dkegl_item_master')
+          .update({
+            item_name: formData.item_name.trim(),
+            category_id: formData.category_id,
+            uom: formData.uom,
+            reorder_level: formData.reorder_level || 0,
+            reorder_quantity: formData.reorder_quantity || 0,
+            status: formData.status,
+            item_type: formData.item_type,
+            hsn_code: formData.hsn_code || null,
+            storage_location: formData.storage_location || null,
+            lead_time_days: formData.lead_time_days || 0,
+            weight_per_unit: formData.weight_per_unit || null,
+            artwork_reference: formData.artwork_reference || null,
+            specification_reference: formData.specification_reference || null,
+            parent_item_code: formData.parent_item_code || null,
+            technical_specs: formData.technical_specs || {},
+            quality_specs: formData.quality_specs || {},
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', formData.id)
+          .eq('organization_id', userProfile.organization_id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Item updated successfully"
+        });
+      } else {
+        // Generate item code for new item
+        const { data: codeResult, error: codeError } = await supabase
+          .rpc('dkegl_generate_item_code', {
+            _org_id: userProfile.organization_id,
+            category_name: categories.find(c => c.id === formData.category_id)?.category_name || 'ITEM',
+            qualifier: formData.item_name.split(' ')[0] || '',
+            size_mm: '',
+            gsm: null
+          });
+
+        if (codeError) throw codeError;
+
+        // Create new item
+        const { error } = await supabase
+          .from('dkegl_item_master')
+          .insert({
+            organization_id: userProfile.organization_id,
+            item_code: codeResult,
+            item_name: formData.item_name.trim(),
+            category_id: formData.category_id,
+            uom: formData.uom,
+            reorder_level: formData.reorder_level || 0,
+            reorder_quantity: formData.reorder_quantity || 0,
+            status: formData.status,
+            item_type: formData.item_type,
+            hsn_code: formData.hsn_code || null,
+            storage_location: formData.storage_location || null,
+            lead_time_days: formData.lead_time_days || 0,
+            weight_per_unit: formData.weight_per_unit || null,
+            artwork_reference: formData.artwork_reference || null,
+            specification_reference: formData.specification_reference || null,
+            parent_item_code: formData.parent_item_code || null,
+            technical_specs: formData.technical_specs || {},
+            quality_specs: formData.quality_specs || {}
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Item created successfully"
+        });
+      }
+
+      // Reset form and close dialog
+      resetForm();
+      
+      // Reload data
+      loadData();
+    } catch (error: any) {
+      console.error('Error saving item:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save item",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredItems = items.filter(item => {
     const matchesSearch = item.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.item_code.toLowerCase().includes(searchTerm.toLowerCase());
@@ -1290,11 +1418,232 @@ export const EnterpriseItemMaster = () => {
           </Dialog>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={() => {
+                resetForm();
+                setIsEditing(false);
+                setIsDialogOpen(true);
+              }}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Item
               </Button>
             </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {isEditing ? 'Edit Item' : 'Add New Item'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Basic Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="item_name">Item Name *</Label>
+                      <Input
+                        id="item_name"
+                        value={formData.item_name}
+                        onChange={(e) => setFormData({...formData, item_name: e.target.value})}
+                        placeholder="Enter item name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="category_id">Category *</Label>
+                      <Select 
+                        value={formData.category_id} 
+                        onValueChange={(value) => setFormData({...formData, category_id: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map(category => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.category_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="uom">Unit of Measure</Label>
+                      <Select 
+                        value={formData.uom} 
+                        onValueChange={(value) => setFormData({...formData, uom: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PCS">PCS</SelectItem>
+                          <SelectItem value="KG">KG</SelectItem>
+                          <SelectItem value="LTR">LTR</SelectItem>
+                          <SelectItem value="MTR">MTR</SelectItem>
+                          <SelectItem value="BOX">BOX</SelectItem>
+                          <SelectItem value="PKT">PKT</SelectItem>
+                          <SelectItem value="SET">SET</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="item_type">Item Type</Label>
+                      <Select 
+                        value={formData.item_type} 
+                        onValueChange={(value) => setFormData({...formData, item_type: value as any})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="raw_material">Raw Material</SelectItem>
+                          <SelectItem value="work_in_progress">Work in Progress</SelectItem>
+                          <SelectItem value="consumable">Consumable</SelectItem>
+                          <SelectItem value="finished_good">Finished Good</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Inventory Management */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Inventory Management</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="reorder_level">Reorder Level</Label>
+                      <Input
+                        id="reorder_level"
+                        type="number"
+                        value={formData.reorder_level}
+                        onChange={(e) => setFormData({...formData, reorder_level: Number(e.target.value)})}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="reorder_quantity">Reorder Quantity</Label>
+                      <Input
+                        id="reorder_quantity"
+                        type="number"
+                        value={formData.reorder_quantity}
+                        onChange={(e) => setFormData({...formData, reorder_quantity: Number(e.target.value)})}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lead_time_days">Lead Time (Days)</Label>
+                      <Input
+                        id="lead_time_days"
+                        type="number"
+                        value={formData.lead_time_days}
+                        onChange={(e) => setFormData({...formData, lead_time_days: Number(e.target.value)})}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Details */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Additional Details</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="hsn_code">HSN Code</Label>
+                      <Input
+                        id="hsn_code"
+                        value={formData.hsn_code || ''}
+                        onChange={(e) => setFormData({...formData, hsn_code: e.target.value})}
+                        placeholder="Enter HSN code"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="storage_location">Storage Location</Label>
+                      <Input
+                        id="storage_location"
+                        value={formData.storage_location || ''}
+                        onChange={(e) => setFormData({...formData, storage_location: e.target.value})}
+                        placeholder="Enter storage location"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="weight_per_unit">Weight Per Unit</Label>
+                      <Input
+                        id="weight_per_unit"
+                        type="number"
+                        step="0.001"
+                        value={formData.weight_per_unit}
+                        onChange={(e) => setFormData({...formData, weight_per_unit: Number(e.target.value)})}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="status">Status</Label>
+                      <Select 
+                        value={formData.status} 
+                        onValueChange={(value) => setFormData({...formData, status: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* References */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">References</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Label htmlFor="artwork_reference">Artwork Reference</Label>
+                      <Input
+                        id="artwork_reference"
+                        value={formData.artwork_reference || ''}
+                        onChange={(e) => setFormData({...formData, artwork_reference: e.target.value})}
+                        placeholder="Enter artwork reference"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="specification_reference">Specification Reference</Label>
+                      <Input
+                        id="specification_reference"
+                        value={formData.specification_reference || ''}
+                        onChange={(e) => setFormData({...formData, specification_reference: e.target.value})}
+                        placeholder="Enter specification reference"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="parent_item_code">Parent Item Code</Label>
+                      <Input
+                        id="parent_item_code"
+                        value={formData.parent_item_code || ''}
+                        onChange={(e) => setFormData({...formData, parent_item_code: e.target.value})}
+                        placeholder="Enter parent item code (for BOM)"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-4 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      resetForm();
+                      setIsDialogOpen(false);
+                    }}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={loading || !formData.item_name.trim() || !formData.category_id}
+                  >
+                    {loading ? 'Saving...' : (isEditing ? 'Update Item' : 'Create Item')}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
           </Dialog>
         </div>
       </div>
