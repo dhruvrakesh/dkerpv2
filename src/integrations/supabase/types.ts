@@ -5668,6 +5668,45 @@ export type Database = {
         }
         Relationships: []
       }
+      dkegl_stock_reconciliation_log: {
+        Row: {
+          created_at: string | null
+          id: string
+          items_processed: number | null
+          items_updated: number | null
+          organization_id: string
+          reconciliation_summary: Json | null
+          reconciliation_type: string
+          total_value_after: number | null
+          total_value_before: number | null
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          items_processed?: number | null
+          items_updated?: number | null
+          organization_id: string
+          reconciliation_summary?: Json | null
+          reconciliation_type: string
+          total_value_after?: number | null
+          total_value_before?: number | null
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          items_processed?: number | null
+          items_updated?: number | null
+          organization_id?: string
+          reconciliation_summary?: Json | null
+          reconciliation_type?: string
+          total_value_after?: number | null
+          total_value_before?: number | null
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       dkegl_stock_snapshots: {
         Row: {
           created_at: string | null
@@ -10424,7 +10463,7 @@ export type Database = {
         Returns: Json
       }
       dkegl_reconcile_stock_data: {
-        Args: { p_org_id: string }
+        Args: { _org_id: string }
         Returns: Json
       }
       dkegl_refresh_stock_summary: {
