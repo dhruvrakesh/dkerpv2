@@ -81,7 +81,7 @@ export const EnterpriseStockDashboard = () => {
 
       // Load stock data and metrics in parallel using comprehensive functions
       const [stockResponse, metricsResponse] = await Promise.all([
-        supabase.rpc('dkegl_get_comprehensive_stock_summary', { _org_id: orgId }),
+        supabase.rpc('dkegl_get_comprehensive_stock_summary', { p_org_id: orgId }),
         supabase.rpc('dkegl_get_stock_metrics', { _org_id: orgId })
       ]);
 

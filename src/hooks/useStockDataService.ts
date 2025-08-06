@@ -39,7 +39,7 @@ export const useStockDataService = (): StockDataService => {
     try {
       const { data, error } = await supabase.rpc(
         'dkegl_get_comprehensive_stock_summary',
-        { _org_id: organization.id }
+        { p_org_id: organization.id }
       );
       
       if (error) throw error;

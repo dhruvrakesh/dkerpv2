@@ -70,7 +70,7 @@ export const EnhancedStockSummary = () => {
 
       // Use the new comprehensive stock summary function
       const { data, error } = await supabase.rpc('dkegl_get_comprehensive_stock_summary', {
-        _org_id: orgId
+        p_org_id: orgId
       });
 
       if (error) {
