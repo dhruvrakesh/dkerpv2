@@ -12,18 +12,22 @@ interface StockBreakdown {
   item_code: string;
   item_name: string;
   category_name: string;
+  uom: string;
+  opening_qty: number;
+  total_grn_qty: number;
+  total_issued_qty: number;
   current_qty: number;
+  calculated_qty: number;
+  variance_qty: number;
   unit_cost: number;
   total_value: number;
   last_transaction_date: string;
-  location: string;
   reorder_level: number;
+  reorder_quantity: number;
+  days_since_last_movement: number;
+  stock_status: string;
+  location: string;
   is_low_stock: boolean;
-  opening_qty?: number;
-  total_grn_qty?: number;
-  total_issued_qty?: number;
-  calculated_qty?: number;
-  variance_qty?: number;
 }
 
 interface SummaryTotals {
@@ -75,7 +79,10 @@ export const EnhancedStockSummary = () => {
       }
 
       console.log('Comprehensive stock summary data loaded:', data?.length || 0, 'records');
-      const stockBreakdown = data || [];
+      const stockBreakdown = (data || []).map((item: any) => ({
+        ...item,
+        is_low_stock: item.stock_status === 'Low Stock' || item.stock_status === 'Out of Stock'
+      }));
       setBreakdown(stockBreakdown);
 
       // Get aggregated totals using the new function

@@ -3,11 +3,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 import { useToast } from '@/hooks/use-toast';
 
+interface StockReconciliationResult {
+  success: boolean;
+  reconciled_items: number;
+  total_items: number;
+  consolidated_location: string;
+  calculation_formula: string;
+  reconciliation_timestamp: string;
+}
+
 interface StockDataService {
   // Centralized stock data fetching
   fetchComprehensiveStockData: () => Promise<any[]>;
   fetchStockAnalytics: () => Promise<any>;
-  runStockReconciliation: () => Promise<void>;
+  runStockReconciliation: () => Promise<StockReconciliationResult>;
   validateStockData: (data: any[]) => { isValid: boolean; errors: string[] };
   
   // Loading states
@@ -67,30 +76,35 @@ export const useStockDataService = (): StockDataService => {
     }
   }, [organization?.id]);
 
-  const runStockReconciliation = useCallback(async () => {
-    if (!organization?.id) return;
+  const runStockReconciliation = useCallback(async (): Promise<StockReconciliationResult> => {
+    if (!organization?.id) {
+      throw new Error('Organization ID is required');
+    }
     
     setLoading(true);
     setError(null);
     
     try {
-      const { data, error } = await supabase.functions.invoke('stock-reconciliation', {
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-        },
+      // Use the new stock reconciliation function
+      const { data, error } = await supabase.rpc('dkegl_reconcile_stock_data', {
+        _org_id: organization.id
       });
 
       if (error) throw error;
       
+      const result = data as unknown as StockReconciliationResult;
+      
       toast({
-        title: "Stock Reconciliation Complete",
-        description: `Reconciled ${data?.consolidated_items || 0} items successfully.`,
+        title: "Stock Consolidation Complete",
+        description: `Reconciled ${result?.reconciled_items || 0} items. All stock consolidated under main_warehouse.`,
       });
+      
+      return result;
     } catch (err) {
-      const errorMsg = err instanceof Error ? err : new Error('Failed to run reconciliation');
+      const errorMsg = err instanceof Error ? err : new Error('Failed to run stock consolidation');
       setError(errorMsg);
       toast({
-        title: "Reconciliation Failed",
+        title: "Consolidation Failed",
         description: errorMsg.message,
         variant: "destructive",
       });

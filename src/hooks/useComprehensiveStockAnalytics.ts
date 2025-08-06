@@ -8,18 +8,23 @@ interface ComprehensiveStockItem {
   item_code: string;
   item_name: string;
   category_name: string;
-  current_qty: number;
-  unit_cost: number;
-  total_value: number;
-  last_transaction_date: string;
-  location: string;
-  reorder_level: number;
-  is_low_stock: boolean;
+  uom: string;
   opening_qty: number;
   total_grn_qty: number;
   total_issued_qty: number;
+  current_qty: number;
   calculated_qty: number;
   variance_qty: number;
+  unit_cost: number;
+  total_value: number;
+  last_transaction_date: string;
+  reorder_level: number;
+  reorder_quantity: number;
+  days_since_last_movement: number;
+  stock_status: string;
+  location: string;
+  // Legacy compatibility field
+  is_low_stock?: boolean;
 }
 
 interface StockAnalyticsTotals {
@@ -50,7 +55,14 @@ export const useComprehensiveStockAnalytics = () => {
         );
 
         if (error) throw error;
-        return data || [];
+        
+        // Add legacy compatibility field
+        const processedData = (data || []).map((item: any) => ({
+          ...item,
+          is_low_stock: item.stock_status === 'Low Stock' || item.stock_status === 'Out of Stock'
+        }));
+        
+        return processedData;
       } catch (error) {
         console.error('Failed to fetch comprehensive stock data:', error);
         throw error;

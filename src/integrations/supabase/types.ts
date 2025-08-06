@@ -8897,18 +8897,21 @@ export type Database = {
           item_code: string
           item_name: string
           category_name: string
-          current_qty: number
-          unit_cost: number
-          total_value: number
-          last_transaction_date: string
-          location: string
-          reorder_level: number
-          is_low_stock: boolean
+          uom: string
           opening_qty: number
           total_grn_qty: number
           total_issued_qty: number
+          current_qty: number
           calculated_qty: number
           variance_qty: number
+          unit_cost: number
+          total_value: number
+          last_transaction_date: string
+          reorder_level: number
+          reorder_quantity: number
+          days_since_last_movement: number
+          stock_status: string
+          location: string
         }[]
       }
       dkegl_get_context_inventory_data: {
