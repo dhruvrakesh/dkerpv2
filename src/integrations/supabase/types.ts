@@ -10162,26 +10162,21 @@ export type Database = {
         Returns: Json
       }
       dkegl_get_comprehensive_stock_summary: {
-        Args: { _org_id: string }
+        Args: { p_org_id: string }
         Returns: {
           item_code: string
           item_name: string
           category_name: string
-          uom: string
+          current_qty: number
           opening_qty: number
           total_grn_qty: number
           total_issued_qty: number
-          current_qty: number
           calculated_qty: number
-          variance_qty: number
           unit_cost: number
           total_value: number
-          last_transaction_date: string
-          reorder_level: number
-          reorder_quantity: number
-          days_since_last_movement: number
+          last_movement_date: string
           stock_status: string
-          location: string
+          is_low_stock: boolean
         }[]
       }
       dkegl_get_context_inventory_data: {
@@ -10429,7 +10424,7 @@ export type Database = {
         Returns: Json
       }
       dkegl_reconcile_stock_data: {
-        Args: { _org_id: string }
+        Args: { p_org_id: string }
         Returns: Json
       }
       dkegl_refresh_stock_summary: {
