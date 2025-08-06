@@ -7479,6 +7479,48 @@ export type Database = {
         }
         Relationships: []
       }
+      dkeglpkl_stock: {
+        Row: {
+          bin: string
+          created_at: string
+          current_qty: number
+          id: string
+          item_code: string
+          last_transaction_date: string | null
+          last_updated: string
+          location: string
+          org_id: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          bin?: string
+          created_at?: string
+          current_qty?: number
+          id?: string
+          item_code: string
+          last_transaction_date?: string | null
+          last_updated?: string
+          location?: string
+          org_id: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          bin?: string
+          created_at?: string
+          current_qty?: number
+          id?: string
+          item_code?: string
+          last_transaction_date?: string | null
+          last_updated?: string
+          location?: string
+          org_id?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dkeglpkl_stock_ledger: {
         Row: {
           bin_id: string | null
@@ -9713,70 +9755,24 @@ export type Database = {
       }
       dkeglpkl_stock_balance: {
         Row: {
-          avg_rate: number | null
-          base_uom_id: string | null
+          bin: string | null
           bin_code: string | null
-          bin_id: string | null
           bin_name: string | null
+          current_qty: number | null
           item_code: string | null
-          item_id: string | null
           item_name: string | null
           item_type: string | null
           last_transaction_date: string | null
-          location_code: string | null
-          location_id: string | null
+          location: string | null
           location_name: string | null
-          lot_id: string | null
-          lot_number: string | null
+          movement_status: string | null
           org_id: string | null
-          quantity_base: number | null
-          total_value: number | null
+          unit_cost: number | null
           uom_code: string | null
+          uom_name: string | null
+          value_amount: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "dkeglpkl_item_base_uom_id_fkey"
-            columns: ["base_uom_id"]
-            isOneToOne: false
-            referencedRelation: "dkeglpkl_uom"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dkeglpkl_stock_ledger_bin_id_fkey"
-            columns: ["bin_id"]
-            isOneToOne: false
-            referencedRelation: "dkeglpkl_bin"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dkeglpkl_stock_ledger_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "dkeglpkl_item"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dkeglpkl_stock_ledger_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "dkeglpkl_location"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dkeglpkl_stock_ledger_lot_id_fkey"
-            columns: ["lot_id"]
-            isOneToOne: false
-            referencedRelation: "dkeglpkl_lot"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dkeglpkl_stock_ledger_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "dkeglpkl_org"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       dkpkl_unified_purchase_view: {
         Row: {
@@ -10493,7 +10489,7 @@ export type Database = {
         Returns: string
       }
       dkeglpkl_generate_bin_code: {
-        Args: { _org_id: string; _location_id: string }
+        Args: { _org_id: string } | { _org_id: string; _location_id: string }
         Returns: string
       }
       dkeglpkl_generate_grn_number: {
