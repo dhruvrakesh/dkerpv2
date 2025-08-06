@@ -10,6 +10,7 @@ import { OpeningStockImportDialog } from './OpeningStockImportDialog';
 import { OpeningStockExportDialog } from './OpeningStockExportDialog';
 import { OpeningStockEditModal } from './OpeningStockEditModal';
 import { OpeningStockAddItemDialog } from './OpeningStockAddItemDialog';
+import { AutoStockReconciliation } from './AutoStockReconciliation';
 import { toast } from '@/hooks/use-toast';
 
 export function OpeningStockManagementDashboard() {
@@ -95,6 +96,9 @@ export function OpeningStockManagementDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Auto Stock Reconciliation */}
+      <AutoStockReconciliation />
+      
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

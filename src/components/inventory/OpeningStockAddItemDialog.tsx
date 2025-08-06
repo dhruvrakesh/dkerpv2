@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Package, Calculator } from 'lucide-react';
+import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 
 interface OpeningStockAddItemDialogProps {
   open: boolean;
@@ -17,9 +18,12 @@ interface OpeningStockAddItemDialogProps {
 }
 
 interface ItemMasterItem {
+  id: string;
   item_code: string;
   item_name: string;
   uom: string;
+  hsn_code?: string;
+  category_name?: string;
 }
 
 export function OpeningStockAddItemDialog({ 
@@ -27,6 +31,7 @@ export function OpeningStockAddItemDialog({
   onOpenChange, 
   onItemAdded 
 }: OpeningStockAddItemDialogProps) {
+  const { organization } = useDKEGLAuth();
   const [items, setItems] = useState<ItemMasterItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -50,22 +55,43 @@ export function OpeningStockAddItemDialog({
   }, [open]);
 
   const fetchItems = async () => {
+    if (!organization?.id) return;
+    
     setLoading(true);
     try {
-      // Use static fallback data for now to avoid database issues
-      const fallbackItems: ItemMasterItem[] = [
-        { item_code: 'SUB_BOPP_350MM_20GSM', item_name: 'BOPP Substrate 350mm x 20 GSM', uom: 'SQM' },
-        { item_code: 'INK_CYAN_PROCESS', item_name: 'Process Cyan Ink for Gravure', uom: 'KG' },
-        { item_code: 'INK_MAGENTA_PROCESS', item_name: 'Process Magenta Ink for Gravure', uom: 'KG' },
-        { item_code: 'SUB_PE_350MM_40GSM', item_name: 'PE Substrate 350mm x 40 GSM', uom: 'SQM' },
-        { item_code: 'ADH_SOLVENT_BASED', item_name: 'Solvent Based Adhesive', uom: 'KG' },
-        { item_code: 'PKG_POUCH_STANDUP_500ML', item_name: 'Stand-up Pouch 500ml Capacity', uom: 'PCS' },
-        { item_code: 'PKG_TAPE_SEALING', item_name: 'Sealing Tape for Packaging', uom: 'MTR' }
-      ];
-      
-      setItems(fallbackItems);
+      const { data, error } = await supabase
+        .from('dkegl_item_master')
+        .select(`
+          id,
+          item_code,
+          item_name,
+          uom,
+          hsn_code,
+          dkegl_categories (category_name)
+        `)
+        .eq('organization_id', organization.id)
+        .eq('status', 'active')
+        .order('item_name');
+
+      if (error) throw error;
+
+      const transformedItems = data?.map(item => ({
+        id: item.id,
+        item_code: item.item_code,
+        item_name: item.item_name,
+        uom: item.uom || 'PCS',
+        hsn_code: item.hsn_code || '',
+        category_name: (item.dkegl_categories as any)?.category_name
+      })) || [];
+
+      setItems(transformedItems);
     } catch (error) {
       console.error('Error loading items:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load items from master",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -84,7 +110,7 @@ export function OpeningStockAddItemDialog({
   };
 
   const handleSave = async () => {
-    if (!formData.item_code || !formData.opening_qty || !formData.unit_cost) {
+    if (!organization?.id || !formData.item_code || !formData.opening_qty || !formData.unit_cost) {
       toast({
         title: "Validation Error",
         description: "Please fill all required fields",
@@ -106,8 +132,22 @@ export function OpeningStockAddItemDialog({
         throw new Error("Unit cost cannot be negative");
       }
 
-      // Simulate saving to database
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Save to the actual database
+      const { error } = await supabase
+        .from('dkegl_opening_stock')
+        .insert({
+          organization_id: organization.id,
+          item_code: formData.item_code,
+          opening_qty: openingQty,
+          unit_cost: unitCost,
+          total_value: openingQty * unitCost,
+          opening_date: formData.opening_date,
+          location: formData.location,
+          remarks: formData.remarks,
+          status: 'approved' // Auto-approve for now
+        });
+
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -185,6 +225,8 @@ export function OpeningStockAddItemDialog({
                   <div><strong>Code:</strong> {selectedItem.item_code}</div>
                   <div><strong>Name:</strong> {selectedItem.item_name}</div>
                   <div><strong>UOM:</strong> {selectedItem.uom}</div>
+                  {selectedItem.hsn_code && <div><strong>HSN:</strong> {selectedItem.hsn_code}</div>}
+                  {selectedItem.category_name && <div><strong>Category:</strong> {selectedItem.category_name}</div>}
                 </CardContent>
               </Card>
             )}
