@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, FileSpreadsheet, AlertTriangle } from 'lucide-react';
+import { Upload, FileSpreadsheet, AlertTriangle, Download } from 'lucide-react';
+import { downloadTemplate } from '@/utils/openingStockTemplates';
+import { toast } from '@/hooks/use-toast';
 
 interface OpeningStockImportDialogProps {
   open: boolean;
@@ -51,6 +53,22 @@ export function OpeningStockImportDialog({
     }
   };
 
+  const handleDownloadTemplate = (format: 'excel' | 'csv') => {
+    try {
+      downloadTemplate(format);
+      toast({
+        title: "Template Downloaded",
+        description: `Sample template downloaded in ${format.toUpperCase()} format`,
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Failed to download template",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleImport = async () => {
     if (selectedFile && openingDate && onImport) {
       await onImport(selectedFile, openingDate);
@@ -67,6 +85,36 @@ export function OpeningStockImportDialog({
         </DialogHeader>
         
         <div className="space-y-4">
+          {/* Sample Template Download */}
+          <div className="border rounded-lg p-4 bg-muted/30">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-sm mb-1">Download Sample Template</h4>
+                <p className="text-xs text-muted-foreground">
+                  Get a pre-formatted template with sample data and validation guidelines
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleDownloadTemplate('excel')}
+                >
+                  <Download className="h-3 w-3 mr-1" />
+                  Excel
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleDownloadTemplate('csv')}
+                >
+                  <Download className="h-3 w-3 mr-1" />
+                  CSV
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* File Upload Area */}
           <div
             className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
@@ -140,13 +188,17 @@ export function OpeningStockImportDialog({
           
           {/* Import Instructions */}
           <div className="p-3 bg-muted rounded-lg">
-            <h4 className="text-sm font-medium mb-2">File Requirements:</h4>
+            <h4 className="text-sm font-medium mb-2">File Format Requirements:</h4>
             <ul className="text-xs text-muted-foreground space-y-1">
-              <li>• Required: item_code, item_name, opening_qty, unit_cost</li>
-              <li>• Optional: opening_date (uses default date if not provided)</li>
-              <li>• Opening dates cannot be in the future</li>
-              <li>• Only positive quantities allowed for opening stock</li>
+              <li>• <strong>Required columns:</strong> item_code, item_name, opening_qty, unit_cost</li>
+              <li>• <strong>Optional columns:</strong> category_name, opening_date, location, remarks</li>
+              <li>• <strong>Validation rules:</strong> Positive quantities, non-negative costs, valid dates</li>
+              <li>• <strong>Date format:</strong> YYYY-MM-DD (e.g., 2024-01-15)</li>
+              <li>• <strong>Location options:</strong> MAIN_STORE, PRODUCTION_FLOOR, QC_HOLD, FINISHED_GOODS</li>
             </ul>
+            <div className="mt-2 text-xs text-blue-600">
+              💡 <strong>Tip:</strong> Download the sample template above for the correct format and examples
+            </div>
           </div>
 
           {/* Import Progress */}

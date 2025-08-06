@@ -9,11 +9,13 @@ import { useOpeningStockManagement } from '@/hooks/useOpeningStockManagement';
 import { OpeningStockImportDialog } from './OpeningStockImportDialog';
 import { OpeningStockExportDialog } from './OpeningStockExportDialog';
 import { OpeningStockEditModal } from './OpeningStockEditModal';
+import { OpeningStockAddItemDialog } from './OpeningStockAddItemDialog';
 import { toast } from '@/hooks/use-toast';
 
 export function OpeningStockManagementDashboard() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   
   const {
@@ -27,7 +29,8 @@ export function OpeningStockManagementDashboard() {
     importOpeningStock,
     exportOpeningStock,
     validateOpeningStock,
-    updateOpeningStock
+    updateOpeningStock,
+    addOpeningStock
   } = useOpeningStockManagement();
 
   useEffect(() => {
@@ -70,6 +73,14 @@ export function OpeningStockManagementDashboard() {
     await updateOpeningStock(itemId, updates);
   };
 
+  const handleItemAdded = () => {
+    fetchOpeningStock();
+    toast({
+      title: "Item Added",
+      description: "Opening stock item has been added successfully.",
+    });
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -101,7 +112,10 @@ export function OpeningStockManagementDashboard() {
             <CheckCircle className="h-4 w-4 mr-2" />
             Validate All
           </Button>
-          <Button onClick={() => setImportDialogOpen(true)}>
+          <Button onClick={() => setAddItemDialogOpen(true)} variant="default">
+            Add Item
+          </Button>
+          <Button onClick={() => setImportDialogOpen(true)} variant="outline">
             <Upload className="h-4 w-4 mr-2" />
             Import
           </Button>
@@ -294,6 +308,12 @@ export function OpeningStockManagementDashboard() {
         onExport={exportOpeningStock}
         exporting={exporting}
         totalRecords={openingStock.length}
+      />
+
+      <OpeningStockAddItemDialog
+        open={addItemDialogOpen}
+        onOpenChange={setAddItemDialogOpen}
+        onItemAdded={handleItemAdded}
       />
 
       <OpeningStockEditModal
