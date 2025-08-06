@@ -87,7 +87,7 @@ export const useStockDataService = (): StockDataService => {
     try {
       // Use the new stock reconciliation function
       const { data, error } = await supabase.rpc('dkegl_reconcile_stock_data', {
-        _org_id: organization.id
+        p_org_id: organization.id
       });
 
       if (error) throw error;

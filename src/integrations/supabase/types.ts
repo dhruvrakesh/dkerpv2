@@ -10463,7 +10463,7 @@ export type Database = {
         Returns: Json
       }
       dkegl_reconcile_stock_data: {
-        Args: { _org_id: string }
+        Args: { p_org_id: string }
         Returns: Json
       }
       dkegl_refresh_stock_summary: {

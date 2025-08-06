@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     // Call the CORRECTED stock reconciliation function that actually updates stock records
     const { data: reconciliationResult, error: reconciliationError } = await supabase.rpc(
       'dkegl_reconcile_stock_data',
-      { _org_id: orgData }
+      { p_org_id: orgData }
     )
 
     if (reconciliationError) {
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     // Get a sample of updated stock to verify the correction
     const { data: stockSample, error: sampleError } = await supabase.rpc(
       'dkegl_get_comprehensive_stock_summary',
-      { _org_id: orgData }
+      { p_org_id: orgData }
     )
 
     if (sampleError) {
