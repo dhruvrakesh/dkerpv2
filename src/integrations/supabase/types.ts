@@ -364,6 +364,47 @@ export type Database = {
           },
         ]
       }
+      bpmn_analysis_results: {
+        Row: {
+          ai_insights: Json | null
+          analysis_data: Json
+          created_at: string
+          file_id: string
+          findings: Json | null
+          id: string
+          summary: Json | null
+          updated_at: string
+        }
+        Insert: {
+          ai_insights?: Json | null
+          analysis_data: Json
+          created_at?: string
+          file_id: string
+          findings?: Json | null
+          id?: string
+          summary?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          ai_insights?: Json | null
+          analysis_data?: Json
+          created_at?: string
+          file_id?: string
+          findings?: Json | null
+          id?: string
+          summary?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bpmn_analysis_results_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "bpmn_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bpmn_audit_trail: {
         Row: {
           action_details: Json
@@ -418,6 +459,59 @@ export type Database = {
           },
         ]
       }
+      bpmn_element_customizations: {
+        Row: {
+          analysis_result_id: string
+          created_at: string
+          custom_description: string | null
+          custom_step_number: number | null
+          custom_swim_lane: string | null
+          element_id: string
+          element_type: string
+          id: string
+          original_step_number: number
+          original_swim_lane: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_result_id: string
+          created_at?: string
+          custom_description?: string | null
+          custom_step_number?: number | null
+          custom_swim_lane?: string | null
+          element_id: string
+          element_type: string
+          id?: string
+          original_step_number: number
+          original_swim_lane?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_result_id?: string
+          created_at?: string
+          custom_description?: string | null
+          custom_step_number?: number | null
+          custom_swim_lane?: string | null
+          element_id?: string
+          element_type?: string
+          id?: string
+          original_step_number?: number
+          original_swim_lane?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bpmn_element_customizations_analysis_result_id_fkey"
+            columns: ["analysis_result_id"]
+            isOneToOne: false
+            referencedRelation: "bpmn_analysis_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bpmn_files: {
         Row: {
           created_at: string | null
@@ -450,6 +544,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      bpmn_swim_lane_customizations: {
+        Row: {
+          analysis_result_id: string
+          color_code: string | null
+          created_at: string
+          custom_name: string | null
+          description: string | null
+          id: string
+          lane_id: string
+          original_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_result_id: string
+          color_code?: string | null
+          created_at?: string
+          custom_name?: string | null
+          description?: string | null
+          id?: string
+          lane_id: string
+          original_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_result_id?: string
+          color_code?: string | null
+          created_at?: string
+          custom_name?: string | null
+          description?: string | null
+          id?: string
+          lane_id?: string
+          original_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bpmn_swim_lane_customizations_analysis_result_id_fkey"
+            columns: ["analysis_result_id"]
+            isOneToOne: false
+            referencedRelation: "bpmn_analysis_results"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bpmn_templates: {
         Row: {
@@ -566,6 +707,607 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      cbot_ai_configurations: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          model_config: Json
+          model_name: string
+          organization_id: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_config?: Json
+          model_name: string
+          organization_id: string
+          provider?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_config?: Json
+          model_name?: string
+          organization_id?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cbot_ai_configurations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "dkegl_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cbot_chat_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          feedback_type: string | null
+          id: string
+          improvement_suggestion: string | null
+          is_helpful: boolean | null
+          message_id: string
+          metadata: Json | null
+          rating: number
+          session_id: string
+          tags: string[] | null
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          feedback_type?: string | null
+          id?: string
+          improvement_suggestion?: string | null
+          is_helpful?: boolean | null
+          message_id: string
+          metadata?: Json | null
+          rating: number
+          session_id: string
+          tags?: string[] | null
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          feedback_type?: string | null
+          id?: string
+          improvement_suggestion?: string | null
+          is_helpful?: boolean | null
+          message_id?: string
+          metadata?: Json | null
+          rating?: number
+          session_id?: string
+          tags?: string[] | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cbot_chat_feedback_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "cbot_chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cbot_chat_feedback_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "cbot_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cbot_chat_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          feedback_comment: string | null
+          feedback_rating: number | null
+          id: string
+          message_type: string
+          metadata: Json | null
+          model_used: string | null
+          processing_time_ms: number | null
+          retrieved_chunks: string[] | null
+          session_id: string
+          similarity_scores: number[] | null
+          temperature: number | null
+          token_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          feedback_comment?: string | null
+          feedback_rating?: number | null
+          id?: string
+          message_type: string
+          metadata?: Json | null
+          model_used?: string | null
+          processing_time_ms?: number | null
+          retrieved_chunks?: string[] | null
+          session_id: string
+          similarity_scores?: number[] | null
+          temperature?: number | null
+          token_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          feedback_comment?: string | null
+          feedback_rating?: number | null
+          id?: string
+          message_type?: string
+          metadata?: Json | null
+          model_used?: string | null
+          processing_time_ms?: number | null
+          retrieved_chunks?: string[] | null
+          session_id?: string
+          similarity_scores?: number[] | null
+          temperature?: number | null
+          token_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cbot_chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "cbot_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cbot_chat_sessions: {
+        Row: {
+          context_data: Json | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_activity_at: string | null
+          max_tokens: number | null
+          model_version: string | null
+          organization_id: string | null
+          session_metadata: Json | null
+          session_name: string | null
+          system_prompt: string | null
+          temperature: number | null
+          total_messages: number | null
+          total_tokens_used: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context_data?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_activity_at?: string | null
+          max_tokens?: number | null
+          model_version?: string | null
+          organization_id?: string | null
+          session_metadata?: Json | null
+          session_name?: string | null
+          system_prompt?: string | null
+          temperature?: number | null
+          total_messages?: number | null
+          total_tokens_used?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context_data?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_activity_at?: string | null
+          max_tokens?: number | null
+          model_version?: string | null
+          organization_id?: string | null
+          session_metadata?: Json | null
+          session_name?: string | null
+          system_prompt?: string | null
+          temperature?: number | null
+          total_messages?: number | null
+          total_tokens_used?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      cbot_document_chunks: {
+        Row: {
+          chunk_index: number
+          chunk_type: string | null
+          content: string
+          created_at: string | null
+          document_id: string
+          embedding: string | null
+          id: string
+          metadata: Json | null
+          page_number: number | null
+          token_count: number | null
+        }
+        Insert: {
+          chunk_index: number
+          chunk_type?: string | null
+          content: string
+          created_at?: string | null
+          document_id: string
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          page_number?: number | null
+          token_count?: number | null
+        }
+        Update: {
+          chunk_index?: number
+          chunk_type?: string | null
+          content?: string
+          created_at?: string | null
+          document_id?: string
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          page_number?: number | null
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cbot_document_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "cbot_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cbot_document_processing_logs: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          document_id: string
+          duration_ms: number | null
+          end_time: string | null
+          error_message: string | null
+          id: string
+          processed_by: string | null
+          processing_step: string
+          start_time: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          document_id: string
+          duration_ms?: number | null
+          end_time?: string | null
+          error_message?: string | null
+          id?: string
+          processed_by?: string | null
+          processing_step: string
+          start_time?: string | null
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          document_id?: string
+          duration_ms?: number | null
+          end_time?: string | null
+          error_message?: string | null
+          id?: string
+          processed_by?: string | null
+          processing_step?: string
+          start_time?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cbot_document_processing_logs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "cbot_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cbot_documents: {
+        Row: {
+          created_at: string | null
+          error_log: string | null
+          file_path: string | null
+          file_size: number | null
+          id: string
+          language: string | null
+          last_updated: string | null
+          metadata: Json | null
+          mime_type: string | null
+          organization_id: string | null
+          processed_by: string | null
+          processed_chunks: number | null
+          processing_status: string | null
+          source_url: string | null
+          tags: string[] | null
+          title: string
+          total_chunks: number | null
+          updated_at: string | null
+          upload_date: string | null
+          version: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_log?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          language?: string | null
+          last_updated?: string | null
+          metadata?: Json | null
+          mime_type?: string | null
+          organization_id?: string | null
+          processed_by?: string | null
+          processed_chunks?: number | null
+          processing_status?: string | null
+          source_url?: string | null
+          tags?: string[] | null
+          title: string
+          total_chunks?: number | null
+          updated_at?: string | null
+          upload_date?: string | null
+          version?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_log?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          language?: string | null
+          last_updated?: string | null
+          metadata?: Json | null
+          mime_type?: string | null
+          organization_id?: string | null
+          processed_by?: string | null
+          processed_chunks?: number | null
+          processing_status?: string | null
+          source_url?: string | null
+          tags?: string[] | null
+          title?: string
+          total_chunks?: number | null
+          updated_at?: string | null
+          upload_date?: string | null
+          version?: string | null
+        }
+        Relationships: []
+      }
+      cbot_knowledge_entries: {
+        Row: {
+          answer: string
+          category: string | null
+          confidence_score: number | null
+          created_at: string | null
+          embedding: string | null
+          id: string
+          is_verified: boolean | null
+          language: string | null
+          last_used_at: string | null
+          metadata: Json | null
+          organization_id: string | null
+          quality_score: number | null
+          question: string
+          source_document_ids: string[] | null
+          tags: string[] | null
+          updated_at: string | null
+          usage_count: number | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          answer: string
+          category?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          is_verified?: boolean | null
+          language?: string | null
+          last_used_at?: string | null
+          metadata?: Json | null
+          organization_id?: string | null
+          quality_score?: number | null
+          question: string
+          source_document_ids?: string[] | null
+          tags?: string[] | null
+          updated_at?: string | null
+          usage_count?: number | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          answer?: string
+          category?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          is_verified?: boolean | null
+          language?: string | null
+          last_used_at?: string | null
+          metadata?: Json | null
+          organization_id?: string | null
+          quality_score?: number | null
+          question?: string
+          source_document_ids?: string[] | null
+          tags?: string[] | null
+          updated_at?: string | null
+          usage_count?: number | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
+      cbot_learning_data: {
+        Row: {
+          answer: string
+          approved_at: string | null
+          approved_by: string | null
+          context_chunks: string[] | null
+          conversation_id: string | null
+          created_at: string | null
+          fine_tuning_status: string | null
+          id: string
+          improvement_notes: string | null
+          is_approved: boolean | null
+          metadata: Json | null
+          organization_id: string | null
+          quality_metrics: Json | null
+          question: string
+          training_round: number | null
+          updated_at: string | null
+          user_feedback: Json | null
+        }
+        Insert: {
+          answer: string
+          approved_at?: string | null
+          approved_by?: string | null
+          context_chunks?: string[] | null
+          conversation_id?: string | null
+          created_at?: string | null
+          fine_tuning_status?: string | null
+          id?: string
+          improvement_notes?: string | null
+          is_approved?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          quality_metrics?: Json | null
+          question: string
+          training_round?: number | null
+          updated_at?: string | null
+          user_feedback?: Json | null
+        }
+        Update: {
+          answer?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          context_chunks?: string[] | null
+          conversation_id?: string | null
+          created_at?: string | null
+          fine_tuning_status?: string | null
+          id?: string
+          improvement_notes?: string | null
+          is_approved?: boolean | null
+          metadata?: Json | null
+          organization_id?: string | null
+          quality_metrics?: Json | null
+          question?: string
+          training_round?: number | null
+          updated_at?: string | null
+          user_feedback?: Json | null
+        }
+        Relationships: []
+      }
+      cbot_system_metrics: {
+        Row: {
+          created_at: string | null
+          id: string
+          metric_name: string
+          metric_unit: string | null
+          metric_value: number | null
+          tags: Json | null
+          timestamp: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metric_name: string
+          metric_unit?: string | null
+          metric_value?: number | null
+          tags?: Json | null
+          timestamp?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metric_name?: string
+          metric_unit?: string | null
+          metric_value?: number | null
+          tags?: Json | null
+          timestamp?: string | null
+        }
+        Relationships: []
+      }
+      cbot_usage_analytics: {
+        Row: {
+          cost_usd: number | null
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          organization_id: string | null
+          performance_metrics: Json | null
+          response_time_ms: number | null
+          session_id: string | null
+          timestamp: string | null
+          tokens_consumed: number | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cost_usd?: number | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          organization_id?: string | null
+          performance_metrics?: Json | null
+          response_time_ms?: number | null
+          session_id?: string | null
+          timestamp?: string | null
+          tokens_consumed?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cost_usd?: number | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          organization_id?: string | null
+          performance_metrics?: Json | null
+          response_time_ms?: number | null
+          session_id?: string | null
+          timestamp?: string | null
+          tokens_consumed?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cbot_usage_analytics_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "cbot_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cost_mockup_estimate: {
         Row: {
@@ -7899,9 +8641,28 @@ export type Database = {
       }
     }
     Functions: {
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
       capture_daily_stock_snapshot: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      cbot_search_similar_chunks: {
+        Args: {
+          query_embedding: string
+          similarity_threshold?: number
+          match_count?: number
+        }
+        Returns: {
+          chunk_id: string
+          document_id: string
+          content: string
+          similarity: number
+          metadata: Json
+          page_number: number
+        }[]
       }
       count_adhesive_started: {
         Args: Record<PropertyKey, never>
@@ -8569,12 +9330,64 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
       has_role: {
         Args: {
           _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: string
       }
       log_bpmn_download: {
         Args: {
@@ -8596,6 +9409,18 @@ export type Database = {
         Args: { "": string }
         Returns: string[]
       }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
       validate_item_code_params: {
         Args: {
           category_name: string
@@ -8604,6 +9429,30 @@ export type Database = {
           gsm?: number
         }
         Returns: Json
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
       }
     }
     Enums: {
