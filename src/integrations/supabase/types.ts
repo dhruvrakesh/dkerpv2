@@ -6748,6 +6748,206 @@ export type Database = {
           },
         ]
       }
+      dkeglpkl_grn: {
+        Row: {
+          created_at: string
+          created_by: string
+          driver_name: string | null
+          grn_date: string
+          grn_number: string
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          lr_date: string | null
+          lr_number: string | null
+          org_id: string
+          party_id: string
+          po_id: string | null
+          posted_at: string | null
+          posted_by: string | null
+          remarks: string | null
+          status: string
+          total_amount: number
+          total_quantity: number
+          updated_at: string
+          vehicle_number: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          driver_name?: string | null
+          grn_date?: string
+          grn_number: string
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          lr_date?: string | null
+          lr_number?: string | null
+          org_id: string
+          party_id: string
+          po_id?: string | null
+          posted_at?: string | null
+          posted_by?: string | null
+          remarks?: string | null
+          status?: string
+          total_amount?: number
+          total_quantity?: number
+          updated_at?: string
+          vehicle_number?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          driver_name?: string | null
+          grn_date?: string
+          grn_number?: string
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          lr_date?: string | null
+          lr_number?: string | null
+          org_id?: string
+          party_id?: string
+          po_id?: string | null
+          posted_at?: string | null
+          posted_by?: string | null
+          remarks?: string | null
+          status?: string
+          total_amount?: number
+          total_quantity?: number
+          updated_at?: string
+          vehicle_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_grn_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_grn_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_party"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_grn_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_po"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_grn_line: {
+        Row: {
+          amount: number
+          bin_id: string | null
+          created_at: string
+          expiry_date: string | null
+          grn_id: string
+          id: string
+          item_id: string
+          line_number: number
+          location_id: string
+          lot_number: string
+          manufacture_date: string | null
+          po_line_id: string | null
+          quality_status: string
+          quantity: number
+          rate: number
+          remarks: string | null
+          uom_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          bin_id?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          grn_id: string
+          id?: string
+          item_id: string
+          line_number: number
+          location_id: string
+          lot_number: string
+          manufacture_date?: string | null
+          po_line_id?: string | null
+          quality_status?: string
+          quantity: number
+          rate: number
+          remarks?: string | null
+          uom_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          bin_id?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          grn_id?: string
+          id?: string
+          item_id?: string
+          line_number?: number
+          location_id?: string
+          lot_number?: string
+          manufacture_date?: string | null
+          po_line_id?: string | null
+          quality_status?: string
+          quantity?: number
+          rate?: number
+          remarks?: string | null
+          uom_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_grn_line_bin_id_fkey"
+            columns: ["bin_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_bin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_grn_line_grn_id_fkey"
+            columns: ["grn_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_grn"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_grn_line_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_item"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_grn_line_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_location"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_grn_line_po_line_id_fkey"
+            columns: ["po_line_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_po_line"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_grn_line_uom_id_fkey"
+            columns: ["uom_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_uom"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkeglpkl_item: {
         Row: {
           base_uom_id: string
@@ -7082,6 +7282,166 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_po: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          exchange_rate: number
+          expected_delivery_date: string | null
+          id: string
+          net_amount: number
+          order_date: string
+          org_id: string
+          party_id: string
+          po_number: string
+          reference_number: string | null
+          remarks: string | null
+          status: string
+          tax_amount: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by: string
+          currency?: string
+          exchange_rate?: number
+          expected_delivery_date?: string | null
+          id?: string
+          net_amount?: number
+          order_date?: string
+          org_id: string
+          party_id: string
+          po_number: string
+          reference_number?: string | null
+          remarks?: string | null
+          status?: string
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          exchange_rate?: number
+          expected_delivery_date?: string | null
+          id?: string
+          net_amount?: number
+          order_date?: string
+          org_id?: string
+          party_id?: string
+          po_number?: string
+          reference_number?: string | null
+          remarks?: string | null
+          status?: string
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_po_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_po_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_party"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_po_line: {
+        Row: {
+          created_at: string
+          description: string | null
+          expected_date: string | null
+          id: string
+          item_id: string
+          line_amount: number
+          line_number: number
+          pending_quantity: number | null
+          po_id: string
+          quantity: number
+          received_quantity: number
+          remarks: string | null
+          tax_rate: number
+          unit_rate: number
+          uom_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          expected_date?: string | null
+          id?: string
+          item_id: string
+          line_amount: number
+          line_number: number
+          pending_quantity?: number | null
+          po_id: string
+          quantity: number
+          received_quantity?: number
+          remarks?: string | null
+          tax_rate?: number
+          unit_rate: number
+          uom_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          expected_date?: string | null
+          id?: string
+          item_id?: string
+          line_amount?: number
+          line_number?: number
+          pending_quantity?: number | null
+          po_id?: string
+          quantity?: number
+          received_quantity?: number
+          remarks?: string | null
+          tax_rate?: number
+          unit_rate?: number
+          uom_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_po_line_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_item"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_po_line_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_po"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_po_line_uom_id_fkey"
+            columns: ["uom_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_uom"
             referencedColumns: ["id"]
           },
         ]
@@ -10136,6 +10496,10 @@ export type Database = {
         Args: { _org_id: string; _location_id: string }
         Returns: string
       }
+      dkeglpkl_generate_grn_number: {
+        Args: { _org_id: string }
+        Returns: string
+      }
       dkeglpkl_generate_item_code: {
         Args: { _org_id: string }
         Returns: string
@@ -10146,6 +10510,10 @@ export type Database = {
       }
       dkeglpkl_generate_party_code: {
         Args: { _org_id: string; _party_type: string }
+        Returns: string
+      }
+      dkeglpkl_generate_po_number: {
+        Args: { _org_id: string }
         Returns: string
       }
       dkeglpkl_generate_uom_code: {
