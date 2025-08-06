@@ -46,6 +46,7 @@ const navigation = [
     href: '/inventory',
     icon: Package,
     children: [
+      { name: 'Opening Stock Manager', href: '/inventory/opening-stock' },
       { name: 'Stock Management', href: '/inventory/stock' },
       { name: 'GRN Logs', href: '/inventory/grn' },
       { name: 'Issue Logs', href: '/inventory/issues' },

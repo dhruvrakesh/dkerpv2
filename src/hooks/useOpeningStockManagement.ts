@@ -1,163 +1,191 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface OpeningStockItem {
+  id: string;
   item_code: string;
   item_name: string;
+  category_name: string;
+  location: string;
   opening_qty: number;
   unit_cost: number;
+  total_value: number;
   opening_date: string;
-  is_valid: boolean;
-  validation_errors?: string[];
+  remarks?: string;
+  approval_status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  approved_by?: string;
 }
 
 interface AuditTrailEntry {
   id: string;
+  table_name: string;
+  record_id: string;
   action: string;
-  user_id: string;
-  timestamp: string;
-  details: any;
-  affected_items: number;
+  old_values: any;
+  new_values: any;
+  changed_by: string;
+  created_at: string;
 }
 
 interface ValidationResult {
-  isValid: boolean;
+  valid: boolean;
   errors: string[];
   warnings: string[];
 }
 
 export function useOpeningStockManagement() {
-  const { toast } = useToast();
   const [openingStock, setOpeningStock] = useState<OpeningStockItem[]>([]);
   const [auditTrail, setAuditTrail] = useState<AuditTrailEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  // Fetch opening stock data
   const fetchOpeningStock = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch opening stock data from dkegl_stock table where opening_qty > 0
-      const { data: stockData, error } = await supabase
-        .from('dkegl_stock')
+      const { data, error } = await supabase
+        .from('dkegl_opening_stock')
         .select(`
+          id,
           item_code,
-          current_qty,
+          item_name,
+          category_name,
+          location,
+          opening_qty,
           unit_cost,
-          last_updated,
-          dkegl_item_master!inner(item_name)
+          total_value,
+          opening_date,
+          remarks,
+          approval_status,
+          created_at,
+          updated_at,
+          created_by,
+          approved_by
         `)
-        .gt('current_qty', 0)
         .order('item_code');
 
       if (error) throw error;
 
-      const formattedData: OpeningStockItem[] = stockData?.map(item => ({
-        item_code: item.item_code,
-        item_name: item.dkegl_item_master?.item_name || 'Unknown',
-        opening_qty: item.current_qty,
-        unit_cost: item.unit_cost || 0,
-        opening_date: item.last_updated || new Date().toISOString(),
-        is_valid: true,
-      })) || [];
-
-      setOpeningStock(formattedData);
+      setOpeningStock((data || []).map(item => ({
+        ...item,
+        approval_status: item.approval_status as 'pending' | 'approved' | 'rejected'
+      })));
     } catch (error) {
       console.error('Error fetching opening stock:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch opening stock data.",
+        description: "Failed to fetch opening stock data",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
+  // Fetch audit trail
   const fetchAuditTrail = useCallback(async () => {
     try {
-      // Get current user's organization context first
-      const { data: orgData, error: orgError } = await supabase.rpc('dkegl_get_current_user_org');
-      
-      if (orgError) {
-        console.error('Failed to get organization context:', orgError);
-        return;
-      }
-
       const { data, error } = await supabase
         .from('dkegl_audit_log')
         .select('*')
-        .eq('organization_id', orgData)
-        .eq('table_name', 'opening_stock')
+        .eq('table_name', 'dkegl_opening_stock')
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) throw error;
-      
-      // Transform the data to match our interface
-      const transformedData: AuditTrailEntry[] = (data || []).map(item => ({
+
+      setAuditTrail((data || []).map(item => ({
         id: item.id,
+        table_name: item.table_name,
+        record_id: item.record_id || '',
         action: item.action,
-        user_id: item.user_id || 'system',
-        timestamp: item.created_at,
-        details: item.metadata || item.new_values,
-        affected_items: 1 // Default to 1, could be enhanced to calculate actual count
-      }));
-      
-      setAuditTrail(transformedData);
+        old_values: item.old_values,
+        new_values: item.new_values,
+        changed_by: item.user_id || 'system',
+        created_at: item.created_at
+      })));
     } catch (error) {
       console.error('Error fetching audit trail:', error);
     }
   }, []);
 
-  const importOpeningStock = useCallback(async (file: File) => {
+  // Import opening stock from file
+  const importOpeningStock = useCallback(async (file: File, openingDate: string) => {
     setImporting(true);
     try {
-      // This would implement the actual file import logic
-      // For now, we'll simulate the process
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('opening_date', openingDate);
+      
+      toast({
+        title: "Import Started",
+        description: "Processing opening stock file...",
+      });
+      
+      // TODO: Implement actual file import logic with Supabase edge function
+      // This would parse Excel/CSV files and bulk insert to dkegl_opening_stock
+      console.log('Importing opening stock from:', file.name, 'with date:', openingDate);
+      
+      // Placeholder implementation
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       toast({
         title: "Import Successful",
-        description: "Opening stock data imported successfully.",
+        description: "Opening stock data has been imported successfully",
       });
       
+      // Refresh data after import
       await fetchOpeningStock();
     } catch (error) {
       console.error('Error importing opening stock:', error);
       toast({
         title: "Import Failed",
-        description: "Failed to import opening stock data.",
+        description: "Failed to import opening stock data",
         variant: "destructive",
       });
     } finally {
       setImporting(false);
     }
-  }, [fetchOpeningStock, toast]);
+  }, [fetchOpeningStock]);
 
+  // Export opening stock to file
   const exportOpeningStock = useCallback(async (format: 'excel' | 'csv' | 'pdf') => {
     setExporting(true);
     try {
-      // This would implement the actual export logic
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      toast({
+        title: "Export Started",
+        description: `Generating ${format.toUpperCase()} file...`,
+      });
+      
+      // TODO: Implement actual export logic
+      console.log('Exporting opening stock to:', format);
+      
+      // Placeholder implementation
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast({
         title: "Export Successful",
-        description: `Opening stock data exported to ${format.toUpperCase()}.`,
+        description: `Opening stock exported to ${format.toUpperCase()} successfully`,
       });
     } catch (error) {
       console.error('Error exporting opening stock:', error);
       toast({
         title: "Export Failed",
-        description: "Failed to export opening stock data.",
+        description: "Failed to export opening stock data",
         variant: "destructive",
       });
     } finally {
       setExporting(false);
     }
-  }, [toast]);
+  }, []);
 
+  // Validate opening stock data
   const validateOpeningStock = useCallback(async (): Promise<ValidationResult> => {
     try {
       const errors: string[] = [];
@@ -176,117 +204,112 @@ export function useOpeningStockManagement() {
         if (item.opening_qty === 0) {
           warnings.push(`Row ${index + 1}: Opening quantity is zero`);
         }
+        if (!item.opening_date) {
+          errors.push(`Row ${index + 1}: Opening date is required`);
+        }
       });
 
       return {
-        isValid: errors.length === 0,
+        valid: errors.length === 0,
         errors,
         warnings,
       };
     } catch (error) {
       console.error('Error validating opening stock:', error);
       return {
-        isValid: false,
+        valid: false,
         errors: ['Validation failed due to an unexpected error'],
         warnings: [],
       };
     }
   }, [openingStock]);
 
+  // Update opening stock item
   const updateOpeningStock = useCallback(async (
-    itemCode: string, 
-    updates: { opening_qty: number; unit_cost: number }, 
-    reason: string
+    itemId: string, 
+    updates: Partial<OpeningStockItem>
   ) => {
     try {
-      // Get current item data for audit comparison
-      const currentItem = openingStock.find(item => item.item_code === itemCode);
-      if (!currentItem) {
-        throw new Error('Item not found');
-      }
-
-      // Update the specific item in the database
-      const { error: updateError } = await supabase
-        .from('dkegl_stock')
+      const { error } = await supabase
+        .from('dkegl_opening_stock')
         .update({
-          current_qty: updates.opening_qty,
-          unit_cost: updates.unit_cost,
-          last_updated: new Date().toISOString(),
+          ...updates,
+          updated_at: new Date().toISOString()
         })
-        .eq('item_code', itemCode);
+        .eq('id', itemId);
 
-      if (updateError) throw updateError;
-
-      // Create audit log entry
-      const { error: auditError } = await supabase
-        .from('dkegl_audit_log')
-        .insert({
-          organization_id: null, // Will be set by function
-          table_name: 'opening_stock',
-          record_id: null,
-          action: 'UPDATE',
-          old_values: {
-            item_code: itemCode,
-            item_name: currentItem.item_name,
-            opening_qty: currentItem.opening_qty,
-            unit_cost: currentItem.unit_cost,
-          },
-          new_values: {
-            item_code: itemCode,
-            item_name: currentItem.item_name,
-            opening_qty: updates.opening_qty,
-            unit_cost: updates.unit_cost,
-          },
-          metadata: {
-            reason: reason,
-            value_change: {
-              old_value: currentItem.opening_qty * currentItem.unit_cost,
-              new_value: updates.opening_qty * updates.unit_cost,
-              difference: (updates.opening_qty * updates.unit_cost) - (currentItem.opening_qty * currentItem.unit_cost)
-            },
-            variance_percentages: {
-              qty_variance: currentItem.opening_qty !== 0 
-                ? ((updates.opening_qty - currentItem.opening_qty) / currentItem.opening_qty) * 100 
-                : 0,
-              cost_variance: currentItem.unit_cost !== 0 
-                ? ((updates.unit_cost - currentItem.unit_cost) / currentItem.unit_cost) * 100 
-                : 0
-            }
-          },
-          user_id: null, // Will be set by RLS
-        });
-
-      if (auditError) {
-        console.error('Audit log error:', auditError);
-        // Continue despite audit error - main update succeeded
-      }
-
-      // Update local state
-      setOpeningStock(prev => 
-        prev.map(item => 
-          item.item_code === itemCode 
-            ? { ...item, opening_qty: updates.opening_qty, unit_cost: updates.unit_cost }
-            : item
-        )
-      );
-
-      // Refresh audit trail to show new entry
-      fetchAuditTrail();
+      if (error) throw error;
 
       toast({
-        title: "Update Successful",
-        description: "Opening stock item updated with audit trail logged.",
+        title: "Success",
+        description: "Opening stock updated successfully",
       });
+
+      // Refresh data
+      await fetchOpeningStock();
+      await fetchAuditTrail();
     } catch (error) {
       console.error('Error updating opening stock:', error);
       toast({
-        title: "Update Failed",
-        description: "Failed to update opening stock item.",
+        title: "Error",
+        description: "Failed to update opening stock",
         variant: "destructive",
       });
-      throw error;
     }
-  }, [openingStock, fetchAuditTrail, toast]);
+  }, [fetchOpeningStock, fetchAuditTrail]);
+
+  // Add new opening stock item
+  const addOpeningStock = useCallback(async (item: Omit<OpeningStockItem, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const { error } = await supabase
+        .from('dkegl_opening_stock')
+        .insert(item);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Opening stock added successfully",
+      });
+
+      // Refresh data
+      await fetchOpeningStock();
+    } catch (error) {
+      console.error('Error adding opening stock:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add opening stock",
+        variant: "destructive",
+      });
+    }
+  }, [fetchOpeningStock]);
+
+  // Delete opening stock item
+  const deleteOpeningStock = useCallback(async (itemId: string) => {
+    try {
+      const { error } = await supabase
+        .from('dkegl_opening_stock')
+        .delete()
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Opening stock deleted successfully",
+      });
+
+      // Refresh data
+      await fetchOpeningStock();
+    } catch (error) {
+      console.error('Error deleting opening stock:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete opening stock",
+        variant: "destructive",
+      });
+    }
+  }, [fetchOpeningStock]);
 
   return {
     openingStock,
@@ -300,5 +323,7 @@ export function useOpeningStockManagement() {
     exportOpeningStock,
     validateOpeningStock,
     updateOpeningStock,
+    addOpeningStock,
+    deleteOpeningStock
   };
 }

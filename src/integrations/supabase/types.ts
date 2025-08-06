@@ -4019,6 +4019,63 @@ export type Database = {
           },
         ]
       }
+      dkegl_opening_stock: {
+        Row: {
+          approval_status: string | null
+          approved_by: string | null
+          category_name: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          item_code: string
+          item_name: string | null
+          location: string | null
+          opening_date: string
+          opening_qty: number
+          organization_id: string
+          remarks: string | null
+          total_value: number | null
+          unit_cost: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          approval_status?: string | null
+          approved_by?: string | null
+          category_name?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          item_code: string
+          item_name?: string | null
+          location?: string | null
+          opening_date: string
+          opening_qty?: number
+          organization_id?: string
+          remarks?: string | null
+          total_value?: number | null
+          unit_cost?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          approval_status?: string | null
+          approved_by?: string | null
+          category_name?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          item_code?: string
+          item_name?: string | null
+          location?: string | null
+          opening_date?: string
+          opening_qty?: number
+          organization_id?: string
+          remarks?: string | null
+          total_value?: number | null
+          unit_cost?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       dkegl_orders: {
         Row: {
           approved_by: string | null
@@ -6557,6 +6614,781 @@ export type Database = {
           },
         ]
       }
+      dkeglpkl_app_user: {
+        Row: {
+          auth_user_id: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auth_user_id?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auth_user_id?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      dkeglpkl_bin: {
+        Row: {
+          bin_type: string | null
+          capacity: number | null
+          code: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          location_id: string
+          name: string
+          org_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          bin_type?: string | null
+          capacity?: number | null
+          code: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id: string
+          name: string
+          org_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          bin_type?: string | null
+          capacity?: number | null
+          code?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id?: string
+          name?: string
+          org_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_bin_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_location"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_bin_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_document_numbering: {
+        Row: {
+          created_at: string | null
+          doc_type: string
+          fiscal_year: number
+          id: string
+          last_sequence: number | null
+          org_id: string
+          prefix: string | null
+          sequence_length: number | null
+          suffix: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          doc_type: string
+          fiscal_year: number
+          id?: string
+          last_sequence?: number | null
+          org_id: string
+          prefix?: string | null
+          sequence_length?: number | null
+          suffix?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          doc_type?: string
+          fiscal_year?: number
+          id?: string
+          last_sequence?: number | null
+          org_id?: string
+          prefix?: string | null
+          sequence_length?: number | null
+          suffix?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_document_numbering_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_item: {
+        Row: {
+          base_uom_id: string
+          category: string | null
+          code: string
+          created_at: string | null
+          description: string | null
+          dimensions: Json | null
+          id: string
+          is_active: boolean | null
+          item_type: string
+          lead_time_days: number | null
+          name: string
+          org_id: string
+          reorder_level: number | null
+          reorder_quantity: number | null
+          shelf_life_days: number | null
+          specifications: Json | null
+          standard_cost: number | null
+          storage_conditions: string | null
+          updated_at: string | null
+          weight_per_unit: number | null
+        }
+        Insert: {
+          base_uom_id: string
+          category?: string | null
+          code: string
+          created_at?: string | null
+          description?: string | null
+          dimensions?: Json | null
+          id?: string
+          is_active?: boolean | null
+          item_type: string
+          lead_time_days?: number | null
+          name: string
+          org_id: string
+          reorder_level?: number | null
+          reorder_quantity?: number | null
+          shelf_life_days?: number | null
+          specifications?: Json | null
+          standard_cost?: number | null
+          storage_conditions?: string | null
+          updated_at?: string | null
+          weight_per_unit?: number | null
+        }
+        Update: {
+          base_uom_id?: string
+          category?: string | null
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          dimensions?: Json | null
+          id?: string
+          is_active?: boolean | null
+          item_type?: string
+          lead_time_days?: number | null
+          name?: string
+          org_id?: string
+          reorder_level?: number | null
+          reorder_quantity?: number | null
+          shelf_life_days?: number | null
+          specifications?: Json | null
+          standard_cost?: number | null
+          storage_conditions?: string | null
+          updated_at?: string | null
+          weight_per_unit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_item_base_uom_id_fkey"
+            columns: ["base_uom_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_uom"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_item_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_item_attribute: {
+        Row: {
+          attribute_name: string
+          attribute_type: string | null
+          attribute_value: string | null
+          created_at: string | null
+          id: string
+          is_required: boolean | null
+          item_id: string
+          org_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          attribute_name: string
+          attribute_type?: string | null
+          attribute_value?: string | null
+          created_at?: string | null
+          id?: string
+          is_required?: boolean | null
+          item_id: string
+          org_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          attribute_name?: string
+          attribute_type?: string | null
+          attribute_value?: string | null
+          created_at?: string | null
+          id?: string
+          is_required?: boolean | null
+          item_id?: string
+          org_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_item_attribute_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_item"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_item_attribute_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_location: {
+        Row: {
+          address: Json | null
+          code: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          location_type: string
+          name: string
+          org_id: string
+          parent_location_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: Json | null
+          code: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_type: string
+          name: string
+          org_id: string
+          parent_location_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: Json | null
+          code?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_type?: string
+          name?: string
+          org_id?: string
+          parent_location_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_location_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_location_parent_location_id_fkey"
+            columns: ["parent_location_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_location"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_lot: {
+        Row: {
+          attributes: Json | null
+          created_at: string | null
+          expiry_date: string | null
+          id: string
+          item_id: string
+          lot_number: string
+          manufacture_date: string | null
+          org_id: string
+          status: string | null
+          supplier_lot: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          attributes?: Json | null
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          item_id: string
+          lot_number: string
+          manufacture_date?: string | null
+          org_id: string
+          status?: string | null
+          supplier_lot?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          attributes?: Json | null
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          item_id?: string
+          lot_number?: string
+          manufacture_date?: string | null
+          org_id?: string
+          status?: string | null
+          supplier_lot?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_lot_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_item"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_lot_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_org: {
+        Row: {
+          address: Json | null
+          code: string
+          contact_info: Json | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          settings: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: Json | null
+          code: string
+          contact_info?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          settings?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: Json | null
+          code?: string
+          contact_info?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          settings?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      dkeglpkl_party: {
+        Row: {
+          address: Json | null
+          code: string
+          contact_info: Json | null
+          created_at: string | null
+          credit_limit: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          org_id: string
+          party_type: string
+          payment_terms: string | null
+          tax_info: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: Json | null
+          code: string
+          contact_info?: Json | null
+          created_at?: string | null
+          credit_limit?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          org_id: string
+          party_type: string
+          payment_terms?: string | null
+          tax_info?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: Json | null
+          code?: string
+          contact_info?: Json | null
+          created_at?: string | null
+          credit_limit?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          org_id?: string
+          party_type?: string
+          payment_terms?: string | null
+          tax_info?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_party_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_role: {
+        Row: {
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          permissions: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          permissions?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          permissions?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      dkeglpkl_stock_ledger: {
+        Row: {
+          bin_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          item_id: string
+          location_id: string
+          lot_id: string | null
+          org_id: string
+          posting_date: string
+          quantity_base: number
+          rate: number | null
+          remarks: string | null
+          transaction_date: string | null
+          transaction_type: string
+          uom_id: string
+          value: number | null
+          voucher_id: string
+          voucher_line_id: string | null
+          voucher_type: string
+        }
+        Insert: {
+          bin_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          item_id: string
+          location_id: string
+          lot_id?: string | null
+          org_id: string
+          posting_date: string
+          quantity_base: number
+          rate?: number | null
+          remarks?: string | null
+          transaction_date?: string | null
+          transaction_type: string
+          uom_id: string
+          value?: number | null
+          voucher_id: string
+          voucher_line_id?: string | null
+          voucher_type: string
+        }
+        Update: {
+          bin_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          item_id?: string
+          location_id?: string
+          lot_id?: string | null
+          org_id?: string
+          posting_date?: string
+          quantity_base?: number
+          rate?: number | null
+          remarks?: string | null
+          transaction_date?: string | null
+          transaction_type?: string
+          uom_id?: string
+          value?: number | null
+          voucher_id?: string
+          voucher_line_id?: string | null
+          voucher_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_stock_ledger_bin_id_fkey"
+            columns: ["bin_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_bin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_stock_ledger_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_app_user"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_stock_ledger_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_item"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_stock_ledger_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_location"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_stock_ledger_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_lot"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_stock_ledger_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_stock_ledger_uom_id_fkey"
+            columns: ["uom_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_uom"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_uom: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_base_uom: boolean | null
+          name: string
+          org_id: string
+          precision_digits: number | null
+          uom_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_base_uom?: boolean | null
+          name: string
+          org_id: string
+          precision_digits?: number | null
+          uom_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_base_uom?: boolean | null
+          name?: string
+          org_id?: string
+          precision_digits?: number | null
+          uom_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_uom_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_uom_conversion: {
+        Row: {
+          conversion_factor: number
+          created_at: string | null
+          from_uom_id: string
+          id: string
+          is_active: boolean | null
+          org_id: string
+          to_uom_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          conversion_factor: number
+          created_at?: string | null
+          from_uom_id: string
+          id?: string
+          is_active?: boolean | null
+          org_id: string
+          to_uom_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          conversion_factor?: number
+          created_at?: string | null
+          from_uom_id?: string
+          id?: string
+          is_active?: boolean | null
+          org_id?: string
+          to_uom_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_uom_conversion_from_uom_id_fkey"
+            columns: ["from_uom_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_uom"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_uom_conversion_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_uom_conversion_to_uom_id_fkey"
+            columns: ["to_uom_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_uom"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_user_org_role: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          org_id: string
+          role_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          org_id: string
+          role_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          org_id?: string
+          role_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_user_org_role_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_user_org_role_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_role"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_user_org_role_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_app_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkpkl_account_mapping: {
         Row: {
           created_at: string
@@ -8519,6 +9351,73 @@ export type Database = {
           },
         ]
       }
+      dkeglpkl_stock_balance: {
+        Row: {
+          avg_rate: number | null
+          base_uom_id: string | null
+          bin_code: string | null
+          bin_id: string | null
+          bin_name: string | null
+          item_code: string | null
+          item_id: string | null
+          item_name: string | null
+          item_type: string | null
+          last_transaction_date: string | null
+          location_code: string | null
+          location_id: string | null
+          location_name: string | null
+          lot_id: string | null
+          lot_number: string | null
+          org_id: string | null
+          quantity_base: number | null
+          total_value: number | null
+          uom_code: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_item_base_uom_id_fkey"
+            columns: ["base_uom_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_uom"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_stock_ledger_bin_id_fkey"
+            columns: ["bin_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_bin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_stock_ledger_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_item"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_stock_ledger_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_location"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_stock_ledger_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_lot"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dkeglpkl_stock_ledger_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkpkl_unified_purchase_view: {
         Row: {
           amount: number | null
@@ -8762,6 +9661,21 @@ export type Database = {
       dkegl_calculate_stock_valuation: {
         Args: { _org_id: string; _item_code: string; _quantity: number }
         Returns: number
+      }
+      dkegl_calculate_stock_with_opening_date: {
+        Args: { _org_id: string; _item_code?: string; _as_of_date?: string }
+        Returns: {
+          item_code: string
+          item_name: string
+          category_name: string
+          opening_qty: number
+          opening_date: string
+          grn_qty_since_opening: number
+          issues_qty_since_opening: number
+          calculated_current_qty: number
+          opening_value: number
+          calculated_current_value: number
+        }[]
       }
       dkegl_calculate_vendor_performance: {
         Args: { _vendor_id: string; _start_date: string; _end_date: string }
@@ -9214,6 +10128,34 @@ export type Database = {
         Args: { _workflow_progress_id: string }
         Returns: Json
       }
+      dkeglpkl_current_org_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      dkeglpkl_generate_bin_code: {
+        Args: { _org_id: string; _location_id: string }
+        Returns: string
+      }
+      dkeglpkl_generate_item_code: {
+        Args: { _org_id: string }
+        Returns: string
+      }
+      dkeglpkl_generate_location_code: {
+        Args: { _org_id: string }
+        Returns: string
+      }
+      dkeglpkl_generate_party_code: {
+        Args: { _org_id: string; _party_type: string }
+        Returns: string
+      }
+      dkeglpkl_generate_uom_code: {
+        Args: { _org_id: string }
+        Returns: string
+      }
+      dkeglpkl_get_current_org_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       dkpkl_get_customer_analysis: {
         Args: { _org_id: string; _start_date?: string; _end_date?: string }
         Returns: Json
@@ -9398,6 +10340,10 @@ export type Database = {
           p_version_id?: string
           p_download_type?: string
         }
+        Returns: undefined
+      }
+      refresh_dkeglpkl_stock_balance: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       set_limit: {

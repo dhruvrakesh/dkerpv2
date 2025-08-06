@@ -11,19 +11,20 @@ import { Upload, FileSpreadsheet, AlertTriangle } from 'lucide-react';
 interface OpeningStockImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onImport: (file: File) => Promise<void>;
+  onImport: (file: File, openingDate: string) => Promise<void>;
   importing: boolean;
 }
 
-export function OpeningStockImportDialog({
-  open,
-  onOpenChange,
-  onImport,
-  importing
+export function OpeningStockImportDialog({ 
+  open, 
+  onOpenChange, 
+  onImport, 
+  importing 
 }: OpeningStockImportDialogProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importType, setImportType] = useState<'excel' | 'csv'>('excel');
   const [dragActive, setDragActive] = useState(false);
+  const [openingDate, setOpeningDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
@@ -51,8 +52,8 @@ export function OpeningStockImportDialog({
   };
 
   const handleImport = async () => {
-    if (selectedFile && onImport) {
-      await onImport(selectedFile);
+    if (selectedFile && openingDate && onImport) {
+      await onImport(selectedFile, openingDate);
       setSelectedFile(null);
       onOpenChange(false);
     }
