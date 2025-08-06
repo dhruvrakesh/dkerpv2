@@ -18,6 +18,10 @@ interface OpeningStockItem {
   updated_at: string;
   created_by?: string;
   approved_by?: string;
+  // Calculated fields for enhanced functionality
+  grn_since_opening?: number;
+  issues_since_opening?: number;
+  current_calculated_qty?: number;
 }
 
 interface AuditTrailEntry {

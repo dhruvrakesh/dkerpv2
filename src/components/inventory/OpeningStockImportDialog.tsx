@@ -111,18 +111,42 @@ export function OpeningStockImportDialog({
             )}
           </div>
 
-          {/* Import Type Selection */}
-          <div>
-            <Label htmlFor="import-type">Import Format</Label>
-            <Select value={importType} onValueChange={(value: 'excel' | 'csv') => setImportType(value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="excel">Excel (.xlsx, .xls)</SelectItem>
-                <SelectItem value="csv">CSV (.csv)</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Import Type and Opening Date */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="import-type">Import Format</Label>
+              <Select value={importType} onValueChange={(value: 'excel' | 'csv') => setImportType(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="excel">Excel (.xlsx, .xls)</SelectItem>
+                  <SelectItem value="csv">CSV (.csv)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="opening-date">Default Opening Date</Label>
+              <Input
+                id="opening-date"
+                type="date"
+                value={openingDate}
+                onChange={(e) => setOpeningDate(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+          </div>
+          
+          {/* Import Instructions */}
+          <div className="p-3 bg-muted rounded-lg">
+            <h4 className="text-sm font-medium mb-2">File Requirements:</h4>
+            <ul className="text-xs text-muted-foreground space-y-1">
+              <li>• Required: item_code, item_name, opening_qty, unit_cost</li>
+              <li>• Optional: opening_date (uses default date if not provided)</li>
+              <li>• Opening dates cannot be in the future</li>
+              <li>• Only positive quantities allowed for opening stock</li>
+            </ul>
           </div>
 
           {/* Import Progress */}

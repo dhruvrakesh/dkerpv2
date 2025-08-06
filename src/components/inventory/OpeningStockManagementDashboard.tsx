@@ -176,59 +176,71 @@ export function OpeningStockManagementDashboard() {
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Item Code</TableHead>
-                      <TableHead>Item Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Opening Qty</TableHead>
-                      <TableHead>Unit Cost</TableHead>
-                      <TableHead>Total Value</TableHead>
-                      <TableHead>Opening Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
+                     <TableRow>
+                       <TableHead>Item Code</TableHead>
+                       <TableHead>Item Name</TableHead>
+                       <TableHead>Category</TableHead>
+                       <TableHead>Opening Qty</TableHead>
+                       <TableHead>Unit Cost</TableHead>
+                       <TableHead>Total Value</TableHead>
+                       <TableHead>Opening Date</TableHead>
+                       <TableHead>GRN Since Opening</TableHead>
+                       <TableHead>Issues Since Opening</TableHead>
+                       <TableHead>Current Calculated</TableHead>
+                       <TableHead>Status</TableHead>
+                       <TableHead>Actions</TableHead>
+                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {openingStock && openingStock.length > 0 ? (
                       openingStock.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.item_code}</TableCell>
-                          <TableCell>{item.item_name}</TableCell>
-                          <TableCell>{item.category_name}</TableCell>
-                          <TableCell className="text-right">
-                            {item.opening_qty.toLocaleString('en-IN', { minimumFractionDigits: 3 })}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(item.unit_cost)}
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatCurrency(item.total_value)}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(item.opening_date).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={item.approval_status === 'approved' ? 'default' : 'secondary'}>
-                              {item.approval_status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditItem(item)}
-                            >
-                              Edit
-                            </Button>
-                          </TableCell>
-                        </TableRow>
+                         <TableRow key={item.id}>
+                           <TableCell className="font-medium">{item.item_code}</TableCell>
+                           <TableCell>{item.item_name}</TableCell>
+                           <TableCell>{item.category_name}</TableCell>
+                           <TableCell className="text-right">
+                             {item.opening_qty.toLocaleString('en-IN', { minimumFractionDigits: 3 })}
+                           </TableCell>
+                           <TableCell className="text-right">
+                             {formatCurrency(item.unit_cost)}
+                           </TableCell>
+                           <TableCell className="text-right font-medium">
+                             {formatCurrency(item.total_value)}
+                           </TableCell>
+                           <TableCell>
+                             {new Date(item.opening_date).toLocaleDateString()}
+                           </TableCell>
+                           <TableCell className="text-right text-green-600">
+                             +{(item.grn_since_opening || 0).toLocaleString('en-IN', { minimumFractionDigits: 3 })}
+                           </TableCell>
+                           <TableCell className="text-right text-red-600">
+                             -{(item.issues_since_opening || 0).toLocaleString('en-IN', { minimumFractionDigits: 3 })}
+                           </TableCell>
+                           <TableCell className="text-right font-medium text-blue-600">
+                             {(item.current_calculated_qty || 0).toLocaleString('en-IN', { minimumFractionDigits: 3 })}
+                           </TableCell>
+                           <TableCell>
+                             <Badge variant={item.approval_status === 'approved' ? 'default' : 'secondary'}>
+                               {item.approval_status}
+                             </Badge>
+                           </TableCell>
+                           <TableCell>
+                             <Button
+                               size="sm"
+                               variant="outline"
+                               onClick={() => handleEditItem(item)}
+                             >
+                               Edit
+                             </Button>
+                           </TableCell>
+                         </TableRow>
                       ))
                     ) : (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8">
-                          No opening stock data found
-                        </TableCell>
-                      </TableRow>
+                       <TableRow>
+                         <TableCell colSpan={12} className="text-center py-8">
+                           No opening stock data found
+                         </TableCell>
+                       </TableRow>
                     )}
                   </TableBody>
                 </Table>
@@ -281,6 +293,7 @@ export function OpeningStockManagementDashboard() {
         onOpenChange={setExportDialogOpen}
         onExport={exportOpeningStock}
         exporting={exporting}
+        totalRecords={openingStock.length}
       />
 
       <OpeningStockEditModal
