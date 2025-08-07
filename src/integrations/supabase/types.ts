@@ -4023,12 +4023,10 @@ export type Database = {
         Row: {
           approval_status: string | null
           approved_by: string | null
-          category_name: string | null
           created_at: string | null
           created_by: string | null
           id: string
           item_code: string
-          item_name: string | null
           location: string | null
           opening_date: string
           opening_qty: number
@@ -4041,12 +4039,10 @@ export type Database = {
         Insert: {
           approval_status?: string | null
           approved_by?: string | null
-          category_name?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
           item_code: string
-          item_name?: string | null
           location?: string | null
           opening_date: string
           opening_qty?: number
@@ -4059,12 +4055,10 @@ export type Database = {
         Update: {
           approval_status?: string | null
           approved_by?: string | null
-          category_name?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
           item_code?: string
-          item_name?: string | null
           location?: string | null
           opening_date?: string
           opening_qty?: number
@@ -4074,7 +4068,43 @@ export type Database = {
           unit_cost?: number | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_opening_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_consumable_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_opening_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_fg_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_opening_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_item_master"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_opening_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_rm_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_opening_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_wip_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+        ]
       }
       dkegl_orders: {
         Row: {
@@ -9687,6 +9717,66 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "dkegl_organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkegl_opening_stock_with_master: {
+        Row: {
+          approval_status: string | null
+          approved_by: string | null
+          category_name: string | null
+          created_at: string | null
+          created_by: string | null
+          hsn_code: string | null
+          id: string | null
+          item_code: string | null
+          item_name: string | null
+          item_status: string | null
+          location: string | null
+          opening_date: string | null
+          opening_qty: number | null
+          organization_id: string | null
+          remarks: string | null
+          total_value: number | null
+          unit_cost: number | null
+          uom: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_opening_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_consumable_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_opening_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_fg_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_opening_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_item_master"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_opening_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_rm_items_view"
+            referencedColumns: ["organization_id", "item_code"]
+          },
+          {
+            foreignKeyName: "fk_opening_stock_item_master"
+            columns: ["organization_id", "item_code"]
+            isOneToOne: false
+            referencedRelation: "dkegl_wip_items_view"
+            referencedColumns: ["organization_id", "item_code"]
           },
         ]
       }

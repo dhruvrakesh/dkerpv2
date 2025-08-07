@@ -5,8 +5,11 @@ import { toast } from '@/hooks/use-toast';
 interface OpeningStockItem {
   id: string;
   item_code: string;
-  item_name: string;
-  category_name: string;
+  item_name?: string; // From joined item master (read-only)
+  category_name?: string; // From joined categories (read-only)
+  uom?: string; // From joined item master (read-only)
+  hsn_code?: string; // From joined item master (read-only)
+  item_status?: string; // From joined item master (read-only)
   location: string;
   opening_qty: number;
   unit_cost: number;
@@ -53,12 +56,15 @@ export function useOpeningStockManagement() {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('dkegl_opening_stock')
+        .from('dkegl_opening_stock_with_master')
         .select(`
           id,
           item_code,
           item_name,
           category_name,
+          uom,
+          hsn_code,
+          item_status,
           location,
           opening_qty,
           unit_cost,
@@ -234,10 +240,13 @@ export function useOpeningStockManagement() {
     updates: Partial<OpeningStockItem>
   ) => {
     try {
+      // Filter out read-only fields that come from item master
+      const { item_name, category_name, uom, hsn_code, item_status, ...updateData } = updates;
+      
       const { error } = await supabase
         .from('dkegl_opening_stock')
         .update({
-          ...updates,
+          ...updateData,
           updated_at: new Date().toISOString()
         })
         .eq('id', itemId);
@@ -265,9 +274,12 @@ export function useOpeningStockManagement() {
   // Add new opening stock item
   const addOpeningStock = useCallback(async (item: Omit<OpeningStockItem, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      // Filter out read-only fields that come from item master
+      const { item_name, category_name, uom, hsn_code, item_status, ...stockData } = item;
+      
       const { error } = await supabase
         .from('dkegl_opening_stock')
-        .insert(item);
+        .insert(stockData);
 
       if (error) throw error;
 
