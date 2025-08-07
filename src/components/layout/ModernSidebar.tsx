@@ -76,8 +76,8 @@ const navigation = [
     children: [
       { name: 'Enterprise Stock Management', href: '/inventory/stock' },
       { name: 'Opening Stock Manager', href: '/inventory/opening-stock' },
-      { name: 'GRN Logs', href: '/inventory/grn' },
-      { name: 'Issue Logs', href: '/inventory/issues' },
+      { name: 'GRN Management', href: '/inventory/grn-management' },
+      { name: 'Issue Management', href: '/inventory/issue-management' },
       { name: 'Item Master', href: '/inventory/items' },
       { name: 'Pricing Master', href: '/inventory/pricing' },
       { name: 'Tally Import', href: '/imports/tally' },
