@@ -34,7 +34,7 @@ export function OpeningStockAddItemDialog({
     opening_qty: '',
     unit_cost: '',
     opening_date: new Date().toISOString().split('T')[0],
-    location: 'main',
+    location: 'main_warehouse',
     remarks: ''
   });
 
@@ -95,6 +95,7 @@ export function OpeningStockAddItemDialog({
           item_code: formData.item_code,
           opening_qty: openingQty,
           unit_cost: unitCost,
+          total_value: openingQty * unitCost,
           opening_date: formData.opening_date,
           location: formData.location,
           remarks: formData.remarks,
@@ -114,7 +115,7 @@ export function OpeningStockAddItemDialog({
         opening_qty: '',
         unit_cost: '',
         opening_date: new Date().toISOString().split('T')[0],
-        location: 'main',
+        location: 'main_warehouse',
         remarks: ''
       });
       setSelectedItem(null);
@@ -231,8 +232,8 @@ export function OpeningStockAddItemDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="main">Main Store</SelectItem>
-                  <SelectItem value="production">Production Floor</SelectItem>
+                  <SelectItem value="main_warehouse">Main Warehouse</SelectItem>
+                  <SelectItem value="production_floor">Production Floor</SelectItem>
                   <SelectItem value="qc_hold">QC Hold</SelectItem>
                   <SelectItem value="finished_goods">Finished Goods</SelectItem>
                 </SelectContent>
