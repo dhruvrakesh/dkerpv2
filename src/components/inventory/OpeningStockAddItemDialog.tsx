@@ -34,7 +34,7 @@ export function OpeningStockAddItemDialog({
     opening_qty: '',
     unit_cost: '',
     opening_date: new Date().toISOString().split('T')[0],
-    location: 'MAIN_STORE',
+    location: 'main',
     remarks: ''
   });
 
@@ -95,7 +95,6 @@ export function OpeningStockAddItemDialog({
           item_code: formData.item_code,
           opening_qty: openingQty,
           unit_cost: unitCost,
-          total_value: openingQty * unitCost,
           opening_date: formData.opening_date,
           location: formData.location,
           remarks: formData.remarks,
@@ -115,7 +114,7 @@ export function OpeningStockAddItemDialog({
         opening_qty: '',
         unit_cost: '',
         opening_date: new Date().toISOString().split('T')[0],
-        location: 'MAIN_STORE',
+        location: 'main',
         remarks: ''
       });
       setSelectedItem(null);
@@ -140,8 +139,8 @@ export function OpeningStockAddItemDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
             Add Opening Stock Item
@@ -151,7 +150,7 @@ export function OpeningStockAddItemDialog({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto space-y-6 pr-2">
           {/* Item Selection */}
           <div className="space-y-4">
             <div>
@@ -232,10 +231,10 @@ export function OpeningStockAddItemDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MAIN_STORE">Main Store</SelectItem>
-                  <SelectItem value="PRODUCTION_FLOOR">Production Floor</SelectItem>
-                  <SelectItem value="QC_HOLD">QC Hold</SelectItem>
-                  <SelectItem value="FINISHED_GOODS">Finished Goods</SelectItem>
+                  <SelectItem value="main">Main Store</SelectItem>
+                  <SelectItem value="production">Production Floor</SelectItem>
+                  <SelectItem value="qc_hold">QC Hold</SelectItem>
+                  <SelectItem value="finished_goods">Finished Goods</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -267,8 +266,10 @@ export function OpeningStockAddItemDialog({
               rows={3}
             />
           </div>
+        </div>
 
-          {/* Action Buttons */}
+        {/* Action Buttons - Fixed at bottom */}
+        <div className="flex-shrink-0 pt-6 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"
