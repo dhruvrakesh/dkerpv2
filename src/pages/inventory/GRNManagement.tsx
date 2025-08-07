@@ -29,23 +29,19 @@ import {
 import * as XLSX from 'xlsx';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 import { useEnterpriseExport } from '@/hooks/useEnterpriseExport';
-import { PricingVarianceIndicator } from '@/components/inventory/PricingVarianceIndicator';
-import { usePricingMaster } from '@/hooks/usePricingMaster';
-import { EnterpriseBulkUpload } from '@/components/inventory/EnterpriseBulkUpload';
+import { GRNFormFields } from '@/components/inventory/GRNFormFix';
 
 interface GRNRecord {
   id: string;
   grn_number: string;
   item_code: string;
   item_name?: string;
-  supplier_name?: string;
+  supplier_name: string;
   date: string;
   qty_received: number;
-  unit_rate?: number;
-  total_amount?: number;
-  invoice_number?: string;
-  invoice_date?: string;
-  quality_status: 'pending' | 'approved' | 'in_review' | 'passed' | 'failed' | 'rework_required';
+  unit_rate: number;
+  total_amount: number;
+  quality_status?: string;
   remarks?: string;
   created_at: string;
   uom?: string;
@@ -58,30 +54,23 @@ interface GRNForm {
   date: string;
   qty_received: number;
   unit_rate: number;
-  invoice_number: string;
-  invoice_date: string;
-  quality_status: 'pending' | 'approved' | 'in_review' | 'passed' | 'failed' | 'rework_required';
-  remarks: string;
   uom: string;
+  quality_status: string;
+  remarks: string;
 }
 
 export default function GRNManagement() {
   const { organization } = useDKEGLAuth();
   const { toast } = useToast();
   const { exportData, isExporting } = useEnterpriseExport();
-  const pricing = usePricingMaster();
   const [grnRecords, setGrnRecords] = useState<GRNRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterSupplier, setFilterSupplier] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [filterDateRange, setFilterDateRange] = useState('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedGrn, setSelectedGrn] = useState<GRNRecord | null>(null);
   const [availableItems, setAvailableItems] = useState<ItemOption[]>([]);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [selectedSupplier, setSelectedSupplier] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
 
   const [grnForm, setGrnForm] = useState<GRNForm>({
     grn_number: '',
@@ -90,11 +79,9 @@ export default function GRNManagement() {
     date: new Date().toISOString().split('T')[0],
     qty_received: 0,
     unit_rate: 0,
-    invoice_number: '',
-    invoice_date: '',
-    quality_status: 'pending',
-    remarks: '',
-    uom: 'PCS'
+    uom: 'PCS',
+    quality_status: 'approved',
+    remarks: ''
   });
 
   useEffect(() => {
@@ -105,55 +92,58 @@ export default function GRNManagement() {
     try {
       setLoading(true);
       
-      // Load GRN records with item details
+      const { data: userProfile } = await supabase
+        .from('dkegl_user_profiles')
+        .select('organization_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!userProfile?.organization_id) {
+        throw new Error('Organization not found');
+      }
+
+      // Load GRN records
       const { data: grnData, error: grnError } = await supabase
         .from('dkegl_grn_log')
         .select(`
           *,
-          dkegl_item_master!fk_grn_item_master(item_name, uom)
+          dkegl_item_master!inner(item_name, uom)
         `)
-        .order('created_at', { ascending: false });
+        .eq('organization_id', userProfile.organization_id)
+        .order('date', { ascending: false });
 
       if (grnError) throw grnError;
-      
-      const formattedGrn = grnData?.map(grn => ({
-        ...grn,
-        item_name: grn.dkegl_item_master?.item_name,
-        uom: grn.dkegl_item_master?.uom || grn.uom
-      })) || [];
-      
-      setGrnRecords(formattedGrn);
 
-      // Load available items with enhanced data for enterprise selector
+      // Transform data to include item_name
+      const transformedGrnData = grnData?.map(grn => ({
+        ...grn,
+        item_name: grn.dkegl_item_master?.item_name || '',
+        uom: grn.dkegl_item_master?.uom || 'PCS'
+      })) || [];
+
+      setGrnRecords(transformedGrnData);
+
+      // Load items for dropdown
       const { data: itemsData, error: itemsError } = await supabase
         .from('dkegl_item_master')
-        .select(`
-          id, 
-          item_code, 
-          item_name, 
-          uom,
-          status,
-          created_at
-        `)
-        .eq('status', 'active')
-        .order('item_name');
+        .select('*')
+        .eq('organization_id', userProfile.organization_id)
+        .eq('status', 'active');
 
       if (itemsError) throw itemsError;
-      
-      // Transform items data to match ItemOption interface
-      const transformedItems: ItemOption[] = (itemsData || []).map(item => ({
+
+      const formattedItems: ItemOption[] = itemsData?.map(item => ({
         id: item.id,
+        value: item.item_code,
+        label: `${item.item_code} - ${item.item_name}`,
         item_code: item.item_code,
         item_name: item.item_name,
-        uom: item.uom || 'PCS',
-        category_name: 'General', // Default category since column doesn't exist yet
-        status: item.status,
-        // Mock usage data - in production, this would come from actual usage analytics
-        usage_frequency: Math.floor(Math.random() * 50),
-        last_used: Math.random() > 0.5 ? new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000) : undefined
-      }));
-      
-      setAvailableItems(transformedItems);
+        category: item.category_id || 'general',
+        uom: item.uom,
+        specifications: item.specifications || {}
+      })) || [];
+
+      setAvailableItems(formattedItems);
 
     } catch (error: any) {
       toast({
@@ -215,7 +205,7 @@ export default function GRNManagement() {
         // Create new GRN
         const { error } = await supabase
           .from('dkegl_grn_log')
-          .insert([grnData]);
+          .insert(grnData);
         
         if (error) throw error;
         
@@ -228,7 +218,7 @@ export default function GRNManagement() {
       setIsCreateDialogOpen(false);
       setSelectedGrn(null);
       resetForm();
-      loadData();
+      await loadData();
     } catch (error: any) {
       toast({
         title: "Error saving GRN",
@@ -248,11 +238,9 @@ export default function GRNManagement() {
       date: new Date().toISOString().split('T')[0],
       qty_received: 0,
       unit_rate: 0,
-      invoice_number: '',
-      invoice_date: '',
-      quality_status: 'pending',
-      remarks: '',
-      uom: 'PCS'
+      uom: 'PCS',
+      quality_status: 'approved',
+      remarks: ''
     });
   };
 
@@ -261,15 +249,13 @@ export default function GRNManagement() {
     setGrnForm({
       grn_number: grn.grn_number,
       item_code: grn.item_code,
-      supplier_name: grn.supplier_name || '',
+      supplier_name: grn.supplier_name,
       date: grn.date,
       qty_received: grn.qty_received,
-      unit_rate: grn.unit_rate || 0,
-      invoice_number: grn.invoice_number || '',
-      invoice_date: grn.invoice_date || '',
-      quality_status: grn.quality_status,
-      remarks: grn.remarks || '',
-      uom: grn.uom || 'PCS'
+      unit_rate: grn.unit_rate,
+      uom: grn.uom || 'PCS',
+      quality_status: grn.quality_status || 'approved',
+      remarks: grn.remarks || ''
     });
     setIsCreateDialogOpen(true);
   };
@@ -280,21 +266,21 @@ export default function GRNManagement() {
       setGrnForm(prev => ({
         ...prev,
         item_code: itemCode,
-        uom: selectedItem.uom
+        uom: selectedItem.uom || 'PCS'
       }));
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status?: string) => {
     switch (status) {
-      case 'approved': return 'default';
-      case 'rejected': return 'destructive';
-      case 'pending': return 'secondary';
-      default: return 'secondary';
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status?: string) => {
     switch (status) {
       case 'approved': return <CheckCircle className="h-4 w-4" />;
       case 'rejected': return <AlertCircle className="h-4 w-4" />;
@@ -306,74 +292,49 @@ export default function GRNManagement() {
   const handleExport = async () => {
     if (!organization?.id) return;
     
-    const filters: any = {};
-    if (searchTerm) filters.itemCode = searchTerm;
-    if (startDate) filters.startDate = startDate;
-    if (endDate) filters.endDate = endDate;
-    if (selectedSupplier) filters.supplier = selectedSupplier;
-    if (statusFilter) filters.status = statusFilter;
-    
+    const filters = {
+      startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      endDate: new Date().toISOString().split('T')[0],
+    };
+
     await exportData('grn', 'excel', filters, organization.id);
   };
-
-  // Legacy upload function removed - now using Enterprise Bulk Upload system
-  // This ensures all uploads go through proper validation, staging, and approval workflow
 
   const downloadTemplate = () => {
     const templateData = [
       {
-        'GRN Number': 'GRN202501010001',
-        'Date': new Date().toISOString().split('T')[0],
-        'Item Code': 'RAW_ADHESIVE_001',
+        'GRN Number': 'GRN202401010001',
+        'Item Code': 'ITEM001',
         'Supplier Name': 'ABC Suppliers Ltd',
+        'Date': '2024-01-01',
         'Quantity Received': 100,
-        'Unit Rate': 25.50,
-        'Invoice Number': 'INV-2025-001',
-        'Invoice Date': new Date().toISOString().split('T')[0],
-        'Quality Status': 'pending',
-        'Remarks': 'Material received in good condition'
+        'Unit Rate': 50.00,
+        'Quality Status': 'approved',
+        'Remarks': 'Sample entry'
       }
     ];
 
-    const worksheet = XLSX.utils.json_to_sheet(templateData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'GRN Template');
-    
-    XLSX.writeFile(workbook, 'grn_upload_template.xlsx');
-    
-    toast({
-      title: "Template downloaded",
-      description: "Use this template for bulk upload"
-    });
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'GRN Template');
+    XLSX.writeFile(wb, 'grn_upload_template.xlsx');
   };
 
   const filteredGrn = grnRecords.filter(grn => {
-    const matchesSearch = grn.grn_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         grn.item_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         grn.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         grn.item_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = !searchTerm || 
+      grn.grn_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      grn.item_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      grn.supplier_name.toLowerCase().includes(searchTerm.toLowerCase());
     
+    const matchesSupplier = filterSupplier === 'all' || grn.supplier_name === filterSupplier;
     const matchesStatus = filterStatus === 'all' || grn.quality_status === filterStatus;
     
-    let matchesDate = true;
-    if (filterDateRange !== 'all') {
-      const grnDate = new Date(grn.date);
-      const now = new Date();
-      const daysDiff = Math.ceil((now.getTime() - grnDate.getTime()) / (1000 * 3600 * 24));
-      
-      switch (filterDateRange) {
-        case '7d': matchesDate = daysDiff <= 7; break;
-        case '30d': matchesDate = daysDiff <= 30; break;
-        case '90d': matchesDate = daysDiff <= 90; break;
-      }
-    }
-    
-    return matchesSearch && matchesStatus && matchesDate;
+    return matchesSearch && matchesSupplier && matchesStatus;
   });
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
@@ -382,17 +343,14 @@ export default function GRNManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">GRN Management</h1>
-          <p className="text-muted-foreground">
-            Goods Received Notes - Track incoming inventory
-          </p>
+          <h2 className="text-3xl font-bold tracking-tight">GRN Management</h2>
+          <p className="text-muted-foreground">Manage goods received notes and stock entries</p>
         </div>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
-            size="sm" 
             onClick={handleExport}
             disabled={isExporting}
           >
@@ -460,17 +418,15 @@ export default function GRNManagement() {
                       required
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="qty_received">Quantity Received *</Label>
-                    <Input
-                      id="qty_received"
-                      type="number"
-                      step="0.001"
-                      value={grnForm.qty_received}
-                      onChange={(e) => setGrnForm(prev => ({ ...prev, qty_received: parseFloat(e.target.value) || 0 }))}
-                      required
-                    />
-                  </div>
+                  <GRNFormFields 
+                    grnForm={grnForm}
+                    handleInputChange={(field, value) => {
+                      setGrnForm(prev => ({ 
+                        ...prev, 
+                        [field]: field === 'qty_received' || field === 'unit_rate' ? parseFloat(value) || 0 : value 
+                      }));
+                    }}
+                  />
                   <div>
                     <Label htmlFor="uom">UOM</Label>
                     <Input
@@ -478,16 +434,6 @@ export default function GRNManagement() {
                       value={grnForm.uom}
                       onChange={(e) => setGrnForm(prev => ({ ...prev, uom: e.target.value }))}
                       readOnly
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="unit_rate">Unit Rate</Label>
-                    <Input
-                      id="unit_rate"
-                      type="number"
-                      step="0.01"
-                      value={grnForm.unit_rate}
-                      onChange={(e) => setGrnForm(prev => ({ ...prev, unit_rate: parseFloat(e.target.value) || 0 }))}
                     />
                   </div>
                   <div>
@@ -499,35 +445,15 @@ export default function GRNManagement() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="invoice_number">Invoice Number</Label>
-                    <Input
-                      id="invoice_number"
-                      value={grnForm.invoice_number}
-                      onChange={(e) => setGrnForm(prev => ({ ...prev, invoice_number: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="invoice_date">Invoice Date</Label>
-                    <Input
-                      id="invoice_date"
-                      type="date"
-                      value={grnForm.invoice_date}
-                      onChange={(e) => setGrnForm(prev => ({ ...prev, invoice_date: e.target.value }))}
-                    />
-                  </div>
-                  <div>
                     <Label htmlFor="quality_status">Quality Status</Label>
-                    <Select value={grnForm.quality_status} onValueChange={(value: any) => setGrnForm(prev => ({ ...prev, quality_status: value }))}>
+                    <Select value={grnForm.quality_status} onValueChange={(value) => setGrnForm(prev => ({ ...prev, quality_status: value }))}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="in_review">In Review</SelectItem>
-                        <SelectItem value="passed">Passed</SelectItem>
-                        <SelectItem value="failed">Failed</SelectItem>
-                        <SelectItem value="rework_required">Rework Required</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -538,23 +464,15 @@ export default function GRNManagement() {
                     id="remarks"
                     value={grnForm.remarks}
                     onChange={(e) => setGrnForm(prev => ({ ...prev, remarks: e.target.value }))}
-                    rows={3}
+                    placeholder="Additional notes..."
                   />
                 </div>
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsCreateDialogOpen(false);
-                      setSelectedGrn(null);
-                      resetForm();
-                    }}
-                  >
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                     <X className="h-4 w-4 mr-2" />
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={loading}>
+                  <Button type="submit">
                     <Save className="h-4 w-4 mr-2" />
                     {selectedGrn ? 'Update' : 'Create'} GRN
                   </Button>
@@ -565,58 +483,39 @@ export default function GRNManagement() {
         </div>
       </div>
 
-      {/* Enterprise Bulk Upload */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Upload className="h-5 w-5" />
-            <span>Enterprise Bulk Upload</span>
-          </CardTitle>
-          <CardDescription>
-            Advanced GRN bulk upload with validation, staging, and approval workflow
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <EnterpriseBulkUpload />
-        </CardContent>
-      </Card>
-
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by GRN number, item code, or supplier..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+        <CardContent className="pt-6">
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Search by GRN number, item code, or supplier..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+                
+              />
             </div>
+            <Select value={filterSupplier} onValueChange={setFilterSupplier}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by supplier" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Suppliers</SelectItem>
+                {[...new Set(grnRecords.map(grn => grn.supplier_name))].map(supplier => (
+                  <SelectItem key={supplier} value={supplier}>{supplier}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[150px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="All Status" />
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterDateRange} onValueChange={setFilterDateRange}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All Dates" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Dates</SelectItem>
-                <SelectItem value="7d">Last 7 days</SelectItem>
-                <SelectItem value="30d">Last 30 days</SelectItem>
-                <SelectItem value="90d">Last 90 days</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -626,10 +525,10 @@ export default function GRNManagement() {
       {/* GRN Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            GRN Records ({filteredGrn.length})
-          </CardTitle>
+          <CardTitle>GRN Records</CardTitle>
+          <CardDescription>
+            {filteredGrn.length} of {grnRecords.length} records
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -637,53 +536,36 @@ export default function GRNManagement() {
               <TableRow>
                 <TableHead>GRN Number</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Item</TableHead>
+                <TableHead>Item Code</TableHead>
+                <TableHead>Item Name</TableHead>
                 <TableHead>Supplier</TableHead>
-                <TableHead>Quantity</TableHead>
-                    <TableHead>Unit Rate</TableHead>
-                    <TableHead>Total Amount</TableHead>
-                    <TableHead>Price Variance</TableHead>
-                    <TableHead>Quality Status</TableHead>
+                <TableHead>Qty Received</TableHead>
+                <TableHead>Unit Rate</TableHead>
+                <TableHead>Total Amount</TableHead>
+                <TableHead>Quality Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredGrn.map((grn) => (
                 <TableRow key={grn.id}>
-                  <TableCell className="font-mono">{grn.grn_number}</TableCell>
+                  <TableCell className="font-medium">{grn.grn_number}</TableCell>
                   <TableCell>{new Date(grn.date).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{grn.item_code}</div>
-                      <div className="text-sm text-muted-foreground">{grn.item_name}</div>
-                    </div>
-                  </TableCell>
+                  <TableCell>{grn.item_code}</TableCell>
+                  <TableCell>{grn.item_name}</TableCell>
                   <TableCell>{grn.supplier_name}</TableCell>
-                  <TableCell className="text-right">
-                    {grn.qty_received.toLocaleString()} {grn.uom}
-                  </TableCell>
-                   <TableCell>₹{grn.unit_rate?.toFixed(2) || 0}</TableCell>
-                   <TableCell>₹{grn.total_amount?.toFixed(2) || 0}</TableCell>
-                   <TableCell>
-                     {grn.unit_rate && (
-                       <PricingVarianceIndicator
-                         itemCode={grn.item_code}
-                         currentPrice={grn.unit_rate}
-                         showTooltip={true}
-                       />
-                     )}
-                   </TableCell>
-                   <TableCell>
-                     <div className="flex items-center space-x-2">
-                       {getStatusIcon(grn.quality_status)}
-                       <Badge variant={getStatusColor(grn.quality_status) as any}>
-                         {grn.quality_status}
-                       </Badge>
-                     </div>
-                   </TableCell>
+                  <TableCell>{grn.qty_received.toLocaleString()} {grn.uom}</TableCell>
+                  <TableCell>₹{grn.unit_rate.toFixed(2)}</TableCell>
+                  <TableCell>₹{grn.total_amount.toFixed(2)}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
+                    <Badge className={getStatusColor(grn.quality_status)}>
+                      {getStatusIcon(grn.quality_status)}
+                      <span className="ml-1">{grn.quality_status || 'pending'}</span>
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button 
+                      variant="ghost" 
                       size="sm"
                       onClick={() => handleEdit(grn)}
                     >
