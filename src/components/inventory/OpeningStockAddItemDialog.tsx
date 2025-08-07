@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EnterpriseItemSelector, type ItemOption } from '@/components/ui/enterprise-item-selector';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Package, Calculator } from 'lucide-react';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
+import { useItemMaster } from '@/hooks/useItemMaster';
 
 interface OpeningStockAddItemDialogProps {
   open: boolean;
@@ -17,14 +19,6 @@ interface OpeningStockAddItemDialogProps {
   onItemAdded: () => void;
 }
 
-interface ItemMasterItem {
-  id: string;
-  item_code: string;
-  item_name: string;
-  uom: string;
-  hsn_code?: string;
-  category_name?: string;
-}
 
 export function OpeningStockAddItemDialog({ 
   open, 
@@ -32,8 +26,7 @@ export function OpeningStockAddItemDialog({
   onItemAdded 
 }: OpeningStockAddItemDialogProps) {
   const { organization } = useDKEGLAuth();
-  const [items, setItems] = useState<ItemMasterItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { items, loading } = useItemMaster();
   const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -45,60 +38,22 @@ export function OpeningStockAddItemDialog({
     remarks: ''
   });
 
-  const [selectedItem, setSelectedItem] = useState<ItemMasterItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ItemOption | null>(null);
 
-  // Fetch items from item master
-  useEffect(() => {
-    if (open) {
-      fetchItems();
-    }
-  }, [open]);
-
-  const fetchItems = async () => {
-    if (!organization?.id) return;
-    
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('dkegl_item_master')
-        .select(`
-          id,
-          item_code,
-          item_name,
-          uom,
-          hsn_code,
-          dkegl_categories (category_name)
-        `)
-        .eq('organization_id', organization.id)
-        .eq('status', 'active')
-        .order('item_name');
-
-      if (error) throw error;
-
-      const transformedItems = data?.map(item => ({
-        id: item.id,
-        item_code: item.item_code,
-        item_name: item.item_name,
-        uom: item.uom || 'PCS',
-        hsn_code: item.hsn_code || '',
-        category_name: (item.dkegl_categories as any)?.category_name
-      })) || [];
-
-      setItems(transformedItems);
-    } catch (error) {
-      console.error('Error loading items:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load items from master",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Transform items to ItemOption format for EnterpriseItemSelector
+  const itemOptions: ItemOption[] = items.map(item => ({
+    id: item.id,
+    item_code: item.item_code,
+    item_name: item.item_name,
+    uom: item.uom,
+    category_name: item.category_name,
+    status: item.status,
+    last_used: item.last_used,
+    usage_frequency: item.usage_frequency
+  }));
 
   const handleItemSelect = (itemCode: string) => {
-    const item = items.find(i => i.item_code === itemCode);
+    const item = itemOptions.find(i => i.item_code === itemCode);
     setSelectedItem(item || null);
     setFormData(prev => ({ ...prev, item_code: itemCode }));
   };
@@ -198,21 +153,15 @@ export function OpeningStockAddItemDialog({
           <div className="space-y-4">
             <div>
               <Label htmlFor="item-select">Select Item*</Label>
-              <Select onValueChange={handleItemSelect} value={formData.item_code}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose an item from master..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {items.map((item) => (
-                    <SelectItem key={item.item_code} value={item.item_code}>
-                      <div className="flex flex-col text-left">
-                        <span className="font-medium">{item.item_code}</span>
-                        <span className="text-sm text-muted-foreground">{item.item_name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <EnterpriseItemSelector
+                items={itemOptions}
+                value={formData.item_code}
+                onValueChange={handleItemSelect}
+                placeholder="Search and select an item..."
+                searchPlaceholder="Search by code, name, or category..."
+                showCategories={true}
+                showRecentItems={true}
+              />
             </div>
 
             {/* Selected Item Details */}
@@ -225,7 +174,6 @@ export function OpeningStockAddItemDialog({
                   <div><strong>Code:</strong> {selectedItem.item_code}</div>
                   <div><strong>Name:</strong> {selectedItem.item_name}</div>
                   <div><strong>UOM:</strong> {selectedItem.uom}</div>
-                  {selectedItem.hsn_code && <div><strong>HSN:</strong> {selectedItem.hsn_code}</div>}
                   {selectedItem.category_name && <div><strong>Category:</strong> {selectedItem.category_name}</div>}
                 </CardContent>
               </Card>
