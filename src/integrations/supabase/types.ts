@@ -7984,6 +7984,50 @@ export type Database = {
           },
         ]
       }
+      dkeglpkl_user_profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean | null
+          org_id: string
+          role: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          org_id: string
+          role?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          org_id?: string
+          role?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_user_profiles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkpkl_account_mapping: {
         Row: {
           created_at: string
