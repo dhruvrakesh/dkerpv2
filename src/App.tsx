@@ -11,8 +11,8 @@ import DKEGLAuth from "./pages/DKEGLAuth";
 import NotFound from "./pages/NotFound";
 import InventoryDashboard from "./pages/inventory/InventoryDashboard";
 import { ItemMaster } from "./pages/inventory/ItemMaster";
-import GRNManagement from "./pages/inventory/GRNManagement";
-import IssueManagement from "./pages/inventory/IssueManagement";
+import GRNDashboard from "./pages/inventory/GRNDashboard";
+import IssueDashboard from "./pages/inventory/IssueDashboard";
 import StockManagement from "./pages/inventory/StockManagement";
 import PricingMasterPage from "./pages/inventory/PricingMasterPage";
 import { ProductionAnalyticsDashboard } from "./components/analytics/ProductionAnalyticsDashboard";
@@ -87,21 +87,21 @@ const App = () => (
               } 
             />
             <Route 
-              path="/inventory/grn" 
+              path="/inventory/grn-management" 
               element={
                 <ProtectedRoute>
                   <InventoryLayout>
-                    <GRNManagement />
+                    <GRNDashboard />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 
             />
             <Route 
-              path="/inventory/issues" 
+              path="/inventory/issue-management" 
               element={
                 <ProtectedRoute>
                   <InventoryLayout>
-                    <IssueManagement />
+                    <IssueDashboard />
                   </InventoryLayout>
                 </ProtectedRoute>
               } 
