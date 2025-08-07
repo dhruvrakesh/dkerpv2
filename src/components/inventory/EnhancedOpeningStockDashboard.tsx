@@ -25,6 +25,7 @@ import {
   Filter
 } from 'lucide-react';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
+import { useEnterpriseExport } from '@/hooks/useEnterpriseExport';
 import { cn } from '@/lib/utils';
 
 interface OpeningStockRecord {
@@ -56,6 +57,7 @@ interface StockAnalytics {
 export function EnhancedOpeningStockDashboard() {
   const { organization } = useDKEGLAuth();
   const { toast } = useToast();
+  const { exportData, isExporting } = useEnterpriseExport();
   
   const [openingStock, setOpeningStock] = useState<OpeningStockRecord[]>([]);
   const [analytics, setAnalytics] = useState<StockAnalytics>({
@@ -227,6 +229,22 @@ export function EnhancedOpeningStockDashboard() {
               Date Range
             </Button>
           </div>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={async () => {
+              if (!organization?.id) return;
+              await exportData('stock', 'excel', {
+                startDate: startDate ? format(startDate, 'yyyy-MM-dd') : undefined,
+                endDate: endDate ? format(endDate, 'yyyy-MM-dd') : undefined
+              }, organization.id);
+            }}
+            disabled={isExporting}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {isExporting ? 'Exporting...' : 'Export Data'}
+          </Button>
           
           <Button onClick={loadOpeningStockData} size="sm" variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />

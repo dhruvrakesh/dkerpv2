@@ -31,6 +31,8 @@ import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
 import { useEnterpriseExport } from '@/hooks/useEnterpriseExport';
 import { GRNFormFields } from '@/components/inventory/GRNFormFix';
 
+type QualityStatus = 'approved' | 'failed' | 'in_review' | 'passed' | 'pending' | 'rework_required';
+
 interface GRNRecord {
   id: string;
   grn_number: string;
@@ -41,7 +43,7 @@ interface GRNRecord {
   qty_received: number;
   unit_rate: number;
   total_amount: number;
-  quality_status?: string;
+  quality_status?: QualityStatus;
   remarks?: string;
   created_at: string;
   uom?: string;
@@ -55,7 +57,7 @@ interface GRNForm {
   qty_received: number;
   unit_rate: number;
   uom: string;
-  quality_status: string;
+  quality_status: QualityStatus;
   remarks: string;
 }
 
@@ -271,20 +273,26 @@ export default function GRNManagement() {
     }
   };
 
-  const getStatusColor = (status?: string) => {
+  const getStatusColor = (status?: QualityStatus) => {
     switch (status) {
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'approved': 
+      case 'passed': return 'bg-green-100 text-green-800';
+      case 'failed': 
+      case 'rework_required': return 'bg-red-100 text-red-800';
+      case 'pending': 
+      case 'in_review': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusIcon = (status?: string) => {
+  const getStatusIcon = (status?: QualityStatus) => {
     switch (status) {
-      case 'approved': return <CheckCircle className="h-4 w-4" />;
-      case 'rejected': return <AlertCircle className="h-4 w-4" />;
-      case 'pending': return <Clock className="h-4 w-4" />;
+      case 'approved': 
+      case 'passed': return <CheckCircle className="h-4 w-4" />;
+      case 'failed': 
+      case 'rework_required': return <AlertCircle className="h-4 w-4" />;
+      case 'pending': 
+      case 'in_review': return <Clock className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
     }
   };
@@ -446,14 +454,17 @@ export default function GRNManagement() {
                   </div>
                   <div>
                     <Label htmlFor="quality_status">Quality Status</Label>
-                    <Select value={grnForm.quality_status} onValueChange={(value) => setGrnForm(prev => ({ ...prev, quality_status: value }))}>
+                    <Select value={grnForm.quality_status} onValueChange={(value: QualityStatus) => setGrnForm(prev => ({ ...prev, quality_status: value }))}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="approved">Approved</SelectItem>
                         <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
+                        <SelectItem value="in_review">In Review</SelectItem>
+                        <SelectItem value="passed">Passed</SelectItem>
+                        <SelectItem value="failed">Failed</SelectItem>
+                        <SelectItem value="rework_required">Rework Required</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -515,7 +526,10 @@ export default function GRNManagement() {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="approved">Approved</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="in_review">In Review</SelectItem>
+                <SelectItem value="passed">Passed</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+                <SelectItem value="rework_required">Rework Required</SelectItem>
               </SelectContent>
             </Select>
           </div>
