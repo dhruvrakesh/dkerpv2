@@ -26,6 +26,8 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
+import { useEnterpriseExport } from '@/hooks/useEnterpriseExport';
 
 interface IssueRecord {
   id: string;
@@ -54,7 +56,9 @@ interface IssueForm {
 }
 
 export default function IssueManagement() {
+  const { organization } = useDKEGLAuth();
   const { toast } = useToast();
+  const { exportData, isExporting } = useEnterpriseExport();
   const [issueRecords, setIssueRecords] = useState<IssueRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -64,6 +68,9 @@ export default function IssueManagement() {
   const [selectedIssue, setSelectedIssue] = useState<IssueRecord | null>(null);
   const [availableItems, setAvailableItems] = useState<any[]>([]);
   const [stockInfo, setStockInfo] = useState<any>({});
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('');
 
   const [issueForm, setIssueForm] = useState<IssueForm>({
     item_code: '',
@@ -330,57 +337,16 @@ export default function IssueManagement() {
     return stockInfo[itemCode]?.uom || 'PCS';
   };
 
-  const handleExport = () => {
-    try {
-      const exportData = filteredIssues.map(issue => ({
-        'Issue Number': issue.id.slice(0, 8),
-        'Date': issue.date,
-        'Item Code': issue.item_code,
-        'Item Name': issue.item_name || '',
-        'Quantity Issued': issue.qty_issued,
-        'UOM': issue.uom || '',
-        'Department': issue.department || '',
-        'Purpose': issue.purpose || '',
-        'Requested By': issue.requested_by || '',
-        'Approved By': issue.approved_by || '',
-        'Remarks': issue.remarks || '',
-        'Created At': new Date(issue.created_at).toLocaleString()
-      }));
-
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Issue Records');
-      
-      // Auto-size columns
-      const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-      const colWidths = [];
-      for (let col = range.s.c; col <= range.e.c; col++) {
-        let maxWidth = 10;
-        for (let row = range.s.r; row <= range.e.r; row++) {
-          const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
-          const cell = worksheet[cellAddress];
-          if (cell && cell.v) {
-            maxWidth = Math.max(maxWidth, cell.v.toString().length);
-          }
-        }
-        colWidths.push({ width: Math.min(maxWidth + 2, 50) });
-      }
-      worksheet['!cols'] = colWidths;
-
-      const fileName = `issue_records_${new Date().toISOString().split('T')[0]}.xlsx`;
-      XLSX.writeFile(workbook, fileName);
-      
-      toast({
-        title: "Export successful",
-        description: `${exportData.length} records exported to ${fileName}`
-      });
-    } catch (error: any) {
-      toast({
-        title: "Export failed",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
+  const handleExport = async () => {
+    if (!organization?.id) return;
+    
+    const filters: any = {};
+    if (searchTerm) filters.itemCode = searchTerm;
+    if (departmentFilter) filters.department = departmentFilter;
+    if (startDate) filters.startDate = startDate;
+    if (endDate) filters.endDate = endDate;
+    
+    await exportData('issue', 'excel', filters, organization.id);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -564,9 +530,14 @@ export default function IssueManagement() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExport}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExport}
+            disabled={isExporting}
+          >
             <Download className="h-4 w-4 mr-2" />
-            Export
+            {isExporting ? 'Exporting...' : 'Export'}
           </Button>
           <div className="relative">
             <input

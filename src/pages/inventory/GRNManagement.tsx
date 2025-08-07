@@ -27,6 +27,8 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
+import { useEnterpriseExport } from '@/hooks/useEnterpriseExport';
 import { PricingVarianceIndicator } from '@/components/inventory/PricingVarianceIndicator';
 import { usePricingMaster } from '@/hooks/usePricingMaster';
 import { EnterpriseBulkUpload } from '@/components/inventory/EnterpriseBulkUpload';
@@ -64,7 +66,9 @@ interface GRNForm {
 }
 
 export default function GRNManagement() {
+  const { organization } = useDKEGLAuth();
   const { toast } = useToast();
+  const { exportData, isExporting } = useEnterpriseExport();
   const pricing = usePricingMaster();
   const [grnRecords, setGrnRecords] = useState<GRNRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,6 +78,10 @@ export default function GRNManagement() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedGrn, setSelectedGrn] = useState<GRNRecord | null>(null);
   const [availableItems, setAvailableItems] = useState<ItemOption[]>([]);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [selectedSupplier, setSelectedSupplier] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const [grnForm, setGrnForm] = useState<GRNForm>({
     grn_number: '',
@@ -295,59 +303,17 @@ export default function GRNManagement() {
     }
   };
 
-  const handleExport = () => {
-    try {
-      const exportData = filteredGrn.map(grn => ({
-        'GRN Number': grn.grn_number,
-        'Date': grn.date,
-        'Item Code': grn.item_code,
-        'Item Name': grn.item_name || '',
-        'Supplier Name': grn.supplier_name || '',
-        'Quantity Received': grn.qty_received,
-        'UOM': grn.uom || '',
-        'Unit Rate': grn.unit_rate || 0,
-        'Total Amount': grn.total_amount || 0,
-        'Invoice Number': grn.invoice_number || '',
-        'Invoice Date': grn.invoice_date || '',
-        'Quality Status': grn.quality_status,
-        'Remarks': grn.remarks || '',
-        'Created At': new Date(grn.created_at).toLocaleString()
-      }));
-
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'GRN Records');
-      
-      // Auto-size columns
-      const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-      const colWidths = [];
-      for (let col = range.s.c; col <= range.e.c; col++) {
-        let maxWidth = 10;
-        for (let row = range.s.r; row <= range.e.r; row++) {
-          const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
-          const cell = worksheet[cellAddress];
-          if (cell && cell.v) {
-            maxWidth = Math.max(maxWidth, cell.v.toString().length);
-          }
-        }
-        colWidths.push({ width: Math.min(maxWidth + 2, 50) });
-      }
-      worksheet['!cols'] = colWidths;
-
-      const fileName = `grn_records_${new Date().toISOString().split('T')[0]}.xlsx`;
-      XLSX.writeFile(workbook, fileName);
-      
-      toast({
-        title: "Export successful",
-        description: `${exportData.length} records exported to ${fileName}`
-      });
-    } catch (error: any) {
-      toast({
-        title: "Export failed",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
+  const handleExport = async () => {
+    if (!organization?.id) return;
+    
+    const filters: any = {};
+    if (searchTerm) filters.itemCode = searchTerm;
+    if (startDate) filters.startDate = startDate;
+    if (endDate) filters.endDate = endDate;
+    if (selectedSupplier) filters.supplier = selectedSupplier;
+    if (statusFilter) filters.status = statusFilter;
+    
+    await exportData('grn', 'excel', filters, organization.id);
   };
 
   // Legacy upload function removed - now using Enterprise Bulk Upload system
@@ -424,9 +390,14 @@ export default function GRNManagement() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExport}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExport}
+            disabled={isExporting}
+          >
             <Download className="h-4 w-4 mr-2" />
-            Export
+            {isExporting ? 'Exporting...' : 'Export'}
           </Button>
           <Button variant="outline" size="sm" onClick={downloadTemplate}>
             <FileSpreadsheet className="h-4 w-4 mr-2" />

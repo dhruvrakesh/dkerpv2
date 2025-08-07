@@ -20,6 +20,7 @@ import {
   Download
 } from 'lucide-react';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
+import { useEnterpriseExport } from '@/hooks/useEnterpriseExport';
 import GRNManagement from './GRNManagement';
 
 interface GRNMetrics {
@@ -36,6 +37,7 @@ interface GRNMetrics {
 export default function GRNDashboard() {
   const { organization } = useDKEGLAuth();
   const { toast } = useToast();
+  const { exportData, isExporting } = useEnterpriseExport();
   const [metrics, setMetrics] = useState<GRNMetrics>({
     totalGRNs: 0,
     totalValue: 0,
@@ -121,6 +123,15 @@ export default function GRNDashboard() {
     }
   };
 
+  const handleExportReport = async () => {
+    if (!organization?.id) return;
+    
+    await exportData('grn', 'excel', {
+      startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Last 90 days
+      endDate: new Date().toISOString().split('T')[0]
+    }, organization.id);
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -161,9 +172,14 @@ export default function GRNDashboard() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportReport}
+              disabled={isExporting}
+            >
               <Download className="h-4 w-4 mr-2" />
-              Export Report
+              {isExporting ? 'Exporting...' : 'Export Report'}
             </Button>
             <Button size="sm" onClick={() => setActiveTab('management')}>
               <Plus className="h-4 w-4 mr-2" />

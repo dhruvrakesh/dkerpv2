@@ -20,6 +20,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useDKEGLAuth } from '@/hooks/useDKEGLAuth';
+import { useEnterpriseExport } from '@/hooks/useEnterpriseExport';
 import IssueManagement from './IssueManagement';
 
 interface IssueMetrics {
@@ -36,6 +37,7 @@ interface IssueMetrics {
 export default function IssueDashboard() {
   const { organization } = useDKEGLAuth();
   const { toast } = useToast();
+  const { exportData, isExporting } = useEnterpriseExport();
   const [metrics, setMetrics] = useState<IssueMetrics>({
     totalIssues: 0,
     totalQuantity: 0,
@@ -133,6 +135,15 @@ export default function IssueDashboard() {
     }
   };
 
+  const handleExportReport = async () => {
+    if (!organization?.id) return;
+    
+    await exportData('issue', 'excel', {
+      startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Last 90 days
+      endDate: new Date().toISOString().split('T')[0]
+    }, organization.id);
+  };
+
   if (loading) {
     return (
       <InventoryLayout>
@@ -164,9 +175,14 @@ export default function IssueDashboard() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportReport}
+              disabled={isExporting}
+            >
               <Download className="h-4 w-4 mr-2" />
-              Export Report
+              {isExporting ? 'Exporting...' : 'Export Report'}
             </Button>
             <Button size="sm" onClick={() => setActiveTab('management')}>
               <Plus className="h-4 w-4 mr-2" />
