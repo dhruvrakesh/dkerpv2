@@ -47,7 +47,7 @@ export function ERPTopBar({ className }: TopBarProps) {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search orders, items, reports..."
+              placeholder="Global search - orders, items, suppliers..."
               className="pl-10 bg-muted/50 border-0 focus:ring-2 focus:ring-primary/20"
             />
           </div>
