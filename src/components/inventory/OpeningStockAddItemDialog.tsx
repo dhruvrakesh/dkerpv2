@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -99,7 +99,7 @@ export function OpeningStockAddItemDialog({
           opening_date: formData.opening_date,
           location: formData.location,
           remarks: formData.remarks,
-          status: 'approved' // Auto-approve for now
+          approval_status: 'approved' // Auto-approve for now
         });
 
       if (error) throw error;
@@ -146,6 +146,9 @@ export function OpeningStockAddItemDialog({
             <Package className="h-5 w-5" />
             Add Opening Stock Item
           </DialogTitle>
+          <DialogDescription>
+            Add new items to your opening stock inventory with accurate quantities and costs.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6">
