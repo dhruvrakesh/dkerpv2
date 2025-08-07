@@ -1721,6 +1721,7 @@ export type Database = {
         Row: {
           action: string
           created_at: string | null
+          details: Json | null
           id: string
           ip_address: string | null
           metadata: Json | null
@@ -1735,6 +1736,7 @@ export type Database = {
         Insert: {
           action: string
           created_at?: string | null
+          details?: Json | null
           id?: string
           ip_address?: string | null
           metadata?: Json | null
@@ -1749,6 +1751,7 @@ export type Database = {
         Update: {
           action?: string
           created_at?: string | null
+          details?: Json | null
           id?: string
           ip_address?: string | null
           metadata?: Json | null
@@ -7017,6 +7020,68 @@ export type Database = {
           },
         ]
       }
+      dkeglpkl_issue_log: {
+        Row: {
+          approval_status: string
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          department: string
+          id: string
+          issue_number: string
+          item_code: string
+          job_order_ref: string | null
+          org_id: string
+          purpose: string
+          qty_issued: number
+          remarks: string | null
+          updated_at: string
+        }
+        Insert: {
+          approval_status?: string
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          department: string
+          id?: string
+          issue_number: string
+          item_code: string
+          job_order_ref?: string | null
+          org_id: string
+          purpose: string
+          qty_issued?: number
+          remarks?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approval_status?: string
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          department?: string
+          id?: string
+          issue_number?: string
+          item_code?: string
+          job_order_ref?: string | null
+          org_id?: string
+          purpose?: string
+          qty_issued?: number
+          remarks?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_issue_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkeglpkl_item: {
         Row: {
           base_uom_id: string
@@ -7256,6 +7321,65 @@ export type Database = {
           },
           {
             foreignKeyName: "dkeglpkl_lot_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_opening_stock: {
+        Row: {
+          approval_status: string
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          item_code: string
+          location_code: string
+          opening_date: string
+          opening_qty: number
+          org_id: string
+          remarks: string | null
+          total_value: number | null
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          approval_status?: string
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_code: string
+          location_code: string
+          opening_date?: string
+          opening_qty?: number
+          org_id: string
+          remarks?: string | null
+          total_value?: number | null
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          approval_status?: string
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_code?: string
+          location_code?: string
+          opening_date?: string
+          opening_qty?: number
+          org_id?: string
+          remarks?: string | null
+          total_value?: number | null
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_opening_stock_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "dkeglpkl_org"
@@ -10643,6 +10767,10 @@ export type Database = {
       dkeglpkl_get_current_org_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      dkeglpkl_is_admin: {
+        Args: { user_id?: string }
+        Returns: boolean
       }
       dkpkl_get_customer_analysis: {
         Args: { _org_id: string; _start_date?: string; _end_date?: string }
