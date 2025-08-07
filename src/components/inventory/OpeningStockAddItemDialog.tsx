@@ -95,7 +95,6 @@ export function OpeningStockAddItemDialog({
           item_code: formData.item_code,
           opening_qty: openingQty,
           unit_cost: unitCost,
-          total_value: openingQty * unitCost,
           opening_date: formData.opening_date,
           location: formData.location,
           remarks: formData.remarks,
