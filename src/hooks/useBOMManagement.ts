@@ -189,7 +189,15 @@ export const useBOMManagement = () => {
           yield_percentage: bomData.yield_percentage || 100,
           scrap_percentage: bomData.scrap_percentage || 0,
           bom_notes: bomData.bom_notes,
-          approval_status: bomData.approval_status || 'draft'
+          approval_status: bomData.approval_status || 'draft',
+          effective_from: bomData.effective_from,
+          effective_until: bomData.effective_until,
+          is_active: bomData.is_active ?? true,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+          material_cost: 0,
+          labor_cost: 0,
+          overhead_cost: 0,
+          total_cost: 0
         })
         .select()
         .single();

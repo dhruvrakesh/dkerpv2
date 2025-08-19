@@ -34,6 +34,9 @@ const bomSchema = z.object({
   scrap_percentage: z.number().min(0).max(100, 'Scrap % must be 0-100'),
   bom_notes: z.string().optional(),
   approval_status: z.enum(['draft', 'pending', 'approved']),
+  effective_from: z.string().min(1, 'Effective from date is required'),
+  effective_until: z.string().optional(),
+  is_active: z.boolean(),
   components: z.array(bomComponentSchema).min(1, 'At least one component is required')
 });
 
@@ -126,6 +129,9 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
       scrap_percentage: 0,
       bom_notes: '',
       approval_status: 'draft',
+      effective_from: new Date().toISOString().split('T')[0],
+      effective_until: '',
+      is_active: true,
       components: [
         {
           item_code: '',
@@ -178,7 +184,10 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
           yield_percentage: data.yield_percentage,
           scrap_percentage: data.scrap_percentage,
           bom_notes: data.bom_notes,
-          approval_status: data.approval_status
+          approval_status: data.approval_status,
+          effective_from: data.effective_from,
+          effective_until: data.effective_until || null,
+          is_active: data.is_active
         },
         components: data.components.map((comp, index) => ({
           component_item_code: comp.item_code,
@@ -297,18 +306,48 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="approval_status">Status</Label>
-            <Select value={form.watch('approval_status')} onValueChange={(value) => form.setValue('approval_status', value as any)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="pending">Pending Approval</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="approval_status">Status</Label>
+              <Select value={form.watch('approval_status')} onValueChange={(value) => form.setValue('approval_status', value as any)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="pending">Pending Approval</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="effective_from">Effective From</Label>
+              <Input
+                type="date"
+                {...form.register('effective_from')}
+              />
+              {form.formState.errors.effective_from && (
+                <p className="text-sm text-destructive">{form.formState.errors.effective_from.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="effective_until">Effective Until (Optional)</Label>
+              <Input
+                type="date"
+                {...form.register('effective_until')}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="is_active"
+              checked={form.watch('is_active')}
+              onCheckedChange={(checked) => form.setValue('is_active', checked)}
+            />
+            <Label htmlFor="is_active">Active BOM</Label>
           </div>
 
           <div className="space-y-2">
