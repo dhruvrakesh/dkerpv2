@@ -29,13 +29,11 @@ const bomComponentSchema = z.object({
 
 const bomSchema = z.object({
   item_code: z.string().min(1, 'Item code is required'),
-  bom_name: z.string().min(1, 'BOM name is required'),
-  bom_type: z.enum(['standard', 'phantom', 'template']),
-  effective_from: z.string().min(1, 'Effective date is required'),
-  effective_until: z.string().optional(),
-  is_active: z.boolean(),
+  bom_version: z.string().min(1, 'BOM version is required'),
+  yield_percentage: z.number().min(0).max(100, 'Yield % must be 0-100'),
+  scrap_percentage: z.number().min(0).max(100, 'Scrap % must be 0-100'),
+  bom_notes: z.string().optional(),
   approval_status: z.enum(['draft', 'pending', 'approved']),
-  description: z.string().optional(),
   components: z.array(bomComponentSchema).min(1, 'At least one component is required')
 });
 
@@ -123,13 +121,11 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
     resolver: zodResolver(bomSchema),
     defaultValues: {
       item_code: '',
-      bom_name: '',
-      bom_type: 'standard',
-      effective_from: new Date().toISOString().split('T')[0],
-      effective_until: '',
-      is_active: true,
+      bom_version: '1.0',
+      yield_percentage: 100,
+      scrap_percentage: 0,
+      bom_notes: '',
       approval_status: 'draft',
-      description: '',
       components: [
         {
           item_code: '',
@@ -153,13 +149,11 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
     if (initialData) {
       form.reset({
         item_code: initialData.item_code,
-        bom_name: initialData.bom_name || '',
-        bom_type: initialData.bom_type || 'standard',
-        effective_from: initialData.effective_from || new Date().toISOString().split('T')[0],
-        effective_until: initialData.effective_until || '',
-        is_active: initialData.is_active ?? true,
+        bom_version: initialData.bom_version || '1.0',
+        yield_percentage: initialData.yield_percentage || 100,
+        scrap_percentage: initialData.scrap_percentage || 0,
+        bom_notes: initialData.bom_notes || '',
         approval_status: initialData.approval_status || 'draft',
-        description: initialData.description || '',
         components: initialData.components || [
           {
             item_code: '',
@@ -179,15 +173,12 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
     try {
       await createBOM({
         itemCode: data.item_code,
-        bomVersion: '1.0',
+        bomVersion: data.bom_version,
         bomData: {
-          bom_name: data.bom_name,
-          bom_type: data.bom_type,
-          effective_from: data.effective_from,
-          effective_until: data.effective_until || null,
-          is_active: data.is_active,
-          approval_status: data.approval_status,
-          description: data.description
+          yield_percentage: data.yield_percentage,
+          scrap_percentage: data.scrap_percentage,
+          bom_notes: data.bom_notes,
+          approval_status: data.approval_status
         },
         components: data.components.map((comp, index) => ({
           component_item_code: comp.item_code,
@@ -263,78 +254,68 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="bom_name">BOM Name</Label>
+              <Label htmlFor="bom_version">BOM Version</Label>
               <Input
-                {...form.register('bom_name')}
-                placeholder="Enter BOM name..."
+                {...form.register('bom_version')}
+                placeholder="Enter BOM version (e.g., 1.0)..."
               />
-              {form.formState.errors.bom_name && (
-                <p className="text-sm text-destructive">{form.formState.errors.bom_name.message}</p>
+              {form.formState.errors.bom_version && (
+                <p className="text-sm text-destructive">{form.formState.errors.bom_version.message}</p>
               )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="bom_type">BOM Type</Label>
-              <Select value={form.watch('bom_type')} onValueChange={(value) => form.setValue('bom_type', value as any)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standard">Standard</SelectItem>
-                  <SelectItem value="phantom">Phantom</SelectItem>
-                  <SelectItem value="template">Template</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="effective_from">Effective From</Label>
-              <Input
-                type="date"
-                {...form.register('effective_from')}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="effective_until">Effective Until</Label>
-              <Input
-                type="date"
-                {...form.register('effective_until')}
-              />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="approval_status">Status</Label>
-              <Select value={form.watch('approval_status')} onValueChange={(value) => form.setValue('approval_status', value as any)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="pending">Pending Approval</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="yield_percentage">Yield Percentage (%)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                {...form.register('yield_percentage', { valueAsNumber: true })}
+                placeholder="100"
+              />
+              {form.formState.errors.yield_percentage && (
+                <p className="text-sm text-destructive">{form.formState.errors.yield_percentage.message}</p>
+              )}
             </div>
 
-            <div className="flex items-center space-x-2 pt-6">
-              <Switch
-                checked={form.watch('is_active')}
-                onCheckedChange={(checked) => form.setValue('is_active', checked)}
+            <div className="space-y-2">
+              <Label htmlFor="scrap_percentage">Scrap Percentage (%)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                {...form.register('scrap_percentage', { valueAsNumber: true })}
+                placeholder="0"
               />
-              <Label>Active BOM</Label>
+              {form.formState.errors.scrap_percentage && (
+                <p className="text-sm text-destructive">{form.formState.errors.scrap_percentage.message}</p>
+              )}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="approval_status">Status</Label>
+            <Select value={form.watch('approval_status')} onValueChange={(value) => form.setValue('approval_status', value as any)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="pending">Pending Approval</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bom_notes">BOM Notes</Label>
             <Textarea
-              {...form.register('description')}
-              placeholder="Enter BOM description..."
+              {...form.register('bom_notes')}
+              placeholder="Enter BOM notes and specifications..."
               rows={2}
             />
           </div>

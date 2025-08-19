@@ -189,7 +189,7 @@ export const useBOMManagement = () => {
           yield_percentage: bomData.yield_percentage || 100,
           scrap_percentage: bomData.scrap_percentage || 0,
           bom_notes: bomData.bom_notes,
-          approval_status: 'draft'
+          approval_status: bomData.approval_status || 'draft'
         })
         .select()
         .single();
