@@ -203,12 +203,12 @@ export const useBOMManagement = () => {
         stage_id: comp.stage_id,
         component_item_code: comp.component_item_code,
         quantity_per_unit: comp.quantity_per_unit,
-        uom: comp.uom,
-        consumption_type: comp.consumption_type,
-        is_critical: comp.is_critical,
-        waste_percentage: comp.waste_percentage,
+        uom: comp.uom || 'PCS',
+        consumption_type: comp.consumption_type || 'direct',
+        is_critical: comp.is_critical || false,
+        waste_percentage: comp.waste_percentage || 0,
         substitute_items: comp.substitute_items ? JSON.stringify(comp.substitute_items) : '[]',
-        stage_sequence: comp.stage_sequence,
+        stage_sequence: comp.stage_sequence || 1,
         component_notes: comp.component_notes
       }));
 

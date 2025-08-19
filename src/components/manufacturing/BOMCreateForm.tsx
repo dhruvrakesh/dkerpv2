@@ -23,8 +23,7 @@ const bomComponentSchema = z.object({
   quantity_required: z.number().min(0.001, 'Quantity must be greater than 0'),
   stage_name: z.string().min(1, 'Stage is required'),
   stage_id: z.string().optional(),
-  unit_cost: z.number().min(0, 'Unit cost must be positive'),
-  scrap_percentage: z.number().min(0).max(100, 'Scrap % must be 0-100'),
+  waste_percentage: z.number().min(0).max(100, 'Waste % must be 0-100'),
   notes: z.string().optional()
 });
 
@@ -50,7 +49,6 @@ interface BOMCreateFormProps {
 
 
 export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFormProps) {
-  const [totalCost, setTotalCost] = useState(0);
   const queryClient = useQueryClient();
   const { createBOM, isCreatingBOM } = useBOMManagement();
 
@@ -138,8 +136,7 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
           quantity_required: 1,
           stage_name: '',
           stage_id: '',
-          unit_cost: 0,
-          scrap_percentage: 0,
+          waste_percentage: 0,
           notes: ''
         }
       ]
@@ -169,8 +166,7 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
             quantity_required: 1,
             stage_name: '',
             stage_id: '',
-            unit_cost: 0,
-            scrap_percentage: 0,
+            waste_percentage: 0,
             notes: ''
           }
         ]
@@ -178,15 +174,6 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
     }
   }, [initialData, form]);
 
-  // Calculate total cost
-  useEffect(() => {
-    const components = form.watch('components');
-    const total = components.reduce((sum, comp) => {
-      const adjustedQty = comp.quantity_required * (1 + comp.scrap_percentage / 100);
-      return sum + (adjustedQty * comp.unit_cost);
-    }, 0);
-    setTotalCost(total);
-  }, [form.watch('components')]);
 
   const onSubmit = async (data: BOMFormData) => {
     try {
@@ -206,9 +193,7 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
           component_item_code: comp.item_code,
           quantity_per_unit: comp.quantity_required,
           stage_id: comp.stage_id,
-          unit_cost: comp.unit_cost,
-          scrap_percentage: comp.scrap_percentage,
-          waste_percentage: comp.scrap_percentage,
+          waste_percentage: comp.waste_percentage,
           stage_sequence: index + 1,
           component_notes: comp.notes || '',
           uom: 'PCS',
@@ -241,8 +226,7 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
       quantity_required: 1,
       stage_name: firstStage?.stage_name || '',
       stage_id: firstStage?.id || '',
-      unit_cost: 0,
-      scrap_percentage: 0,
+      waste_percentage: 0,
       notes: ''
     });
   };
@@ -361,16 +345,10 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Components</CardTitle>
-          <div className="flex items-center gap-4">
-            <Badge variant="outline" className="gap-2">
-              <Calculator className="h-4 w-4" />
-              Total Cost: ₹{totalCost.toFixed(2)}
-            </Badge>
-            <Button type="button" onClick={addComponent} size="sm" className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Component
-            </Button>
-          </div>
+          <Button type="button" onClick={addComponent} size="sm" className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Component
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           {fields.map((field, index) => (
@@ -441,45 +419,27 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-4 mb-4">
+                <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="space-y-2">
-                    <Label>Quantity</Label>
+                    <Label>Quantity Required</Label>
                     <Input
                       type="number"
                       step="0.001"
+                      placeholder="Enter quantity per unit..."
                       {...form.register(`components.${index}.quantity_required`, { valueAsNumber: true })}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Unit Cost (₹)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      {...form.register(`components.${index}.unit_cost`, { valueAsNumber: true })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Scrap %</Label>
+                    <Label>Waste Percentage (%)</Label>
                     <Input
                       type="number"
                       step="0.1"
                       min="0"
                       max="100"
-                      {...form.register(`components.${index}.scrap_percentage`, { valueAsNumber: true })}
+                      placeholder="Enter waste %..."
+                      {...form.register(`components.${index}.waste_percentage`, { valueAsNumber: true })}
                     />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Total Cost</Label>
-                    <div className="h-10 px-3 py-2 border rounded-md bg-muted text-muted-foreground flex items-center">
-                      ₹{(
-                        form.watch(`components.${index}.quantity_required`) * 
-                        (1 + form.watch(`components.${index}.scrap_percentage`) / 100) * 
-                        form.watch(`components.${index}.unit_cost`)
-                      ).toFixed(2)}
-                    </div>
                   </div>
                 </div>
 
