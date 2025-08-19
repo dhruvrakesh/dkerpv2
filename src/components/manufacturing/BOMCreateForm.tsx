@@ -19,24 +19,14 @@ import { toast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 const bomComponentSchema = z.object({
-  item_code: z.string().min(1, 'Item code is required'),
-  quantity_required: z.number().min(0.001, 'Quantity must be greater than 0'),
-  stage_name: z.string().min(1, 'Stage is required'),
-  stage_id: z.string().optional(),
-  waste_percentage: z.number().min(0).max(100, 'Waste % must be 0-100'),
+  item_code: z.string().min(1, 'Material is required'),
+  weight_percentage: z.number().min(0.1).max(100, 'Weight % must be 0.1-100'),
   notes: z.string().optional()
 });
 
 const bomSchema = z.object({
-  item_code: z.string().min(1, 'Item code is required'),
-  bom_version: z.string().min(1, 'BOM version is required'),
-  yield_percentage: z.number().min(0).max(100, 'Yield % must be 0-100'),
-  scrap_percentage: z.number().min(0).max(100, 'Scrap % must be 0-100'),
+  item_code: z.string().min(1, 'Finished good is required'),
   bom_notes: z.string().optional(),
-  approval_status: z.enum(['draft', 'pending', 'approved']),
-  effective_from: z.string().min(1, 'Effective from date is required'),
-  effective_until: z.string().optional(),
-  is_active: z.boolean(),
   components: z.array(bomComponentSchema).min(1, 'At least one component is required')
 });
 
@@ -124,21 +114,11 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
     resolver: zodResolver(bomSchema),
     defaultValues: {
       item_code: '',
-      bom_version: '1.0',
-      yield_percentage: 100,
-      scrap_percentage: 0,
       bom_notes: '',
-      approval_status: 'draft',
-      effective_from: new Date().toISOString().split('T')[0],
-      effective_until: '',
-      is_active: true,
       components: [
         {
           item_code: '',
-          quantity_required: 1,
-          stage_name: '',
-          stage_id: '',
-          waste_percentage: 0,
+          weight_percentage: 50,
           notes: ''
         }
       ]
@@ -150,55 +130,98 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
     name: 'components'
   });
 
+  // Auto-generate BOM version
+  const [nextVersion, setNextVersion] = useState('1.0');
+  const watchedItemCode = form.watch('item_code');
+
+  // Get next version when item is selected
+  useEffect(() => {
+    const getNextVersion = async () => {
+      if (watchedItemCode && !initialData) {
+        const { data: existingBOMs } = await supabase
+          .from('dkegl_bom_master')
+          .select('bom_version')
+          .eq('item_code', watchedItemCode)
+          .order('bom_version', { ascending: false })
+          .limit(1);
+        
+        if (existingBOMs && existingBOMs.length > 0) {
+          const lastVersion = parseFloat(existingBOMs[0].bom_version.replace(/[^0-9.]/g, ''));
+          const newVersion = (lastVersion + 0.1).toFixed(1);
+          setNextVersion(newVersion);
+        } else {
+          setNextVersion('1.0');
+        }
+      }
+    };
+
+    getNextVersion();
+  }, [watchedItemCode, initialData]);
+
   // Load initial data if editing
   useEffect(() => {
     if (initialData) {
       form.reset({
         item_code: initialData.item_code,
-        bom_version: initialData.bom_version || '1.0',
-        yield_percentage: initialData.yield_percentage || 100,
-        scrap_percentage: initialData.scrap_percentage || 0,
         bom_notes: initialData.bom_notes || '',
-        approval_status: initialData.approval_status || 'draft',
-        components: initialData.components || [
-          {
-            item_code: '',
-            quantity_required: 1,
-            stage_name: '',
-            stage_id: '',
-            waste_percentage: 0,
-            notes: ''
-          }
-        ]
+        components: initialData.components?.map((comp: any) => ({
+          item_code: comp.item_code,
+          weight_percentage: comp.weight_percentage || 50,
+          notes: comp.notes || ''
+        })) || [{ item_code: '', weight_percentage: 50, notes: '' }]
       });
+      setNextVersion(initialData.bom_version || '1.0');
     }
   }, [initialData, form]);
 
 
   const onSubmit = async (data: BOMFormData) => {
     try {
+      // Validate total weight percentage
+      const totalWeight = data.components.reduce((sum, comp) => sum + comp.weight_percentage, 0);
+      if (Math.abs(totalWeight - 100) > 0.1) {
+        toast({
+          title: "Validation Error",
+          description: `Total weight percentage must equal 100% (current: ${totalWeight.toFixed(1)}%)`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Check for duplicate materials
+      const itemCodes = data.components.map(c => c.item_code);
+      const uniqueItemCodes = new Set(itemCodes);
+      if (itemCodes.length !== uniqueItemCodes.size) {
+        toast({
+          title: "Validation Error",
+          description: "Cannot use the same material multiple times in a BOM",
+          variant: "destructive"
+        });
+        return;
+      }
+
       await createBOM({
         itemCode: data.item_code,
-        bomVersion: data.bom_version,
+        bomVersion: nextVersion,
         bomData: {
-          yield_percentage: data.yield_percentage,
-          scrap_percentage: data.scrap_percentage,
+          yield_percentage: 100,
+          scrap_percentage: 0,
           bom_notes: data.bom_notes,
-          approval_status: data.approval_status,
-          effective_from: data.effective_from,
-          effective_until: data.effective_until || null,
-          is_active: data.is_active
+          approval_status: 'draft',
+          effective_from: new Date().toISOString().split('T')[0],
+          effective_until: null,
+          is_active: true
         },
         components: data.components.map((comp, index) => ({
           component_item_code: comp.item_code,
-          quantity_per_unit: comp.quantity_required,
-          stage_id: comp.stage_id,
-          waste_percentage: comp.waste_percentage,
+          quantity_per_unit: comp.weight_percentage / 100, // Convert percentage to ratio
+          stage_id: workflowStages[0]?.id || '', // Use first stage as default
+          waste_percentage: 0,
           stage_sequence: index + 1,
           component_notes: comp.notes || '',
-          uom: 'PCS',
+          uom: 'KG',
           consumption_type: 'direct' as const,
-          is_critical: false
+          is_critical: true
         }))
       });
 
@@ -206,30 +229,39 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
       
       toast({
         title: "Success",
-        description: `BOM ${initialData ? 'updated' : 'created'} successfully`
+        description: `BOM created successfully (Version ${nextVersion})`
       });
       
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('BOM creation error:', error);
+      
+      // Handle specific database errors
+      let errorMessage = 'Failed to create BOM';
+      if (error.message?.includes('uk_dkegl_bom_master_version')) {
+        errorMessage = `BOM version ${nextVersion} already exists for this item. Please refresh and try again.`;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: `Failed to ${initialData ? 'update' : 'create'} BOM`,
+        description: errorMessage,
         variant: "destructive"
       });
     }
   };
 
   const addComponent = () => {
-    const firstStage = workflowStages[0];
     append({
       item_code: '',
-      quantity_required: 1,
-      stage_name: firstStage?.stage_name || '',
-      stage_id: firstStage?.id || '',
-      waste_percentage: 0,
+      weight_percentage: 25,
       notes: ''
     });
   };
+
+  // Calculate total weight percentage
+  const totalWeight = form.watch('components')?.reduce((sum, comp) => sum + (comp.weight_percentage || 0), 0) || 0;
 
   if (loadingFG || loadingRM || loadingStages) {
     return (
@@ -244,12 +276,12 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
       {/* BOM Header */}
       <Card>
         <CardHeader>
-          <CardTitle>BOM Information</CardTitle>
+          <CardTitle>Weight-Based BOM Configuration</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="item_code">Finished Good Item</Label>
+              <Label htmlFor="item_code">Finished Good Product</Label>
               <EnterpriseItemSelector
                 items={finishedGoods}
                 value={form.watch('item_code')}
@@ -263,216 +295,126 @@ export function BOMCreateForm({ initialData, onSuccess, onCancel }: BOMCreateFor
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="bom_version">BOM Version</Label>
-              <Input
-                {...form.register('bom_version')}
-                placeholder="Enter BOM version (e.g., 1.0)..."
-              />
-              {form.formState.errors.bom_version && (
-                <p className="text-sm text-destructive">{form.formState.errors.bom_version.message}</p>
-              )}
+              <Label>BOM Version (Auto-generated)</Label>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary">Version {nextVersion}</Badge>
+                <span className="text-sm text-muted-foreground">Auto-assigned</span>
+              </div>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="yield_percentage">Yield Percentage (%)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                min="0"
-                max="100"
-                {...form.register('yield_percentage', { valueAsNumber: true })}
-                placeholder="100"
-              />
-              {form.formState.errors.yield_percentage && (
-                <p className="text-sm text-destructive">{form.formState.errors.yield_percentage.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="scrap_percentage">Scrap Percentage (%)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                min="0"
-                max="100"
-                {...form.register('scrap_percentage', { valueAsNumber: true })}
-                placeholder="0"
-              />
-              {form.formState.errors.scrap_percentage && (
-                <p className="text-sm text-destructive">{form.formState.errors.scrap_percentage.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="approval_status">Status</Label>
-              <Select value={form.watch('approval_status')} onValueChange={(value) => form.setValue('approval_status', value as any)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="pending">Pending Approval</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="effective_from">Effective From</Label>
-              <Input
-                type="date"
-                {...form.register('effective_from')}
-              />
-              {form.formState.errors.effective_from && (
-                <p className="text-sm text-destructive">{form.formState.errors.effective_from.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="effective_until">Effective Until (Optional)</Label>
-              <Input
-                type="date"
-                {...form.register('effective_until')}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="is_active"
-              checked={form.watch('is_active')}
-              onCheckedChange={(checked) => form.setValue('is_active', checked)}
-            />
-            <Label htmlFor="is_active">Active BOM</Label>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="bom_notes">BOM Notes</Label>
+            <Label htmlFor="bom_notes">Recipe Notes</Label>
             <Textarea
               {...form.register('bom_notes')}
-              placeholder="Enter BOM notes and specifications..."
+              placeholder="Enter recipe notes, special instructions, or specifications..."
               rows={2}
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* Components */}
+      {/* Material Components */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Components</CardTitle>
-          <Button type="button" onClick={addComponent} size="sm" className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Component
-          </Button>
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Calculator className="h-5 w-5" />
+              Material Composition by Weight
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Define what percentage each material contributes to the total weight
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={Math.abs(totalWeight - 100) < 0.1 ? "default" : "destructive"}>
+              Total: {totalWeight.toFixed(1)}%
+            </Badge>
+            <Button type="button" onClick={addComponent} size="sm" className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Material
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {fields.map((field, index) => (
-            <Card key={field.id} className="border-l-4 border-l-blue-500">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-medium">Component {index + 1}</h4>
-                  {fields.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => remove(index)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="space-y-2">
-                    <Label>Material Item</Label>
-                    <EnterpriseItemSelector
-                      items={rawMaterials}
-                      value={form.watch(`components.${index}.item_code`)}
-                      onValueChange={(value) => form.setValue(`components.${index}.item_code`, value)}
-                      placeholder="Select material..."
-                    />
+          {fields.map((field, index) => {
+            const currentWeight = form.watch(`components.${index}.weight_percentage`) || 0;
+            return (
+              <Card key={field.id} className="border-l-4 border-l-primary">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium">Material {index + 1}</h4>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{currentWeight}%</Badge>
+                      {fields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => remove(index)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Stage</Label>
-                    <Select 
-                      value={form.watch(`components.${index}.stage_name`)} 
-                      onValueChange={(value) => {
-                        form.setValue(`components.${index}.stage_name`, value);
-                        // Also update the stage_id
-                        const selectedStage = workflowStages.find(s => s.stage_name === value);
-                        if (selectedStage) {
-                          form.setValue(`components.${index}.stage_id`, selectedStage.id);
-                        }
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select stage" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {loadingStages ? (
-                          <SelectItem value="loading" disabled>Loading stages...</SelectItem>
-                        ) : (
-                          workflowStages.map(stage => {
-                            const stageConfig = stage.stage_config as any;
-                            return (
-                              <SelectItem key={stage.id} value={stage.stage_name}>
-                                {stage.stage_name}
-                                {stageConfig?.material_categories && Array.isArray(stageConfig.material_categories) && (
-                                  <span className="text-xs text-muted-foreground ml-2">
-                                    ({stageConfig.material_categories.join(', ')})
-                                  </span>
-                                )}
-                              </SelectItem>
-                            );
-                          })
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Raw Material</Label>
+                      <EnterpriseItemSelector
+                        items={rawMaterials}
+                        value={form.watch(`components.${index}.item_code`)}
+                        onValueChange={(value) => form.setValue(`components.${index}.item_code`, value)}
+                        placeholder="Select material..."
+                      />
+                      {form.formState.errors.components?.[index]?.item_code && (
+                        <p className="text-sm text-destructive">
+                          {form.formState.errors.components[index]?.item_code?.message}
+                        </p>
+                      )}
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="space-y-2">
-                    <Label>Quantity Required</Label>
+                    <div className="space-y-2">
+                      <Label>Weight Percentage (%)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        max="100"
+                        placeholder="% of total weight"
+                        {...form.register(`components.${index}.weight_percentage`, { valueAsNumber: true })}
+                      />
+                      {form.formState.errors.components?.[index]?.weight_percentage && (
+                        <p className="text-sm text-destructive">
+                          {form.formState.errors.components[index]?.weight_percentage?.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 mt-4">
+                    <Label>Material Notes</Label>
                     <Input
-                      type="number"
-                      step="0.001"
-                      placeholder="Enter quantity per unit..."
-                      {...form.register(`components.${index}.quantity_required`, { valueAsNumber: true })}
+                      {...form.register(`components.${index}.notes`)}
+                      placeholder="Special handling, supplier info, etc..."
                     />
                   </div>
+                </CardContent>
+              </Card>
+            );
+          })}
 
-                  <div className="space-y-2">
-                    <Label>Waste Percentage (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="100"
-                      placeholder="Enter waste %..."
-                      {...form.register(`components.${index}.waste_percentage`, { valueAsNumber: true })}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Notes</Label>
-                  <Input
-                    {...form.register(`components.${index}.notes`)}
-                    placeholder="Component notes..."
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {Math.abs(totalWeight - 100) > 0.1 && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>Note:</strong> Total weight percentage must equal 100%. 
+                Current total: <strong>{totalWeight.toFixed(1)}%</strong>
+                {totalWeight < 100 ? ` (${(100 - totalWeight).toFixed(1)}% remaining)` : ` (${(totalWeight - 100).toFixed(1)}% over)`}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
