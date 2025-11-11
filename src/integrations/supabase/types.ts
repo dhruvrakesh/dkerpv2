@@ -11162,6 +11162,21 @@ export type Database = {
             }
             Returns: Json
           }
+        | {
+            Args: {
+              _base_amount: number
+              _gst_rate?: number
+              _is_interstate?: boolean
+            }
+            Returns: {
+              base_amount: number
+              cgst: number
+              igst: number
+              sgst: number
+              total_amount: number
+              total_gst: number
+            }[]
+          }
       dkegl_calculate_item_pricing: {
         Args: {
           _customer_tier?: string
@@ -11170,12 +11185,10 @@ export type Database = {
           _quantity?: number
         }
         Returns: {
-          discount_applied: number
-          is_primary: boolean
-          margin_percentage: number
-          pricing_source: string
-          total_price: number
-          unit_price: number
+          base_price: number
+          final_price: number
+          tier_discount: number
+          volume_discount: number
         }[]
       }
       dkegl_calculate_stage_cost: {
