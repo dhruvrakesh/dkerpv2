@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -1257,7 +1257,7 @@ export type Database = {
           event_data: Json | null
           event_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           organization_id: string | null
           performance_metrics: Json | null
           response_time_ms: number | null
@@ -1273,7 +1273,7 @@ export type Database = {
           event_data?: Json | null
           event_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           organization_id?: string | null
           performance_metrics?: Json | null
           response_time_ms?: number | null
@@ -1289,7 +1289,7 @@ export type Database = {
           event_data?: Json | null
           event_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           organization_id?: string | null
           performance_metrics?: Json | null
           response_time_ms?: number | null
@@ -1422,6 +1422,636 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      dhatv2_audit_log: {
+        Row: {
+          actor: string | null
+          actor_email: string | null
+          entity: string
+          entity_id: number
+          event: string
+          id: number
+          meta: Json
+          occurred_at: string
+        }
+        Insert: {
+          actor?: string | null
+          actor_email?: string | null
+          entity: string
+          entity_id: number
+          event: string
+          id?: number
+          meta?: Json
+          occurred_at?: string
+        }
+        Update: {
+          actor?: string | null
+          actor_email?: string | null
+          entity?: string
+          entity_id?: number
+          event?: string
+          id?: number
+          meta?: Json
+          occurred_at?: string
+        }
+        Relationships: []
+      }
+      dhatv2_categories: {
+        Row: {
+          attributes: Json | null
+          created_at: string | null
+          id: number
+          name: string
+          parent_id: number | null
+          slug: string | null
+        }
+        Insert: {
+          attributes?: Json | null
+          created_at?: string | null
+          id?: number
+          name: string
+          parent_id?: number | null
+          slug?: string | null
+        }
+        Update: {
+          attributes?: Json | null
+          created_at?: string | null
+          id?: number
+          name?: string
+          parent_id?: number | null
+          slug?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dhatv2_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dhatv2_credit_accounts: {
+        Row: {
+          buyer_id: string
+          created_at: string | null
+          id: number
+          limit_amount: number
+          status: string | null
+          utilized_amount: number
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string | null
+          id?: number
+          limit_amount?: number
+          status?: string | null
+          utilized_amount?: number
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string | null
+          id?: number
+          limit_amount?: number
+          status?: string | null
+          utilized_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dhatv2_credit_accounts_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      dhatv2_credit_txns: {
+        Row: {
+          account_id: number
+          amount: number
+          created_at: string | null
+          due_date: string | null
+          id: number
+          order_id: number | null
+          paid_date: string | null
+          status: string | null
+        }
+        Insert: {
+          account_id: number
+          amount: number
+          created_at?: string | null
+          due_date?: string | null
+          id?: number
+          order_id?: number | null
+          paid_date?: string | null
+          status?: string | null
+        }
+        Update: {
+          account_id?: number
+          amount?: number
+          created_at?: string | null
+          due_date?: string | null
+          id?: number
+          order_id?: number | null
+          paid_date?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dhatv2_credit_txns_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_credit_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_credit_txns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_credit_txns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_v_my_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dhatv2_dispatch_items: {
+        Row: {
+          dispatch_id: number
+          id: number
+          order_item_id: number
+          qty: number
+        }
+        Insert: {
+          dispatch_id: number
+          id?: number
+          order_item_id: number
+          qty: number
+        }
+        Update: {
+          dispatch_id?: number
+          id?: number
+          order_item_id?: number
+          qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dhatv2_dispatch_items_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_dispatches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_dispatch_items_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_dispatch_items_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_v_item_shipped"
+            referencedColumns: ["order_item_id"]
+          },
+          {
+            foreignKeyName: "dhatv2_dispatch_items_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_v_seller_order_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dhatv2_dispatches: {
+        Row: {
+          buyer_id: string
+          carrier: string | null
+          created_at: string
+          dispatch_date: string
+          id: number
+          order_id: number
+          remarks: string | null
+          seller_id: string
+          status: string
+          tracking_no: string | null
+          vehicle_no: string | null
+        }
+        Insert: {
+          buyer_id: string
+          carrier?: string | null
+          created_at?: string
+          dispatch_date?: string
+          id?: number
+          order_id: number
+          remarks?: string | null
+          seller_id: string
+          status?: string
+          tracking_no?: string | null
+          vehicle_no?: string | null
+        }
+        Update: {
+          buyer_id?: string
+          carrier?: string | null
+          created_at?: string
+          dispatch_date?: string
+          id?: number
+          order_id?: number
+          remarks?: string | null
+          seller_id?: string
+          status?: string
+          tracking_no?: string | null
+          vehicle_no?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dhatv2_dispatches_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_dispatches_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_v_my_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dhatv2_freight_quotes: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency_code: string | null
+          eta_days: number | null
+          id: number
+          order_id: number
+          partner_id: number
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency_code?: string | null
+          eta_days?: number | null
+          id?: number
+          order_id: number
+          partner_id: number
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency_code?: string | null
+          eta_days?: number | null
+          id?: number
+          order_id?: number
+          partner_id?: number
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dhatv2_freight_quotes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_freight_quotes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_v_my_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_freight_quotes_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_logistics_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dhatv2_logistics_partners: {
+        Row: {
+          active: boolean | null
+          contact: string | null
+          created_at: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          active?: boolean | null
+          contact?: string | null
+          created_at?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          active?: boolean | null
+          contact?: string | null
+          created_at?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      dhatv2_order_items: {
+        Row: {
+          created_at: string | null
+          currency_code: string | null
+          id: number
+          order_id: number
+          product_id: number
+          product_snapshot: Json | null
+          qty: number
+          seller_id: string
+          seller_note: string | null
+          status: string
+          unit: string | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string | null
+          currency_code?: string | null
+          id?: number
+          order_id: number
+          product_id: number
+          product_snapshot?: Json | null
+          qty: number
+          seller_id: string
+          seller_note?: string | null
+          status?: string
+          unit?: string | null
+          unit_price: number
+        }
+        Update: {
+          created_at?: string | null
+          currency_code?: string | null
+          id?: number
+          order_id?: number
+          product_id?: number
+          product_snapshot?: Json | null
+          qty?: number
+          seller_id?: string
+          seller_note?: string | null
+          status?: string
+          unit?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dhatv2_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_v_my_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_order_items_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      dhatv2_orders: {
+        Row: {
+          buyer_id: string
+          created_at: string | null
+          currency_code: string | null
+          escrow_status: string | null
+          id: number
+          shipping_address: Json | null
+          status: string
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string | null
+          currency_code?: string | null
+          escrow_status?: string | null
+          id?: number
+          shipping_address?: Json | null
+          status?: string
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string | null
+          currency_code?: string | null
+          escrow_status?: string | null
+          id?: number
+          shipping_address?: Json | null
+          status?: string
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dhatv2_orders_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      dhatv2_products: {
+        Row: {
+          available_qty: number
+          brand: string | null
+          category_id: number | null
+          created_at: string | null
+          currency_code: string | null
+          description: string | null
+          grade: string | null
+          has_inspection: boolean | null
+          id: number
+          images: string[] | null
+          inspection_report_url: string | null
+          is_active: boolean | null
+          location_city: string | null
+          location_country: string | null
+          location_state: string | null
+          min_order_qty: number | null
+          mtc_url: string | null
+          price_per_unit: number
+          seller_id: string
+          spec: Json | null
+          title: string
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          available_qty?: number
+          brand?: string | null
+          category_id?: number | null
+          created_at?: string | null
+          currency_code?: string | null
+          description?: string | null
+          grade?: string | null
+          has_inspection?: boolean | null
+          id?: number
+          images?: string[] | null
+          inspection_report_url?: string | null
+          is_active?: boolean | null
+          location_city?: string | null
+          location_country?: string | null
+          location_state?: string | null
+          min_order_qty?: number | null
+          mtc_url?: string | null
+          price_per_unit: number
+          seller_id: string
+          spec?: Json | null
+          title: string
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          available_qty?: number
+          brand?: string | null
+          category_id?: number | null
+          created_at?: string | null
+          currency_code?: string | null
+          description?: string | null
+          grade?: string | null
+          has_inspection?: boolean | null
+          id?: number
+          images?: string[] | null
+          inspection_report_url?: string | null
+          is_active?: boolean | null
+          location_city?: string | null
+          location_country?: string | null
+          location_state?: string | null
+          min_order_qty?: number | null
+          mtc_url?: string | null
+          price_per_unit?: number
+          seller_id?: string
+          spec?: Json | null
+          title?: string
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dhatv2_products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_products_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      dhatv2_profiles: {
+        Row: {
+          company_name: string | null
+          created_at: string | null
+          full_name: string | null
+          gstin: string | null
+          is_verified: boolean | null
+          phone: string | null
+          role: Database["public"]["Enums"]["dhatv2_role_enum"]
+          user_id: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          gstin?: string | null
+          is_verified?: boolean | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["dhatv2_role_enum"]
+          user_id: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          gstin?: string | null
+          is_verified?: boolean | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["dhatv2_role_enum"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      dhatv2_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: number
+          product_id: number
+          rating: number
+          reviewer_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: number
+          product_id: number
+          rating: number
+          reviewer_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: number
+          product_id?: number
+          rating?: number
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dhatv2_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       dkegl_adhesive_coating: {
         Row: {
@@ -2663,7 +3293,7 @@ export type Database = {
           error_count: number | null
           errors: Json | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           operation_data: Json | null
           operation_id: string | null
           operation_type: string
@@ -2688,7 +3318,7 @@ export type Database = {
           error_count?: number | null
           errors?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           operation_data?: Json | null
           operation_id?: string | null
           operation_type: string
@@ -2713,7 +3343,7 @@ export type Database = {
           error_count?: number | null
           errors?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           operation_data?: Json | null
           operation_id?: string | null
           operation_type?: string
@@ -7984,6 +8614,50 @@ export type Database = {
           },
         ]
       }
+      dkeglpkl_user_organization_access: {
+        Row: {
+          created_at: string | null
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          is_active: boolean | null
+          org_id: string
+          role: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          org_id: string
+          role?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          org_id?: string
+          role?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_user_organization_access_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dkeglpkl_user_profiles: {
         Row: {
           created_at: string | null
@@ -8022,6 +8696,44 @@ export type Database = {
           {
             foreignKeyName: "dkeglpkl_user_profiles_org_id_fkey"
             columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "dkeglpkl_org"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dkeglpkl_user_sessions: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          selected_org_id: string | null
+          session_token: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          selected_org_id?: string | null
+          session_token?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          selected_org_id?: string | null
+          session_token?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dkeglpkl_user_sessions_selected_org_id_fkey"
+            columns: ["selected_org_id"]
             isOneToOne: false
             referencedRelation: "dkeglpkl_org"
             referencedColumns: ["id"]
@@ -9785,6 +10497,106 @@ export type Database = {
       }
     }
     Views: {
+      dhatv2_v_item_shipped: {
+        Row: {
+          order_item_id: number | null
+          shipped_qty: number | null
+        }
+        Relationships: []
+      }
+      dhatv2_v_my_orders: {
+        Row: {
+          buyer_id: string | null
+          created_at: string | null
+          currency_code: string | null
+          escrow_status: string | null
+          id: number | null
+          items: Json | null
+          shipping_address: Json | null
+          status: string | null
+          total_amount: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          buyer_id?: string | null
+          created_at?: string | null
+          currency_code?: string | null
+          escrow_status?: string | null
+          id?: number | null
+          items?: never
+          shipping_address?: Json | null
+          status?: string | null
+          total_amount?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          buyer_id?: string | null
+          created_at?: string | null
+          currency_code?: string | null
+          escrow_status?: string | null
+          id?: number | null
+          items?: never
+          shipping_address?: Json | null
+          status?: string | null
+          total_amount?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dhatv2_orders_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      dhatv2_v_seller_order_items: {
+        Row: {
+          created_at: string | null
+          currency_code: string | null
+          id: number | null
+          order_created_at: string | null
+          order_id: number | null
+          product_id: number | null
+          product_snapshot: Json | null
+          qty: number | null
+          seller_id: string | null
+          status: string | null
+          unit: string | null
+          unit_price: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dhatv2_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_v_my_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dhatv2_order_items_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "dhatv2_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       dkegl_consumable_items_view: {
         Row: {
           artwork_reference: string | null
@@ -10193,49 +11005,42 @@ export type Database = {
       }
     }
     Functions: {
-      binary_quantize: {
-        Args: { "": string } | { "": unknown }
-        Returns: unknown
-      }
-      capture_daily_stock_snapshot: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      capture_daily_stock_snapshot: { Args: never; Returns: Json }
       cbot_search_similar_chunks: {
         Args: {
+          match_count?: number
           query_embedding: string
           similarity_threshold?: number
-          match_count?: number
         }
         Returns: {
           chunk_id: string
-          document_id: string
           content: string
-          similarity: number
+          document_id: string
           metadata: Json
           page_number: number
+          similarity: number
         }[]
       }
       count_adhesive_started: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           count: number
         }[]
       }
       count_gravure_started: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           count: number
         }[]
       }
       count_lamination_started: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           count: number
         }[]
       }
       count_orders: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           count: number
         }[]
@@ -10243,55 +11048,134 @@ export type Database = {
       create_ai_revised_version: {
         Args: {
           p_bpmn_file_id: string
+          p_change_summary?: string
           p_revised_xml: string
           p_suggestions_applied: Json
-          p_change_summary?: string
         }
         Returns: string
       }
-      dkegl_analyze_consumption_patterns: {
-        Args: { _org_id: string; _item_code?: string }
+      dhatv2_audit_emit: {
+        Args: {
+          _entity: string
+          _entity_id: number
+          _event: string
+          _meta?: Json
+        }
+        Returns: undefined
+      }
+      dhatv2_cancel_order: { Args: { _order_id: number }; Returns: undefined }
+      dhatv2_create_dispatch: {
+        Args: { _items: Json; _meta?: Json; _order_id: number }
+        Returns: number
+      }
+      dhatv2_impersonate: { Args: { _email: string }; Returns: string }
+      dhatv2_is_admin: { Args: never; Returns: boolean }
+      dhatv2_my_orders: {
+        Args: never
         Returns: {
-          item_code: string
-          item_name: string
+          buyer_id: string | null
+          created_at: string | null
+          currency_code: string | null
+          escrow_status: string | null
+          id: number | null
+          items: Json | null
+          shipping_address: Json | null
+          status: string | null
+          total_amount: number | null
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "dhatv2_v_my_orders"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      dhatv2_place_order: {
+        Args: { _currency?: string; _product_id: number; _qty: number }
+        Returns: number
+      }
+      dhatv2_rollup_order_status: {
+        Args: { _order_id: number }
+        Returns: string
+      }
+      dhatv2_seller_order_items: {
+        Args: never
+        Returns: {
+          created_at: string | null
+          currency_code: string | null
+          id: number | null
+          order_created_at: string | null
+          order_id: number | null
+          product_id: number | null
+          product_snapshot: Json | null
+          qty: number | null
+          seller_id: string | null
+          status: string | null
+          unit: string | null
+          unit_price: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "dhatv2_v_seller_order_items"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      dhatv2_seller_update_item_status: {
+        Args: { _action: string; _note?: string; _order_item_id: number }
+        Returns: string
+      }
+      dhatv2_set_dispatch_status: {
+        Args: { _dispatch_id: number; _status: string }
+        Returns: string
+      }
+      dkegl_analyze_consumption_patterns: {
+        Args: { _item_code?: string; _org_id: string }
+        Returns: {
           avg_monthly_consumption: number
           consumption_trend: string
-          seasonality_factor: number
+          item_code: string
+          item_name: string
+          next_reorder_date: string
           recommended_reorder_level: number
           recommended_reorder_quantity: number
-          next_reorder_date: string
+          seasonality_factor: number
         }[]
       }
-      dkegl_calculate_gst: {
-        Args:
-          | {
-              _org_id: string
+      dkegl_calculate_gst:
+        | {
+            Args: {
               _hsn_code: string
-              _taxable_amount: number
               _is_interstate?: boolean
-            }
-          | {
+              _org_id: string
               _taxable_amount: number
-              _buyer_state_code: string
-              _seller_state_code?: string
-              _gst_rate?: number
             }
-        Returns: Json
-      }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _buyer_state_code: string
+              _gst_rate?: number
+              _seller_state_code?: string
+              _taxable_amount: number
+            }
+            Returns: Json
+          }
       dkegl_calculate_item_pricing: {
         Args: {
-          _org_id: string
-          _item_code: string
           _customer_tier?: string
+          _item_code: string
+          _org_id: string
           _quantity?: number
         }
         Returns: {
-          pricing_source: string
-          unit_price: number
-          total_price: number
           discount_applied: number
-          margin_percentage: number
           is_primary: boolean
+          margin_percentage: number
+          pricing_source: string
+          total_price: number
+          unit_price: number
         }[]
       }
       dkegl_calculate_stage_cost: {
@@ -10305,43 +11189,40 @@ export type Database = {
           item_name: string
           material_category: string
           planned_quantity: number
-          unit_cost: number
           total_planned_cost: number
-          waste_allowance: number
           total_with_waste: number
+          unit_cost: number
+          waste_allowance: number
         }[]
       }
       dkegl_calculate_stock_valuation: {
-        Args: { _org_id: string; _item_code: string; _quantity: number }
+        Args: { _item_code: string; _org_id: string; _quantity: number }
         Returns: number
       }
       dkegl_calculate_stock_with_opening_date: {
-        Args: { _org_id: string; _item_code?: string; _as_of_date?: string }
+        Args: { _as_of_date?: string; _item_code?: string; _org_id: string }
         Returns: {
-          item_code: string
-          item_name: string
+          calculated_current_qty: number
+          calculated_current_value: number
           category_name: string
-          opening_qty: number
-          opening_date: string
           grn_qty_since_opening: number
           issues_qty_since_opening: number
-          calculated_current_qty: number
+          item_code: string
+          item_name: string
+          opening_date: string
+          opening_qty: number
           opening_value: number
-          calculated_current_value: number
         }[]
       }
       dkegl_calculate_vendor_performance: {
-        Args: { _vendor_id: string; _start_date: string; _end_date: string }
+        Args: { _end_date: string; _start_date: string; _vendor_id: string }
         Returns: number
       }
       dkegl_capture_daily_stock_snapshot: {
         Args: { _org_id?: string }
         Returns: Json
       }
-      dkegl_cleanup_old_security_logs: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      dkegl_cleanup_old_security_logs: { Args: never; Returns: undefined }
       dkegl_consolidate_stock_locations: {
         Args: { _org_id: string }
         Returns: Json
@@ -10351,44 +11232,44 @@ export type Database = {
         Returns: Json
       }
       dkegl_count_adhesive_started: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           count: number
         }[]
       }
       dkegl_count_gravure_started: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           count: number
         }[]
       }
       dkegl_count_lamination_started: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           count: number
         }[]
       }
       dkegl_count_orders: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           count: number
         }[]
       }
       dkegl_create_gst_summary: {
         Args: {
-          _org_id: string
-          _document_type: string
           _document_id: string
+          _document_type: string
           _line_items: Json
+          _org_id: string
         }
         Returns: string
       }
       dkegl_detect_material_shortages: {
-        Args: { _org_id: string; _stage_id: string; _order_id: string }
+        Args: { _order_id: string; _org_id: string; _stage_id: string }
         Returns: {
+          available_quantity: number
           item_code: string
           required_quantity: number
-          available_quantity: number
           shortage_quantity: number
           shortage_severity: string
           suggested_action: string
@@ -10396,34 +11277,34 @@ export type Database = {
       }
       dkegl_detect_pricing_variance: {
         Args: {
-          _org_id: string
-          _item_code: string
           _grn_price: number
           _grn_reference: string
+          _item_code: string
+          _org_id: string
         }
         Returns: undefined
       }
       dkegl_explode_bom: {
-        Args: { _org_id: string; _item_code: string; _quantity: number }
+        Args: { _item_code: string; _org_id: string; _quantity: number }
         Returns: {
+          available_stock: number
           component_item_code: string
           component_item_name: string
-          total_quantity_required: number
-          stage_id: string
-          stage_name: string
           consumption_type: string
           is_critical: boolean
-          waste_percentage: number
           net_requirement: number
-          available_stock: number
           shortage_quantity: number
+          stage_id: string
+          stage_name: string
+          total_quantity_required: number
+          waste_percentage: number
         }[]
       }
       dkegl_generate_gstr_returns: {
         Args: {
+          _month: number
           _org_id: string
           _return_type: string
-          _month: number
           _year: number
         }
         Returns: {
@@ -10436,96 +11317,86 @@ export type Database = {
         Args: {
           _org_id: string
           category_name: string
+          gsm?: number
           qualifier?: string
           size_mm?: string
-          gsm?: number
         }
         Returns: string
       }
-      dkegl_generate_po_number: {
-        Args: { _org_id: string }
-        Returns: string
-      }
-      dkegl_generate_vendor_code: {
-        Args: { _org_id: string }
-        Returns: string
-      }
+      dkegl_generate_po_number: { Args: { _org_id: string }; Returns: string }
+      dkegl_generate_vendor_code: { Args: { _org_id: string }; Returns: string }
       dkegl_get_active_bom: {
-        Args: { _org_id: string; _item_code: string }
+        Args: { _item_code: string; _org_id: string }
         Returns: string
       }
-      dkegl_get_ai_memory_insights: {
-        Args: { _org_id: string } | { _org_id: string; _days_back?: number }
-        Returns: Json
-      }
+      dkegl_get_ai_memory_insights:
+        | { Args: { _org_id: string }; Returns: Json }
+        | { Args: { _days_back?: number; _org_id: string }; Returns: Json }
       dkegl_get_comprehensive_stock_summary: {
         Args: { p_org_id: string }
         Returns: {
-          item_code: string
-          item_name: string
+          calculated_qty: number
           category_name: string
           current_qty: number
+          is_low_stock: boolean
+          item_code: string
+          item_name: string
+          last_movement_date: string
           opening_qty: number
+          stock_status: string
           total_grn_qty: number
           total_issued_qty: number
-          calculated_qty: number
-          unit_cost: number
           total_value: number
-          last_movement_date: string
-          stock_status: string
-          is_low_stock: boolean
+          unit_cost: number
         }[]
       }
       dkegl_get_context_inventory_data: {
-        Args: { _org_id: string; _context_type?: string }
+        Args: { _context_type?: string; _org_id: string }
         Returns: Json
       }
       dkegl_get_context_production_data: {
-        Args: { _org_id: string; _context_type?: string }
+        Args: { _context_type?: string; _org_id: string }
         Returns: Json
       }
       dkegl_get_current_item_pricing: {
-        Args: { _org_id: string; _item_code: string }
+        Args: { _item_code: string; _org_id: string }
         Returns: {
+          approved_by: string
+          last_updated: string
+          price_tolerance: number
           standard_cost: number
           valuation_method: string
-          last_updated: string
-          approved_by: string
-          price_tolerance: number
         }[]
       }
-      dkegl_get_current_user_org: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      dkegl_get_current_user_org: { Args: never; Returns: string }
       dkegl_get_gst_summary: {
-        Args: { _org_id: string; _start_date?: string; _end_date?: string }
+        Args: { _end_date?: string; _org_id: string; _start_date?: string }
         Returns: {
+          cgst_amount: number
+          customer_wise_gst: Json
+          gst_rate_wise_breakdown: Json
+          igst_amount: number
+          monthly_gst_trend: Json
+          net_gst_payable: number
+          sgst_amount: number
           total_gst_liability: number
           total_input_tax_credit: number
-          net_gst_payable: number
-          cgst_amount: number
-          sgst_amount: number
-          igst_amount: number
           total_taxable_turnover: number
-          gst_rate_wise_breakdown: Json
-          monthly_gst_trend: Json
           vendor_wise_gst: Json
-          customer_wise_gst: Json
         }[]
       }
       dkegl_get_inventory_analytics: {
         Args: { _org_id: string }
         Returns: {
-          item_code: string
-          item_name: string
           category_name: string
           current_stock: number
+          item_code: string
+          item_name: string
+          last_movement_date: string
+          reorder_recommendation: string
+          stock_status: string
           stock_value: number
           turnover_ratio: number
-          stock_status: string
-          reorder_recommendation: string
-          last_movement_date: string
         }[]
       }
       dkegl_get_next_invoice_number: {
@@ -10535,232 +11406,223 @@ export type Database = {
       dkegl_get_order_cost_summary: {
         Args: { _order_id: string }
         Returns: {
-          stage_name: string
-          material_cost: number
+          efficiency_percentage: number
           labor_cost: number
+          material_cost: number
           overhead_cost: number
+          stage_name: string
           total_stage_cost: number
           waste_percentage: number
-          efficiency_percentage: number
         }[]
       }
       dkegl_get_paginated_stock: {
         Args: {
+          _category_filter?: string
           _org_id: string
           _page?: number
           _page_size?: number
           _search?: string
-          _category_filter?: string
-          _status_filter?: string
           _sort_column?: string
           _sort_direction?: string
+          _status_filter?: string
         }
         Returns: {
-          item_code: string
-          item_name: string
           category_name: string
           current_qty: number
-          unit_cost: number
-          total_value: number
-          location: string
-          uom: string
-          reorder_level: number
           is_low_stock: boolean
+          item_code: string
+          item_name: string
           last_transaction_date: string
           last_updated: string
+          location: string
+          reorder_level: number
           total_count: number
+          total_value: number
+          unit_cost: number
+          uom: string
         }[]
       }
       dkegl_get_predictive_insights: {
         Args: { _org_id: string }
         Returns: {
+          confidence_level: string
           item_code: string
           item_name: string
+          lead_time_buffer: number
+          optimal_order_quantity: number
           predicted_demand_next_month: number
-          confidence_level: string
           recommended_stock_level: number
           stockout_risk: string
-          optimal_order_quantity: number
-          lead_time_buffer: number
         }[]
       }
       dkegl_get_pricing_intelligence: {
         Args: { _org_id: string }
         Returns: {
+          current_market_price: number
           item_code: string
           item_name: string
-          standard_cost: number
-          current_market_price: number
-          variance_percentage: number
-          price_trend: string
           last_grn_price: number
+          price_trend: string
           recommendation: string
+          standard_cost: number
+          variance_percentage: number
         }[]
       }
       dkegl_get_procurement_analytics: {
-        Args: { _org_id: string; _days_back?: number }
+        Args: { _days_back?: number; _org_id: string }
         Returns: {
-          total_vendors: number
+          active_rfqs: number
           active_vendors: number
-          total_spend: number
           avg_order_value: number
           on_time_delivery_rate: number
-          active_rfqs: number
+          total_spend: number
+          total_vendors: number
         }[]
       }
       dkegl_get_real_stock_summary: {
         Args: { _org_id: string }
         Returns: {
-          item_code: string
-          item_name: string
           category_name: string
           current_qty: number
-          unit_cost: number
-          total_value: number
+          is_low_stock: boolean
+          item_code: string
+          item_name: string
           last_transaction_date: string
           location: string
           reorder_level: number
-          is_low_stock: boolean
+          total_value: number
+          unit_cost: number
         }[]
       }
       dkegl_get_stock_aging: {
         Args: { _org_id: string }
         Returns: {
-          item_code: string
-          item_name: string
+          aging_category: string
           category_name: string
           current_qty: number
-          last_movement_date: string
           days_since_movement: number
-          aging_category: string
           estimated_value: number
+          item_code: string
+          item_name: string
+          last_movement_date: string
         }[]
       }
       dkegl_get_stock_analytics_totals: {
         Args: { _org_id: string }
         Returns: {
-          total_opening: number
+          total_calculated: number
+          total_current: number
           total_grn: number
           total_issued: number
-          total_current: number
-          total_calculated: number
-          total_variance: number
           total_items: number
+          total_opening: number
+          total_variance: number
         }[]
       }
       dkegl_get_stock_health_metrics: {
         Args: { _org_id: string }
         Returns: {
-          total_items: number
+          data_quality_score: number
           items_with_opening_stock: number
           items_with_transactions: number
           items_with_variances: number
-          total_variance_value: number
-          data_quality_score: number
           last_reconciliation_date: string
+          total_items: number
+          total_variance_value: number
         }[]
       }
       dkegl_get_stock_metrics: {
         Args: { _org_id: string }
         Returns: {
+          avg_stock_age: number
+          low_stock_count: number
           total_items: number
           total_value: number
-          low_stock_count: number
           zero_stock_count: number
-          avg_stock_age: number
         }[]
       }
       dkegl_get_stock_movements: {
-        Args: { _org_id: string; _item_code?: string; _days?: number }
+        Args: { _days?: number; _item_code?: string; _org_id: string }
         Returns: {
-          transaction_date: string
-          transaction_type: string
           item_code: string
           item_name: string
           quantity: number
           running_balance: number
           source_reference: string
+          transaction_date: string
+          transaction_type: string
           unit_cost: number
         }[]
       }
       dkegl_get_stock_reconciliation_summary: {
         Args: { _org_id: string }
         Returns: {
-          summary_type: string
-          item_count: number
-          total_value: number
           details: Json
+          item_count: number
+          summary_type: string
+          total_value: number
         }[]
       }
       dkegl_get_workflow_status: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
-          uiorn: string
+          adhesive_coating: string
+          coating_lamination: string
+          gravure_printing: string
           item_name: string
           order_punching: string
-          gravure_printing: string
-          coating_lamination: string
-          adhesive_coating: string
           slitting: string
+          uiorn: string
         }[]
       }
       dkegl_has_role: {
         Args: {
-          _user_id: string
           _org_id: string
           _role: Database["public"]["Enums"]["dkegl_user_role"]
+          _user_id: string
         }
         Returns: boolean
       }
       dkegl_log_security_event: {
-        Args: { _event_type: string; _event_data?: Json; _risk_level?: string }
+        Args: { _event_data?: Json; _event_type: string; _risk_level?: string }
         Returns: undefined
       }
-      dkegl_populate_stock_summary: {
-        Args: { _org_id: string } | { _org_id: string; _opening_date?: string }
-        Returns: Json
-      }
-      dkegl_reconcile_stock_data: {
-        Args: { p_org_id: string }
-        Returns: Json
-      }
-      dkegl_refresh_stock_summary: {
-        Args: { _org_id: string } | { _org_id: string; _opening_date?: string }
-        Returns: undefined
-      }
+      dkegl_populate_stock_summary:
+        | { Args: { _org_id: string }; Returns: Json }
+        | { Args: { _opening_date?: string; _org_id: string }; Returns: Json }
+      dkegl_reconcile_stock_data: { Args: { p_org_id: string }; Returns: Json }
+      dkegl_refresh_stock_summary:
+        | { Args: { _opening_date?: string; _org_id: string }; Returns: Json }
+        | { Args: { _org_id: string }; Returns: undefined }
       dkegl_reserve_order_materials: {
         Args: { _order_id: string }
         Returns: Json
       }
-      dkegl_run_emergency_cleanup: {
-        Args: { _org_code?: string } | { _org_id?: string }
-        Returns: Json
-      }
+      dkegl_run_emergency_cleanup:
+        | { Args: { _org_code?: string }; Returns: Json }
+        | { Args: { _org_id?: string }; Returns: Json }
       dkegl_safe_populate_stock_summary: {
-        Args: { _org_id: string; _opening_date?: string }
+        Args: { _opening_date?: string; _org_id: string }
         Returns: Json
       }
-      dkegl_schedule_daily_reconciliation: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      dkegl_schedule_daily_reconciliation: { Args: never; Returns: undefined }
       dkegl_track_gst_compliance: {
         Args: { _org_id: string }
         Returns: {
           compliance_score: number
-          pending_returns: Json
-          upcoming_deadlines: Json
           penalty_calculations: Json
+          pending_returns: Json
           recommendations: Json
+          upcoming_deadlines: Json
         }[]
       }
       dkegl_track_material_consumption: {
         Args: {
-          _workflow_progress_id: string
+          _actual_qty: number
           _item_code: string
           _planned_qty: number
-          _actual_qty: number
           _unit_cost?: number
+          _workflow_progress_id: string
         }
         Returns: string
       }
@@ -10776,14 +11638,10 @@ export type Database = {
         Args: { _workflow_progress_id: string }
         Returns: Json
       }
-      dkeglpkl_current_org_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      dkeglpkl_generate_bin_code: {
-        Args: { _org_id: string } | { _org_id: string; _location_id: string }
-        Returns: string
-      }
+      dkeglpkl_current_org_id: { Args: never; Returns: string }
+      dkeglpkl_generate_bin_code:
+        | { Args: { _location_id: string; _org_id: string }; Returns: string }
+        | { Args: { _org_id: string }; Returns: string }
       dkeglpkl_generate_grn_number: {
         Args: { _org_id: string }
         Returns: string
@@ -10804,36 +11662,37 @@ export type Database = {
         Args: { _org_id: string }
         Returns: string
       }
-      dkeglpkl_generate_uom_code: {
-        Args: { _org_id: string }
-        Returns: string
+      dkeglpkl_generate_uom_code: { Args: { _org_id: string }; Returns: string }
+      dkeglpkl_get_current_org_id: { Args: never; Returns: string }
+      dkeglpkl_get_user_organizations: {
+        Args: { user_uuid?: string }
+        Returns: {
+          is_active: boolean
+          org_code: string
+          org_id: string
+          org_name: string
+          user_role: string
+        }[]
       }
-      dkeglpkl_get_current_org_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      dkeglpkl_is_admin: {
-        Args: { user_id?: string }
-        Returns: boolean
-      }
+      dkeglpkl_is_admin: { Args: { user_id?: string }; Returns: boolean }
+      dkeglpkl_set_current_org: { Args: { org_uuid: string }; Returns: boolean }
       dkpkl_get_customer_analysis: {
-        Args: { _org_id: string; _start_date?: string; _end_date?: string }
+        Args: { _end_date?: string; _org_id: string; _start_date?: string }
         Returns: Json
       }
-      dkpkl_get_dashboard_metrics: {
-        Args: Record<PropertyKey, never> | { _org_id: string }
-        Returns: Json
-      }
+      dkpkl_get_dashboard_metrics:
+        | { Args: never; Returns: Json }
+        | { Args: { _org_id: string }; Returns: Json }
       dkpkl_get_executive_summary: {
         Args: { _org_id: string; _period?: string }
         Returns: Json
       }
       dkpkl_get_purchase_summary: {
-        Args: { _org_id: string; _start_date?: string; _end_date?: string }
+        Args: { _end_date?: string; _org_id: string; _start_date?: string }
         Returns: Json
       }
       dkpkl_get_sales_summary: {
-        Args: { _org_id: string; _start_date?: string; _end_date?: string }
+        Args: { _end_date?: string; _org_id: string; _start_date?: string }
         Returns: Json
       }
       dkpkl_migrate_staging_to_records: {
@@ -10856,216 +11715,101 @@ export type Database = {
         Args: { _staging_id: string }
         Returns: Json
       }
-      dkpkl_post_purchase_to_issue: {
-        Args: { _batch_id: string } | { _batch_id: string; _org_id: string }
-        Returns: Json
-      }
-      dkpkl_post_sales_to_grn: {
-        Args: { _batch_id: string } | { _batch_id: string; _org_id: string }
-        Returns: Json
-      }
-      dkpkl_process_excel_batch: {
-        Args:
-          | {
+      dkpkl_post_purchase_to_issue:
+        | { Args: { _batch_id: string; _org_id: string }; Returns: Json }
+        | { Args: { _batch_id: string }; Returns: Json }
+      dkpkl_post_sales_to_grn:
+        | { Args: { _batch_id: string; _org_id: string }; Returns: Json }
+        | { Args: { _batch_id: string }; Returns: Json }
+      dkpkl_process_excel_batch:
+        | {
+            Args: {
               _batch_id: string
-              _import_type: Database["public"]["Enums"]["dkpkl_import_type"]
               _excel_data: Json
+              _import_type: Database["public"]["Enums"]["dkpkl_import_type"]
             }
-          | { _batch_id: string; _import_type: string; _excel_data: string }
-        Returns: Json
-      }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _batch_id: string
+              _excel_data: string
+              _import_type: string
+            }
+            Returns: Json
+          }
       dkpkl_validate_staging_record: {
         Args: {
-          _staging_id: string
           _import_type: Database["public"]["Enums"]["dkpkl_import_type"]
+          _staging_id: string
         }
         Returns: Json
       }
       generate_item_code: {
         Args: {
           category_name: string
+          gsm?: number
           qualifier?: string
           size_mm?: string
-          gsm?: number
         }
         Returns: string
       }
       generate_item_code_with_validation: {
         Args: {
           category_name: string
+          gsm?: number
           qualifier?: string
           size_mm?: string
-          gsm?: number
         }
         Returns: Json
       }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_workflow_status: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
-          uiorn: string
+          adhesive_coating: string
+          coating_lamination: string
+          gravure_printing: string
           item_name: string
           order_punching: string
-          gravure_printing: string
-          coating_lamination: string
-          adhesive_coating: string
           slitting: string
+          uiorn: string
         }[]
-      }
-      gtrgm_compress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_decompress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_options: {
-        Args: { "": unknown }
-        Returns: undefined
-      }
-      gtrgm_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      halfvec_avg: {
-        Args: { "": number[] }
-        Returns: unknown
-      }
-      halfvec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      halfvec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      halfvec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
-      }
-      hnsw_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_sparsevec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnswhandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflathandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      l2_norm: {
-        Args: { "": unknown } | { "": unknown }
-        Returns: number
-      }
-      l2_normalize: {
-        Args: { "": string } | { "": unknown } | { "": unknown }
-        Returns: string
       }
       log_bpmn_download: {
         Args: {
           p_bpmn_file_id: string
-          p_version_id?: string
           p_download_type?: string
+          p_version_id?: string
         }
         Returns: undefined
       }
-      refresh_dkeglpkl_stock_balance: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      set_limit: {
-        Args: { "": number }
-        Returns: number
-      }
-      show_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      show_trgm: {
-        Args: { "": string }
-        Returns: string[]
-      }
-      sparsevec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      sparsevec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      sparsevec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
+      refresh_dkeglpkl_stock_balance: { Args: never; Returns: undefined }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       validate_item_code_params: {
         Args: {
           category_name: string
+          gsm?: number
           qualifier?: string
           size_mm?: string
-          gsm?: number
         }
         Returns: Json
-      }
-      vector_avg: {
-        Args: { "": number[] }
-        Returns: string
-      }
-      vector_dims: {
-        Args: { "": string } | { "": unknown }
-        Returns: number
-      }
-      vector_norm: {
-        Args: { "": string }
-        Returns: number
-      }
-      vector_out: {
-        Args: { "": string }
-        Returns: unknown
-      }
-      vector_send: {
-        Args: { "": string }
-        Returns: string
-      }
-      vector_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
       }
     }
     Enums: {
       app_role: "admin" | "user"
+      dhatv2_role_enum: "buyer" | "seller" | "admin"
       dkegl_item_type:
         | "raw_material"
         | "work_in_progress"
@@ -11251,6 +11995,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      dhatv2_role_enum: ["buyer", "seller", "admin"],
       dkegl_item_type: [
         "raw_material",
         "work_in_progress",
